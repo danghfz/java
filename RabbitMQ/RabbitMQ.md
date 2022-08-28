@@ -964,12 +964,8 @@ public class Producer {
     public static void main(String[] args) throws Exception{
         //获取信道
         Channel channel = ChannelUtils.getChannel();
-        //获取队列
-        String queue = channel.queueDeclare().getQueue();
         //获取交换机
         channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.FANOUT);
-        //交换机绑定队列
-        channel.queueBind(queue,EXCHANGE_NAME,"");
         //发送消息
         Scanner scanner = new Scanner(System.in);
         Hashtable<Long, Object> hashtable = new Hashtable<>();
@@ -1067,9 +1063,6 @@ public class Producer {
          * @param type the exchange type
          */
         channel.exchangeDeclare(EXCHANGE_NAME, BuiltinExchangeType.DIRECT);
-        String queue = channel.queueDeclare().getQueue();
-        channel.queueBind(queue,EXCHANGE_NAME,"Customer02");
-        channel.queueBind(queue,EXCHANGE_NAME,"Customer01");
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNext()){
             String message = scanner.next();
