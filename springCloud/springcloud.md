@@ -1922,7 +1922,7 @@ springCloud Config分为服务端和客户端两部分
 
 #### 10.1.1、pom文件
 
-```java
+```xml
 <dependencies>
     <dependency>
         <groupId>org.springframework.cloud</groupId>
@@ -2438,7 +2438,7 @@ spring:
   cloud:
     stream:
       binders: # 配置绑定的rabbitmq的服务信息 Map<String, BinderProperties> binders
-        rabbit_1: # 比奥是定义的名称，用于binding整合
+        rabbit_1: # 是定义的名称，用于binding整合
           type: rabbit # 服务组件类型
           environment: # 设置rabbit相关的环境配置 Map<String,Object>
             spring:
@@ -2615,7 +2615,7 @@ eureka:
 
 
 
-12.4.3、业务类
+#### 12.4.3、业务类
 
 过时的：
 
@@ -2641,3 +2641,1430 @@ public class ConController {
     }
 }
 ```
+
+
+
+### 12.5、Stream之消息重复消费与持久化
+
+
+
+#### 12.5.1、重复消费
+
+`开启新的消费者8803`
+
+```yaml
+server:
+  port: 8803
+spring:
+  application:
+    name: cloud-stream-consumer8803
+  cloud:
+    stream:
+      bindings: # 没有配置binder使用默认的rabbitmq
+        input-in-0:
+          destination: topicExchange
+          content-type: application/json
+  rabbitmq:
+    host: centos.com
+    password: dhf200827
+    username: danghf
+    port: 5672
+eureka:
+  instance:
+    instance-id: consumer8803
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka
+```
+
+
+
+使用8801去发送消息：
+
+发现：8802和8803都接收到同一份消息，一个消息被消费了两次
+
+![](image/Snipaste_2022-08-28_11-16-36.png)
+
+
+
+![](image/Snipaste_2022-08-28_11-16-56.png)
+
+
+
+**注意在Stream中处于同一个group中的多个消费者是竞争关系，就能够保证消息只会被其中一个应用消费一次。不同组是可以全面消费的(重复消费)**
+
+![](image/Snipaste_2022-08-28_11-25-28.png)
+
+`默认是绑定多个队列，fanout模式`
+
+解决思路：
+
+每个组一个队列，交换机将消息发送到多个队列，但是每个组内只能消费一次，变成直接交换机
+
+
+
+```yaml
+group: group8802
+```
+
+```yaml
+group: group8803
+```
+
+此时队列名称变成组名了
+
+![](image/Snipaste_2022-08-28_11-35-19.png)
+
+`同一个小组内消息默认轮询消费`
+
+#### 12.5.2、消息持久化
+
+停掉8802和8803
+
+删掉8802的分组group，【不删8803的】
+
+此时8801进行消息的多次发送消息后
+
+启动8802和8803
+
+发现：
+
+- 8802后台没有打印消息
+- 8803后台打印出消息【开启分组后，默认支持持久化】
+
+
+
+## 十三、SpringCloud Sleuth分布式请求链路跟踪
+
+
+
+### 13.1、问题
+
+在微服务框架中，一个由客户端发起的请求在后端系统中会经过多个不同的的服务节点调用来协同产生最后的请求结果，每—个前段请求都会形成一条复杂的分布式服务调用链路，链路中的任何一环出现高延时或错误都会引起整个请求最后的失败。
+
+
+
+### 13.2、搭建链路监控
+
+`centsos /usr/local/zipkin_jar`
+
+运行`java -jar zipkin-server-2.23.4-exec.jar  `，开启zipkin
+
+访问`9411`端口
+
+![](image/Snipaste_2022-08-28_13-09-31.png)
+
+
+
+### 13.3、demo
+
+在8001和80端修改配置
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-zipkin</artifactId>
+    <version>2.2.8.RELEASE</version>
+</dependency>
+```
+
+```yaml
+spring:
+  application:
+    name: cloud-hystrix-payment8001
+  zipkin:
+    base-url: http://centos.com:9411 # zipkin地址
+  sleuth:
+    sampler:
+      probability: 1 # 采集率，0-1之间，1表示全部采集
+```
+
+
+
+开启服务：7001，8001，80
+
+80=>调用8001的服务
+
+![](image/Snipaste_2022-08-28_13-44-30.png)
+
+![](image/Snipaste_2022-08-28_13-43-03.png)
+
+
+
+
+
+## 十四、SpringCloud Alibaba
+
+官网：
+
+[springcloud](https://spring.io/projects/spring-cloud-alibaba)
+
+[github](https://github.com/alibaba/spring-cloud-alibaba/blob/2.2.x/README-zh.md)
+
+## 十五：Nacos服务注册和配置中心
+
+`nacos = eureka + config + bus`
+
+nacos：一个更易于构建云原生应用的动态服务发现、配置管理和服务管理平台。
+
+### 15.1、nacos之服务注册中心
+
+[nacos-discovery](https://spring-cloud-alibaba-group.github.io/github-pages/2021/en-us/index.html#_spring_cloud_alibaba_nacos_discovery)
+
+#### 15.1.1、服务提供者注册
+
+`alibaba-nacos-producer9001`，`alibaba-nacos-producer9002`
+
+
+
+**POM**
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+    </dependency>
+    <!--  nacos 服务发现-->
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+    </dependency>
+</dependencies>
+```
+
+
+
+**Yaml**
+
+```yaml
+server:
+  port: 9001
+spring:
+  application:
+    name: nacos-producer
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+
+
+**启动类**
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+public class Pro9001 {
+    public static void main(String[] args) {
+        SpringApplication.run(Pro9001.class,args);
+    }
+}
+```
+
+
+
+**业务类**
+
+```java
+@RestController
+public class ProController {
+    @Value("${server.port}")
+    private String port;
+
+    @GetMapping("/hello")
+    public String hello(){
+        return "hello nacos discovery in port " + port;
+    }
+}
+```
+
+
+
+![](image/Snipaste_2022-08-28_19-10-45.png)
+
+
+
+启动多个消费者后【不需要配置实例名，服务名一样就好】
+
+![](image/Snipaste_2022-08-28_19-16-08.png)
+
+#### 15.1.2、服务消费者注册
+
+`alibaba-nacos-consumer8080`
+
+
+
+**YAML**
+
+```yaml
+server:
+  port: 8080
+spring:
+  application:
+    name: nacos-consumer
+  cloud:
+    nacos:
+      server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+
+
+**POM**
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-openfeign</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+</dependencies>
+```
+
+
+
+**启动类**
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+@EnableFeignClients
+public class Con8080 {
+    public static void main(String[] args) {
+        SpringApplication.run(Con8080.class,args);
+    }
+}
+```
+
+
+
+**client**
+
+```java
+@Component
+@FeignClient(name = "nacos-producer")
+public interface ProClient {
+    @GetMapping("/hello")
+    String hello();
+}
+```
+
+
+
+**controller**
+
+```java
+@RestController
+public class ConController {
+    @Autowired
+    private ProClient proClient;
+    @GetMapping("/hello")
+    public String hello(){
+        return proClient.hello();
+    }
+}
+```
+
+
+
+### 15.2、各种服务中心注册对比
+
+| 组件名    | 语言 | cap          | 服务健康检查 | 对外暴露接口 |
+| --------- | ---- | ------------ | ------------ | ------------ |
+| Eureka    | java | ap（可用性） | 可配支持     | HTTP         |
+| Zookeeper | java | cp（一致性） | 支持         | 客户端       |
+| Consul    | go   | cp           | 支持         | HTTP/D       |
+| Nacos     |      | cp+ap        |              |              |
+
+` 集群默认支持的是CAP原则中的AP原则，但是也可切换为CP原则`
+
+Nacos支持AP个CP模式切换
+
+
+
+
+
+### 15.3、Nacos作为服务配置中心
+
+#### 15.3.1、基础配置
+
+`alibaba-config-nacos-client3377`
+
+ **POM**
+
+```xml
+<dependencies>
+    <!--  nacos config-->
+    <dependency>
+        <groupId>org.springframework.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        <version>0.9.0.RELEASE</version>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-actuator</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>com.alibaba.cloud</groupId>
+        <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-devtools</artifactId>
+    </dependency>
+</dependencies>
+```
+
+
+
+**bootstrap.yaml**
+
+```yaml
+server:
+  port: 3377
+spring:
+  application:
+    name: nacos-config
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+      config:
+        server-addr: centos.com:8848 # nacos作为配置中心
+        file-extension: yaml # 指定yaml格式的配置
+# dataID
+# ${spring.application.name}-${spring.profile.active}.${spring.cloud.nacos.config.file-extension}
+# nacos-config-dev.yaml 加载的是这个yaml文件
+```
+
+
+
+**application.yaml**
+
+```yaml
+spring:
+  profiles:
+    active: dev # 发开环境
+```
+
+
+
+**主启动**
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+public class NacosConfig3377 {
+    public static void main(String[] args) {
+        SpringApplication.run(NacosConfig3377.class,args);
+    }
+}
+```
+
+
+
+**controller**
+
+```java
+@RestController
+@RefreshScope
+public class ConfigController {
+    @Value("${config.info}")
+    private String config;
+    @GetMapping("/")
+    public String hello(){
+        return config;
+    }
+}
+```
+
+
+
+在 Nacos Spring Cloud 中，`dataId` 的完整格式如下：
+
+`${prefix}-${spring.profiles.active}.${file-extension}`
+
+- `prefix` 默认为 `spring.application.name` 的值，也可以通过配置项 `spring.cloud.nacos.config.prefix`来配置。
+- `spring.profiles.active` 即为当前环境对应的 profile，详情可以参考 [Spring Boot文档](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html#boot-features-profiles)。 **注意：当 `spring.profiles.active` 为空时，对应的连接符 `-` 也将不存在，dataId 的拼接格式变成 `${prefix}.${file-extension}`**
+
+- `file-exetension` 为配置内容的数据格式，可以通过配置项 `spring.cloud.nacos.config.file-extension` 来配置。目前只支持 `properties` 和 `yaml` 类型。
+- 通过 Spring Cloud 原生注解 `@RefreshScope` 实现配置自动更新：
+
+
+
+![](image/Snipaste_2022-08-31_10-05-47.png)
+
+
+
+
+
+![](image/Snipaste_2022-08-31_10-07-16.png)
+
+Data ID必须是xxxx.yaml不能是.yml
+
+
+
+访问：`http://localhost:3377/`
+
+![](image/Snipaste_2022-08-31_10-21-33.png)
+
+
+
+```
+当配置文件更新后，服务也会自动更新，@RefreshScope
+```
+
+
+
+#### 15.3.2、分类配置
+
+Namespace + Group + Data ID
+
+
+
+![](image/Snipaste_2022-08-31_10-32-48.png)
+
+
+
+Namespace主要用来实现隔离
+
+比如多个开发环境，每个Namespace之间是隔离的
+
+Service就是微服务;一个Service可以包含多个Cluster(集群)，Nacos默认Cluster是DEFAULT,Cluster是对指定微服务的一个虚拟划分。比方说为了容灾，将Service微服务分别部署在了杭州机房和广州机房，这时就可以给杭州机房的Service微服务起一个集群名称(HZ) ,给广州机房的Service微服务起一个集群名称(GZ)，还可以尽量让同一个机房的微服务互相调用，以提升性能。
+
+
+
+**Data ID方案**
+
+通过设置spring.profile.active来切换不同的环境，读取不同的配置文件
+
+
+
+
+
+**Group分组方案**
+
+```yaml
+spring:
+  application:
+    name: nacos-config
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+      config:
+        server-addr: centos.com:8848 # nacos作为配置中心
+        file-extension: yaml # 指定yaml格式的配置
+        group: DEFAULT_GROUP # default DEFAULT_GROUP
+```
+
+
+
+**Namespace方案**
+
+
+
+```yaml
+spring:
+  application:
+    name: nacos-config
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+      config:
+        server-addr: centos.com:8848 # nacos作为配置中心
+        file-extension: yaml # 指定yaml格式的配置
+#        group: DEFAULT_GROUP
+#        namespace: # namespace ID
+```
+
+
+
+### 15.4、Nacos集群和持久化配置（重要）
+
+[文档](https://nacos.io/zh-cn/docs/deployment.html)
+
+![](image/Snipaste_2022-08-31_11-32-39.png)
+
+Nacos本身自带一个嵌入式数据库，所以在不配置mysql的情况下，Nacos本身仍然会将配置文件等持久化，保存到自带的嵌入式数据库，如果Nacos集群，每个Nacos使用自己的配置文件，就会发送数据冲突，数据一致性等问题，所以采用集中式存储支持集群化部署，目前只支持mysql数据库
+
+https://nacos.io/zh-cn/docs/deployment.html
+
+
+
+- 在 /conf/cluster.conf中配置集群 ip：port
+- nginx配置
+- 参考[文档](http://c.biancheng.net/springcloud/nacos.html)
+
+## 十六、Sentinel实现熔断与限流
+
+
+
+[官网](https://github.com/alibaba/Sentinel/releases)下载jar包
+
+[官方文档](https://sentinelguard.io/zh-cn/docs/logs.html)
+
+![](image/Snipaste_2022-08-31_18-05-31.png)
+
+
+
+### 16.1、初始化演示
+
+`alibaba-sentinel-service8401`
+
+#### 16.1.1、pom
+
+```xml
+<dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-loadbalancer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-datasource-nacos</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+    </dependencies>
+```
+
+
+
+#### 16.1.2、yaml
+
+```yaml
+server:
+  port: 8401
+spring:
+  application:
+    name: sentinel-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+    sentinel:
+      transport:
+        dashboard: centos.com:8080
+        # 默认8791端口，加入端口被占用，会自动 +1 扫描
+        port: 8791
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+
+
+#### 16.1.3、controller
+
+```java
+@SpringBootApplication
+@EnableDiscoveryClient
+public class SentinelMain {
+    public static void main(String[] args) {
+        SpringApplication.run(SentinelMain.class,args);
+    }
+}
+```
+
+```java
+@RestController
+public class FlowController {
+    @GetMapping("/testA")
+    public String testA(){
+        return "hello  testA";
+    }
+    @GetMapping("/testB")
+    public String testB(){
+        return "hello  testB";
+    }
+}
+```
+
+
+
+`sentinel使用的懒加载机制，只有当你访问过后，才可以被检测到`
+
+![](image/Snipaste_2022-08-31_18-38-58.png)
+
+
+
+### 16.2、流控规则
+
+#### 16.2.1、基本介绍
+
+![](image/Snipaste_2022-08-31_18-42-26.png)
+
+
+
+- 资源名：唯一名称，默认请求路径
+- 针对来源：sentinel可以针对调用者进行限流，填写微服务名。默认default（不区分来源）
+- 阈值类型/单机阈值：
+  - QPS（每秒的请求数量）：当调用改api的QPS达到阈值的时候，进行限流
+  - 线程数：当调用改api的线程数达到阈值的时候，进行限流
+- 是否集群：不需要集群
+- 流控模式：
+  - 直接：当api达到限流条件时，直接限流
+  - 关联：当关联的资源达到阈值时，就限流自己**【A调用B，当B达到阈值，就限流A】**
+  - 链路：只记录指定链路上的流量（指定资源从入口资源进来的流量，如果达到阈值，就进行限流）【api级别的针对来源】
+- 流控效果：
+  - 快速失败：直接失败，抛异常
+  - Warm Up：根据codeFactor（加载冷因子，默认3）的值，从阈值/codeFactor，经过预热时长，才达到设置的QPS阈值【令牌桶算法】
+  
+    - 【**大白话来讲，刚开始把 阈值调低，不要让过多的请求访问服务器，导致冲垮服务器，先让服务器一点一点处理，再慢慢加量。经典的例子：一个好久没运动的人，你刚开始让他跑10圈，他可能会累死，但是你给他一个预热时间，比如 第一天跑 2圈，第三天跑 3 圈，第四天跑4圈，以此类推...**
+  
+      **默认coldFactor为3，即请求QPS从(threshold / 3)开始，经多少预热时长才逐渐升至设定的QPS阈值。**
+  
+      **如下案例，阀值为10，预热时长设置5秒。**
+  
+      **系统初始化的阀值为10 / 3约等于3，即阀值刚开始为3，然后过了 5秒后阀值才慢慢升高恢复到10**
+    - 】
+  - 排队等待：匀速排队，让请求以匀速的速度通过，阈值类型必须设置为QPS，否则无效【漏桶算法】
+
+
+
+### 16.3、sentinel熔断降级
+
+[官方文档](https://sentinelguard.io/zh-cn/docs/circuit-breaking.html)
+
+Sentinel 提供以下几种熔断策略：
+
+- 慢调用比例 (`SLOW_REQUEST_RATIO`)：选择以慢调用比例作为阈值，需要设置允许的慢调用 RT（即最大的响应时间），请求的响应时间大于该值则统计为慢调用。当单位统计时长（`statIntervalMs`）内请求数目大于设置的最小请求数目，并且慢调用的比例大于阈值，则接下来的熔断时长内请求会自动被熔断。经过熔断时长后熔断器会进入探测恢复状态（HALF-OPEN 状态），若接下来的一个请求响应时间小于设置的慢调用 RT 则结束熔断，若大于设置的慢调用 RT 则会再次被熔断。
+- 异常比例 (`ERROR_RATIO`)：当单位统计时长（`statIntervalMs`）内请求数目大于设置的最小请求数目，并且异常的比例大于阈值，则接下来的熔断时长内请求会自动被熔断。经过熔断时长后熔断器会进入探测恢复状态（HALF-OPEN 状态），若接下来的一个请求成功完成（没有错误）则结束熔断，否则会再次被熔断。异常比率的阈值范围是 `[0.0, 1.0]`，代表 0% - 100%。
+- 异常数 (`ERROR_COUNT`)：当单位统计时长内的异常数目超过阈值之后会自动进行熔断。经过熔断时长后熔断器会进入探测恢复状态（HALF-OPEN 状态），若接下来的一个请求成功完成（没有错误）则结束熔断，否则会再次被熔断。
+
+
+
+![](image/Snipaste_2022-09-01_18-40-41.png)
+
+
+
+
+
+### 16.4、热点key限流
+
+[官方文档](https://sentinelguard.io/zh-cn/docs/parameter-flow-control.html)
+
+![](image/Snipaste_2022-09-01_19-05-11.png)
+
+
+
+何为热点？热点即经常访问的数据。很多时候我们希望统计某个热点数据中访问频次最高的 Top K 数据，并对其访问进行限制。比如：
+
+- 商品 ID 为参数，统计一段时间内最常购买的商品 ID 并进行限制
+- 用户 ID 为参数，针对一段时间内频繁访问的用户 ID 进行限制
+
+热点参数限流会统计传入参数中的热点参数，并根据配置的限流阈值与模式，对包含热点参数的资源调用进行限流。热点参数限流可以看做是一种特殊的流量控制，仅对包含热点参数的资源调用生效。
+
+#### 16.4.1、配置
+
+很简单：自己配，都是中文
+
+```java
+@GetMapping("/hotKey")
+    @SentinelResource(value = "hotKey",blockHandler = "deal_hotKey") // 自定义一个处理异常方法
+    // sentinel 资源名 为  /hotkey( mapping )  或者  hotkey( @SentinelResource )
+    public String hotKey(@RequestParam(value = "p1",required = false) String p1,
+                         @RequestParam(value = "p2",required = false)String p2){
+        return "#********************  hotKey  *********************#";
+    }
+    public String deal_hotKey(@RequestParam(value = "p1",required = false) String p1,
+                              @RequestParam(value = "p2",required = false)String p2,
+                              BlockException blockException){
+        return "请稍后再试，hotKeyException";
+    }
+```
+
+**注意**：
+
+- 上述接口有两个参数，p1和p2，但是他们都不是必须的（required = false），你可以选则带或不带参数，**but，无论什么情况，p1永远是第一个参数，索引为0，哪怕你不带p1参数，只带p2参数，那么p2还是第二个参数，而不是第一个**
+
+
+
+#### 16.4.2、配置例外项
+
+
+
+```
+我们期望p1参数当它是某个特殊值时，它的限流值和平时不一样特例
+假如当p1的值等于5时，它的阈值可以达到200
+```
+
+
+
+**@SentinelResource主管配置出错，业务出错还是报异常**
+
+
+
+### 16.5、sentinel系统规则
+
+[官方文档](https://sentinelguard.io/zh-cn/docs/system-adaptive-protection.html)
+
+![](image/Snipaste_2022-09-02_09-47-36.png)
+
+
+
+系统规则支持以下的阈值类型：
+
+- **Load**（仅对 Linux/Unix-like 机器生效）：当系统 load1 超过阈值，且系统当前的并发线程数超过系统容量时才会触发系统保护。系统容量由系统的 `maxQps * minRt` 计算得出。设定参考值一般是 `CPU cores * 2.5`。
+- **CPU usage**（1.5.0+ 版本）：当系统 CPU 使用率超过阈值即触发系统保护（取值范围 0.0-1.0）。
+- **RT**：当单台机器上所有入口流量的平均 RT 达到阈值即触发系统保护，单位是毫秒。
+- **线程数**：当单台机器上所有入口流量的并发线程数达到阈值即触发系统保护。
+- **入口 QPS**：当单台机器上所有入口流量的 QPS 达到阈值即触发系统保护。
+
+
+
+### 16.6、@SentinelResource注解
+
+[官方文档](https://sentinelguard.io/zh-cn/docs/annotation-support.html)
+
+#### 16.6.1、初识
+
+```java
+@RestController
+public class SenResController {
+    @GetMapping("/byResource")
+    @SentinelResource(value = "get",blockHandler = "get_handler")
+    public String get(){
+        return "按照资源名限流";
+    }
+    public String get_handler(BlockException e){
+        return "被限流了" + e.toString();
+    }
+}
+```
+
+![](image/Snipaste_2022-09-02_10-04-58.png)
+
+**注意**：
+
+sentinel本身会使用url作为资源名，但是在@SentinelResource（value = “value”,blockHandler=“block”）注解下，会的得到一个新的资源名，资源名为value属性的值，而其中的blockhandler降级方法支队资源名为value的资源生效，对getMapping（/url）不生效，getMapper()如果出现限流，还是会使用默认的限流`Blocked by Sentinel (flow limiting)`，
+
+比如：GetMapping(“/url”)，@SentinelResource(value = “url”,blockhandler = “handler”),
+
+对 /url设置的的流控是不能触发handler方法，只有对 url 设置的流控才能触发handler方法，**但是**，某些流控只能设置 url 而不能设置 /url ，比如热点key
+
+
+
+
+
+#### 16.6.2、加深
+
+**问题**：
+
+1. 系统默认的，没有体现我们自己的业务要求。
+2. 依照现有条件，我们自定义的处理方法又和业务代码耦合在一块，不直观。
+3. 每个业务方法都添加一个兜底的，那代码膨胀加剧。
+4. 全局统—的处理方法没有体现。
+
+
+
+全局异常统一处理
+
+```java
+/**
+ * @author 党
+ * @version 1.0
+ * 2022/9/2   16:36
+ * 定义限流处理类
+ */
+public class CustomerBlockHandler {
+    public static String handlerException(BlockException e){
+        return "全局异常处理 ---- 1";
+    }
+    public static String handlerException2(BlockException e){
+        return "全局异常处理 ---- 2";
+    }
+}
+```
+
+```java
+@GetMapping("/test")
+@SentinelResource(value = "test",blockHandlerClass = CustomerBlockHandler.class, blockHandler = "handlerException2")
+public String test(){
+    return "test";
+}
+```
+
+
+
+
+
+### 16.7、sentinel服务熔断
+
+`sentinel整合 ribbon + openfeign + fallback`
+
+服务提供者：9004，9003
+
+服务消费者：8084
+
+9004/9003
+
+```java
+@RestController
+public class MController {
+    @Value("${server.port}")
+    private String port;
+    public static String[] arr = new String[3];
+    static {
+        arr[0] = "str : 0";
+        arr[1] = "str : 1";
+        arr[2] = "str : 2";
+    }
+    @GetMapping("/get/{id}")
+    public String get(@PathVariable int id){
+        return arr[id] + " forward " + port;
+    }
+}
+```
+
+客户端：8084
+
+```java
+@RestController
+public class ConController {
+    @Autowired
+    private ServerClient serverClient;
+    @GetMapping("/get/{id}")
+    @SentinelResource(value = "get")
+    public String get(@PathVariable String id){
+        return serverClient.get(id);
+    }
+}
+```
+
+时刻记得移除ribbon依赖，使用loadbalancer做负载均衡
+
+如果@SentinelResource，没有配置任何（fallback，handler）就会使用默认的异常，
+
+
+
+- **fallback**，fallback只会处理业务异常
+- **blockHandler**，blockHandler只负责sentinel控制台配置
+- **exceptionsToIgnore**，忽略异常
+
+
+
+### 16.8、sentinel持久化规则
+
+
+
+将sentinel配置保存到 nacos 中
+
+
+
+添加依赖
+
+```xml
+<dependency>
+    <groupId>com.alibaba.csp</groupId>
+    <artifactId>sentinel-datasource-nacos</artifactId>
+</dependency>
+```
+
+
+
+配置yaml
+
+```yaml
+server:
+  port: 8084
+spring:
+  application:
+    name: alibaba-client
+  cloud:
+    sentinel:
+      transport:
+        dashboard: centos.com:8080
+        port: 8791
+      datasource:
+        ds1:
+          nacos:
+            server-addr: centos.com:8848
+            dataId: ${spring.application.name}
+            groupId:  DEFAULT_GROUP
+            data-type: json
+            rule-type: flow
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+```
+
+
+
+
+
+![](image/Snipaste_2022-09-02_18-33-17.png)
+
+```yaml
+[
+    {
+        "resource": "/get/{id}",
+        "limitApp": "default",
+        "grade": 1,
+        "count": 2,
+        "strategy": 0,
+        "controlBehavior": 0,
+        "clusterMode": false
+    }
+]
+```
+
+resource：资源名。
+limitApp：来源应用。
+grade：阈值类型。0 表示线程数，1 表示是QPS。
+count：单机阈值。
+strategy：流控模式。0 表示直接，1 表示关联，2 表示链路。
+controlBehavior：流控效果。0 表示快速失败，1 表示Warm up，2 表示排队等待。
+clusterMode：是否集群。false 表示否，true 表示是。
+
+
+
+`启动完成后，sentinel会检查到nacos中的配置规则`
+
+![](image/Snipaste_2022-09-02_18-32-49.png)
+
+
+
+## 十七、分布式事务Alibaba Seata
+
+
+
+### 17.1、分布式事务问题由来
+
+
+
+`一次业务操作需要跨多个数据源或需要跨多个系统进行远程调用，就会产生分布式事务问题`
+
+- 多数据源
+
+
+
+### 17.2、分布式事务过程
+
+[github](https://github.com/seata/seata)
+
+[官方文档](https://seata.io/zh-cn/docs/overview/what-is-seata.html)
+
+分布式事务处理过程的 1 ID + 3 组件模型
+
+- Transaction lD XID：全局唯一的事务ID
+- Transaction Coordinator（TC）：事务协调者，维护全局和分支事务的状态，驱动全局事务提交或回滚。
+- Transaction Manager（TM）： 事务管理器，定义全局事务的范围，开始全局事务、提交或回滚全局事务。
+- Resource Manager（RM）： 资源管理器，管理分支事务处理的资源，与TC交谈以注册分支事务和报告分支事务的状态，并驱动分支事务提交或回滚。
+
+![](image/Snipaste_2022-09-02_19-04-16.png)
+
+
+
+![](image/Snipaste_2022-09-02_19-09-43.png)
+
+
+
+**处理过程**：
+
+1. TM向TC申请开启一个全局事务，全局事务创建成功并生成一个全局唯一的XID
+2. XID在微服务调用链路的上下文中传播;
+3. RM向TC注册分支事务，将其纳入XID对应全局事务的管辖
+4. TM向TC发起针对XID的全局提交或回滚决议;
+5. TC调度XID下管辖的全部分支事务完成提交或回滚请求。
+
+
+
+### 17.3、seata配置
+
+按照seata/conf.application.example.yml 配置 application.yml
+
+[文档](https://www.jianshu.com/p/37c3640284cc)
+
+### 17.4、数据库准备
+
+```
+三个微服务
+	订单服务
+	库存服务
+	账户服务
+  用户下单时，在订单服务中创建一个订单，然后远程调用库存服务，减少库存，在通过远程调用减少账户余额，最后修改订单服务状态已完成
+```
+
+
+
+建立三个数据库
+
+seata_account，seata_order，seata_storage
+
+分别建立表
+
+t_account，t_order，t_storage
+
+按照三个库分别建回滚日志表
+
+```sql
+-- 注意此处0.3.0+ 增加唯一索引 ux_undo_log
+CREATE TABLE `undo_log` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
+  `xid` varchar(100) NOT NULL,
+  `context` varchar(128) NOT NULL,
+  `rollback_info` longblob NOT NULL,
+  `log_status` int(11) NOT NULL,
+  `log_created` datetime NOT NULL,
+  `log_modified` datetime NOT NULL,
+  `ext` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `ux_undo_log` (`xid`,`branch_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+```
+
+
+
+### 17.5、微服务
+
+`下订单->减库存->扣余额->改状态`
+
+`seata-order`
+
+#### 17.5.1、pom
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>springcloud</artifactId>
+        <groupId>com.example</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>seata-order</artifactId>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-openfeign-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-openfeign-core</artifactId>
+            <version>2.2.6.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+            <version>2.2.6.RELEASE</version>
+        </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid-spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+        <!--  mybatis 多数据源配置-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+
+
+#### 17.5.2、yaml
+
+```yaml
+server:
+  port: 2001
+
+spring:
+  application:
+    name: seata-order-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+        group: SEATA_GROUP # 要与 seata 相同
+  datasource:
+    dynamic: # 多数据源配置
+      primary: mysql1
+      strict: true #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      datasource:
+        mysql1:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_order
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+        mysql2:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_storage
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+        mysql3:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_account
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+seata:
+  service:
+    vgroup-mapping:
+      default_tx_group: default
+    grouplist:
+      seata-server: centos.com:8091
+      default: centos.com:8091
+  config:
+    type: nacos
+    nacos:
+      data-id: seataServer.properties
+      server-addr: centos.com:8848
+      group: SEATA_GROUP
+      username: danghf
+      password: dhf200827
+  tx-service-group: my_test_tx_group # seata配置文件没有配置，用这个默认的
+```
+
+
+
+#### 17.5.3、启动问题
+
+
+
+```
+java.lang.ClassNotFoundException: org.springframework.cloud.openfeign.ribbon.CachingSpringLoadBalancerFactor
+```
+
+```
+解决方法：找不到CachingSpringLoadBalancerFactor，这个东西在spring-cloud-openfeign-core2.26中存在，但是3版本后剔除了，
+
+```
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+    <exclusions>
+        <exclusion>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-openfeign-core</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-openfeign-core</artifactId>
+    <version>2.2.6.RELEASE</version>
+</dependency>
+同时引入ribbon 2.2.6
+```
+
+
+
+#### 17.5.4、说明
+
+我这里配置多数据源，故意抛出RuntimeException观察是否发生回滚
+
+
+
+```
+艹、配置出问题，暂时弄不好
+```
+
+
+
+
+
+### 17.6、seata补充
+
+Seata 是一款开源的分布式事务解决方案，致力于提供高性能和简单易用的分布式事务服务。Seata 将为用户提供了 **AT、TCC、SAGA 和 XA** 事务模式，为用户打造一站式的分布式解决方案。
+
+`默认是AT`
+
+
+
+#### 17.6.1、AT模式
+
+**一阶段加载**
+
+在第一阶段，Seata会拦截业务SQL
+
+1、解析SQL语句，找到业务SQL要更新的业务数据，在业务数据被更新前，将其保存成“before image”，
+
+2、执行业务SQL，更新业务数据，在业务数据更新后
+
+3、将其保存成“after image”，最后生成行锁
+
+以上操作全部在一个数据库事务内完成，这样保证了这一阶段操作的原子性
+
+
+
+![](image/Snipaste_2022-09-04_12-46-15.png)
+
+
+
+**二阶段提交**
+
+二阶段如果是顺利提交的话
+
+因为业务sql在一阶段已经提交到数据库，所以Seata框架只要将一阶段的快照数据和行锁清除，完成数据清理即可
+
+![](image/Snipaste_2022-09-04_12-49-09.png)
+
+**三阶段回滚**
+
+二阶段如果是回滚的话，Seata就要回滚一阶段已经执行的业务SQL，还原业务数据
+
+回滚方式使用的“before image”还原业务数据，但在还原前要首先检验脏写，对比数据库“当前业务数据”和“after image”，如果两份数据完全一致就说明没有脏写，可以还原业务数据，如果不一致就说明又脏写，需要人工处理
+
+![](image/Snipaste_2022-09-04_12-52-29.png)
+
+
+
+
+
+
+
