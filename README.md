@@ -1,7 +1,6 @@
+## 菜鸟的java学习笔记
 
-## java
-
-菜鸟的学习笔记
+![java: 1.8 (shields.io)](https://img.shields.io/badge/jdk-1.8-green)
 
 
 
