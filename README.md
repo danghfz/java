@@ -1,6 +1,3 @@
-![](https://lever-client-logos.s3-us-west-2.amazonaws.com/4ec24534-f01e-4354-a580-3395056f19e7-1592848050361.png)
-
-
 
 ## java
 
