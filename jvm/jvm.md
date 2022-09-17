@@ -2514,9 +2514,21 @@ public class Candy11 {
 
 ### 4.1、加载
 
+- 将类的字节码载入方法区，内部采用C++的instanceKlass描述java类，它的重要field有：
+  - _java_mirror：即java的类镜像，例如对String来说，就是String.class，作用是把klass暴露给java使用
+  - _super：即父类
+  - _fields：即成员变量
+  - _methods：方法
+  - _constants：常量池
+  - _class_loader：类加载器
+  - _vtable：虚方法表
+  - _itable：接口方法表
+- 如果这个类还有父类没有加载，先加载父类
+- 加载和链接可能是交替运行
 
 
 
+![](image/Snipaste_2022-09-17_08-50-06.png)
 
 
 
@@ -2524,7 +2536,13 @@ public class Candy11 {
 
 ### 4.2、链接
 
-
+- 验证：验证类是否符合JVM规范，安全性检查
+- 准备：为static变量分配空间，设置默认值
+  - static 变量在JDK 7前存储在 instancesKlass末尾，之后存储在_java_mirror末尾
+  - static 变量分配空间和赋值是两个步骤，分配空间在准备阶段完成，赋值在初始化阶段完成
+  - 如果static 变量是 final 的基本类型，那么编译阶段值就确定了，赋值在准备阶段完成
+  - 如果 static 变量是final的，但属于引用类型，那么赋值也会在初始化阶段完成
+- 解析：将常量池中的符号引用解析为直接引用
 
 
 
@@ -2534,17 +2552,38 @@ public class Candy11 {
 
 #### 1）< cinit>()V 方法
 
+初始化即调用< cnit>()V，虚拟机会保证这个类的 构造方法 的线程安全
+
 
 
 #### 2）发生的时机
 
+类的初始化是懒惰的：
+
+会初始化的情况：
+
+- mian方法所以在的类，总会被首先初始化
+- 首次访问这个类的静态变量或静态方法时
+- 子类初始化，如果父类还没有初始化，会引发父类的初始化
+- 子类访问父类的静态变量，只会触发父类的初始化
+- Class.forName()
+- new 会导致初始化
 
 
 
+不会导致类初始化的请况：
 
-### 4.4、练习
+- 访问类的static final 静态常量（基本类型和字符串）不会触发初始化
+- 类对象.class不会触发初始化
+- 创建该类的数组不会触发初始化
+- 类加载器的 loadClass 方法
+- Class.forName的参数 2 为 false时
 
 
+
+```
+查看静态代码块是否执行，就可以观察到类是否进行初始化
+```
 
 
 
@@ -2552,9 +2591,50 @@ public class Candy11 {
 
 ## 4.5、类加载器
 
+![](image/Snipaste_2022-09-17_09-48-45.png)
+
+
+
 
 
 ### 5.1、启动类加载器
+
+`Bootstrap ClassLoader`
+
+加载 JAVA_HOME/jre/lib
+
+```java
+public class BootstrapDemo {
+    public static void main(String[] args) throws ClassNotFoundException{
+        Class<?> clazz = Class.forName("com.dhf.clazz.loads.F");
+        // 获得类加载器
+        System.out.println(clazz.getClassLoader());
+    }
+}
+class F{
+    static {
+        System.out.println("bootstrap F init");
+    }
+}
+```
+
+正常运行：
+
+```
+bootstrap F init
+sun.misc.Launcher$AppClassLoader@18b4aac2
+```
+
+
+
+java -Xbootclasspath/a: . com.dhf.clazz.loads.BootstrapDemo
+
+```
+bootstrap F init
+null
+```
+
+- -Xbootclasspath表示设置bootclasspath
 
 
 
@@ -2562,17 +2642,172 @@ public class Candy11 {
 
 ### 5.2、扩展类加载器
 
-
+加载  JAVA_HOME/jre/lib/ext
 
 
 
 ### 5.3、双亲委派机制
 
+classLoader类
 
+```java
+protected Class<?> loadClass(String name, boolean resolve)
+    throws ClassNotFoundException
+{
+    synchronized (getClassLoadingLock(name)) {
+        // First, check if the class has already been loaded
+        Class<?> c = findLoadedClass(name);
+        if (c == null) {
+            long t0 = System.nanoTime();
+            try {
+                if (parent != null) {
+                    // 有上级交给上级
+                    c = parent.loadClass(name, false);
+                } else {
+                    // 没有上级，交给BootstrapClassLoader
+                    c = findBootstrapClassOrNull(name);
+                }
+            } catch (ClassNotFoundException e) {
+                // ClassNotFoundException thrown if class not found
+                // from the non-null parent class loader
+            }
+            
+			// 上级没有找到
+            if (c == null) {
+                // If still not found, then invoke findClass in order
+                // to find the class.
+                long t1 = System.nanoTime();
+                // 调用findClass来加载
+                c = findClass(name);
+
+                // this is the defining class loader; record the stats
+                sun.misc.PerfCounter.getParentDelegationTime().addTime(t1 - t0);
+                sun.misc.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+                sun.misc.PerfCounter.getFindClasses().increment();
+            }
+        }
+        if (resolve) {
+            resolveClass(c);
+        }
+        return c;
+    }
+}
+```
 
 
 
 ### 5.4、线程上下类加载器
+
+使用 JDBC 时，需要加载 Driver驱动
+
+```java
+Class.forName("com.mysql.jdbc.Driver");
+```
+
+
+
+```java
+public class DriverManager {
+
+
+    // List of registered JDBC drivers
+    private final static CopyOnWriteArrayList<DriverInfo> registeredDrivers = new CopyOnWriteArrayList<>();
+    private static volatile int loginTimeout = 0;
+    private static volatile java.io.PrintWriter logWriter = null;
+    private static volatile java.io.PrintStream logStream = null;
+
+    private DriverManager(){}
+
+    static {
+        loadInitialDrivers();
+        println("JDBC DriverManager initialized");
+    }
+    // ...
+}
+```
+
+
+
+```java
+System.out.println(DriverManager.class.getClassLoader());
+```
+
+结果为 ：null
+
+表示它的类加载器是 Bootstrap ClassLoader，会到JAVA_HOME/jre/lib下搜索类，但JAVA_HOME/jre/lib下显然没有mysql-connector-java-5.1.47.jar包，这样问题来了，在DriverManager的静态代码块中，怎么能正确加载com.mysql.jdbc.Driver呢?
+
+
+
+```java
+private static void loadInitialDrivers() {
+    String drivers;
+    try {
+        drivers = AccessController.doPrivileged(new PrivilegedAction<String>() {
+            public String run() {
+                return System.getProperty("jdbc.drivers");
+            }
+        });
+    } catch (Exception ex) {
+        drivers = null;
+    }
+    // If the driver is packaged as a Service Provider, load it.
+    // Get all the drivers through the classloader
+    // exposed as a java.sql.Driver.class service.
+    // ServiceLoader.load() replaces the sun.misc.Providers()
+    
+	// 1）使用ServiceLoader加载驱动
+    AccessController.doPrivileged(new PrivilegedAction<Void>() {
+        public Void run() {
+
+            ServiceLoader<Driver> loadedDrivers = ServiceLoader.load(Driver.class);
+            Iterator<Driver> driversIterator = loadedDrivers.iterator();
+
+            /* Load these drivers, so that they can be instantiated.
+             * It may be the case that the driver class may not be there
+             * i.e. there may be a packaged driver with the service class
+             * as implementation of java.sql.Driver but the actual class
+             * may be missing. In that case a java.util.ServiceConfigurationError
+             * will be thrown at runtime by the VM trying to locate
+             * and load the service.
+             *
+             * Adding a try catch block to catch those runtime errors
+             * if driver not available in classpath but it's
+             * packaged as service and that service is there in classpath.
+             */
+            try{
+                while(driversIterator.hasNext()) {
+                    driversIterator.next();
+                }
+            } catch(Throwable t) {
+            // Do nothing
+            }
+            return null;
+        }
+    });
+
+    println("DriverManager.initialize: jdbc.drivers = " + drivers);
+	// 2）使用jdbc.driver定义的驱动名加载驱动类
+    if (drivers == null || drivers.equals("")) {
+        return;
+    }
+    String[] driversList = drivers.split(":");
+    println("number of Drivers:" + driversList.length);
+    for (String aDriver : driversList) {
+        try {
+            println("DriverManager.Initialize: loading " + aDriver);
+            // 使用应用程序类加载器
+            Class.forName(aDriver, true,
+                    ClassLoader.getSystemClassLoader());
+        } catch (Exception ex) {
+            println("DriverManager.Initialize: load failed: " + ex);
+        }
+    }
+}
+```
+
+
+
+![](image/Snipaste_2022-09-17_10-27-18.png)
 
 
 
@@ -2580,7 +2815,49 @@ public class Candy11 {
 
 ### 5.5、自定义类加载器
 
+什么时候需要自定义类加载器
 
+1. 想加载非 classpath 随意路径中的类文件
+2. 都是通过接口来使用实现，希望解耦时，常用在框架设计
+3. 这些类希望给予隔离，不同应用的同类名都可以加载，不冲突，常见与tomcat容器
+
+
+
+步骤：
+
+1. 继承ClassLoader父类
+2. 要遵循双亲委派机制，重写findClass方法
+   - 注意不是重写loadCLass方法
+3. 读取类文件的字节码
+4. 调用父类的defineCLass方法加载类
+5. 使用者调用该类的加载器的loadClass方法
+
+
+
+```java
+public class MyClassLoader extends ClassLoader{
+    @Override
+    /**
+     * @Param name 类名称
+     */
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        String path = "xxx" + name + ".class"; // 类文件路径
+        // 读取 二进制 类文件
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Files.copy(Paths.get(path), outputStream);
+            // 得到字节数组
+            byte[] bytes = outputStream.toByteArray();
+
+            // byte[] -> *.class
+            return defineClass(name,bytes,0,bytes.length);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ClassNotFoundException();
+        }
+    }
+}
+```
 
 
 
@@ -2590,13 +2867,620 @@ public class Candy11 {
 
 
 
-
-
 ### 6.1、即时编译
 
 
 
 #### 1）分层编译
+
+```java
+public class Demo1 {
+    public static void main(String[] args) {
+        for (int i = 0; i < 200; i++) {
+            long start = System.nanoTime();
+            for (int i1 = 0; i1 < 1000; i1++) {
+                new Object();
+            }
+            long end = System.nanoTime();
+            System.out.printf("%d\t%d\n",i,(end-start));
+        }
+    }
+}
+```
+
+发现再后面运行速度比刚开始快很多
+
+原因，JVM将执行状态分成了5个层次：
+
+- 0层，解释执行（Interpreter）
+- 1层，使用C1即时编译器编译执行（不带profiling）
+- 2层，使用C1即时编译器编译执行（带基本profiling）
+- 3层，使用C1即时编译器编译执行（带完全profiling）、
+- 4层，使用C2即时编译器编译执行
+
+`profiling是旨在运行过程中收集一些程序执行状态的数据，例如【方法的调用次数】等`
+
+
+
+即时编译器（JIT）与解释器的区别：
+
+- 解释器是将字节码解释为机器码，下次即使遇到相同的字节码，仍会执行重复的解释
+- JIT是将一些字节码编译为机器码，并存入Code Cache，下次遇到相同的代码，直接执行，无需再编译
+- 解释器是将字节码解释为针对所有平台都通用的机器码
+- JIT会根据平台类型，生成平台特定的机器码
+
+
+
+对于占据大都分的不常用的代码，我们无需耗费时间将其编译成机器码，而是采取解释执行的方式运行;另一方面，对于仅占据小部分的热点代码，我们则可以将其编译成机器码，以达到理想的运行速度。执行效率上简单比较一下Interpreter<Cl<C2，总的目标是发现热点代码(hotspot名称的由来)，优化之
+
+
+
+`刚才的一种优化手段称之为【逃浼分析】，发现新建的对象是否逃浼。可以使用-XX:-DOEscapeAnalvsis关`闭
+
+
+
+#### 2）方法内联
+
+（Inlining）
+
+```java
+private static int square(final int i){
+	reutrn i * i;
+}
+```
+
+```java
+System.out.print(square(9))
+```
+
+
+
+如果发现square是热点代码，并且长度不长的话，会进行内联，就是把方法内代码拷贝到调用者位置：
+
+```java
+System.out.print(9 * 9)
+```
+
+还能进行常量折叠（constant folding）的优化
+
+```java
+System.out.print(81)
+```
+
+
+
+
+
+#### 3）字段优化
+
+```java
+private int sum;
+public void doSum(int x){
+    sum += x;
+}
+private int[] list = new int[]{};
+public void test1(){
+    // 首次访问 list.length -> 缓存到 int[] local
+    for (int i = 0; i < list.length; i++) {
+        doSum(list[i]);
+    }
+}
+public void test2(){
+    int[] local = this.list;
+    for (int i = 0; i < local.length; i++) {
+        doSum(list[i]);
+    }
+}
+public void test3(){
+    for (int x : list){
+        doSum(x);
+    }
+}
+```
+
+
+
+开启方法内联：三种差不多
+
+关闭方法内敛：test2 = test3  >  test1
+
+
+
+
+
+### 6.2、反射优化
+
+
+
+```java
+public class ReflectDemo {
+    public static void foo(){
+        System.out.println("foo ...");
+    }
+    public static void main(String[] args) throws Exception{
+        Method foo = ReflectDemo.class.getDeclaredMethod("foo");
+        for (int i = 0; i <= 16; i++) {
+            System.out.printf("%d\t",i);
+            foo.invoke(null);
+        }
+    }
+}
+```
+
+```java
+public Object invoke(Object obj, Object... args)
+    throws IllegalAccessException, IllegalArgumentException,
+       InvocationTargetException
+{
+    if (!override) {
+        if (!Reflection.quickCheckMemberAccess(clazz, modifiers)) {
+            Class<?> caller = Reflection.getCallerClass();
+            checkAccess(caller, clazz, obj, modifiers);
+        }
+    }
+    MethodAccessor ma = methodAccessor;             // read volatile
+    if (ma == null) {
+        ma = acquireMethodAccessor();
+    }
+    return ma.invoke(obj, args);
+}
+```
+
+```java
+class NativeMethodAccessorImpl extends MethodAccessorImpl {
+    private final Method method;
+    private DelegatingMethodAccessorImpl parent;
+    private int numInvocations;//方法调用次数
+
+    NativeMethodAccessorImpl(Method var1) {
+        this.method = var1;
+    }
+
+    public Object invoke(Object var1, Object[] var2) throws IllegalArgumentException, InvocationTargetException {
+        // ReflectionFactory.inflationThreshold() = 15
+        if (++this.numInvocations > ReflectionFactory.inflationThreshold() && !ReflectUtil.isVMAnonymousClass(this.method.getDeclaringClass())) {
+            MethodAccessorImpl var3 = (MethodAccessorImpl)(new MethodAccessorGenerator()).generateMethod(this.method.getDeclaringClass(), this.method.getName(), this.method.getParameterTypes(), this.method.getReturnType(), this.method.getExceptionTypes(), this.method.getModifiers());
+            this.parent.setDelegate(var3);
+        }
+
+        return invoke0(this.method, var1, var2);
+    }
+
+    void setParent(DelegatingMethodAccessorImpl var1) {
+        this.parent = var1;
+    }
+
+    private static native Object invoke0(Method var0, Object var1, Object[] var2);
+}
+
+```
+
+
+
+当调用15次后，就直接调用方法了
+
+![](image/Snipaste_2022-09-17_11-47-34.png)
+
+
+
+
+
+# 5、JMM内存模型
+
+`笔记较为简略，详细可看 JUC 笔记 `
+
+## 1、java 内存模型
+
+简单的说，JMM定义了一套在多线程读写共享数据时（成员变量、数组)时，对数据的可见性、有序性、和原子性的规则和保障
+
+
+
+### 1.1、原子性
+
+```java
+public class Demo1 {
+    private static int num = 0;
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(10000);
+        new Thread(() -> {
+            for (int i = 0; i < 5000; i++) {
+                num++;
+                countDownLatch.countDown();
+            }
+        }).start();
+        new Thread(() -> {
+            for (int i = 0; i < 5000; i++) {
+                num--;
+                countDownLatch.countDown();
+            }
+        }).start();
+        countDownLatch.await();
+        System.out.println(num);
+    }
+}
+```
+
+
+
+
+
+### 1.2、问题分析
+
+![](image/Snipaste_2022-09-17_14-58-14.png)
+
+![](image/Snipaste_2022-09-17_15-00-17.png)
+
+![](image/Snipaste_2022-09-17_15-02-03.png)
+
+
+
+
+
+
+
+
+
+### 1.3、解决方法
+
+synchronized（同步关键字）
+
+```java
+public class Demo1 {
+    private static int num = 0;
+    private static Object lock = new Object();
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch countDownLatch = new CountDownLatch(10000);
+        new Thread(() -> {
+            for (int i = 0; i < 5000; i++) {
+                synchronized (lock){
+                    num++;
+                }
+                countDownLatch.countDown();
+            }
+        }).start();
+        new Thread(() -> {
+            for (int i = 0; i < 5000; i++) {
+                synchronized (lock){
+                    num--;
+                }
+                countDownLatch.countDown();
+            }
+        }).start();
+        countDownLatch.await();
+        System.out.println(num);
+    }
+}
+```
+
+
+
+lock对象：
+
+​	minitor:
+
+​		owner：当前持有锁的线程
+
+​		EntryList：排队等待，阻塞
+
+​	
+
+
+
+
+
+## 2、可见性
+
+
+
+### 2.1、退不出的循环
+
+```java
+public class Demo2 {
+    private static boolean flag = true;
+
+    public static void main(String[] args) {
+        new Thread(() -> {
+            while (flag) {
+            }
+        }).start();
+        try {
+            TimeUnit.SECONDS.sleep(2);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        flag = false;
+    }
+}
+```
+
+
+
+![](image/Snipaste_2022-09-17_15-25-00.png)
+
+main方法修改值后，但是t线程中的高速缓存中还是旧值
+
+
+
+
+
+### 2.2、解决方法
+
+volatile(易变关键字)
+它可以用来修饰成员变量和静态成员变量，他可以避免线程从自己的工作缓存中查找变量的值，必须到主存中获取它的值，线程操作volatile变量都是直接操作主存
+
+
+
+`保证有序性，可见性，不保证原子性`
+
+
+
+### 2.3、可见性
+
+前面例子体现的实际就是可见性，它保证的是在多个线程之间，一个线程对volatile变量的修改对另一个线程可见，不能保证原子性，仅用在一个写线程，多个读线程的情况
+
+
+
+
+
+## 3、有序性
+
+
+
+### 3.1、诡异的结果
+
+![](image/Snipaste_2022-09-17_17-17-47.png)
+
+
+
+![](image/Snipaste_2022-09-17_17-19-32.png)
+
+
+
+`这种现象叫做指令重排序`
+
+
+
+### 3.2、解决方法
+
+
+
+使用  volatile  防止指令重排序
+
+
+
+### 3.3、有序性理解
+
+![](image/Snipaste_2022-09-17_17-24-22.png)
+
+
+
+![](image/Snipaste_2022-09-17_17-24-58.png)
+
+在多线程情况下，上述DCL是有问题的，INSTANCE = new Singleton();
+
+INSTANCE = new Singleton()对应的字节码是
+
+```
+0: new				#2 // class .../Singleton
+3: dup
+3: involespecial	#3 // Method "<init>":()V
+7: putstatic		#4 // Field INSTANCE:L.../Singleton;
+```
+
+其中47两步的顺序不是固定的，也许jvm会优化为:先将引用地址赋值给INSTANCE变量后，再执行构造方法。
+
+
+
+### 3.4、happens-before
+
+`happens-before 规定了哪些操作对其他线程的读操作可见，它是可见性与有序性的一套规则总结`
+
+
+
+- 线程对 volatile 变量的写，对接下来其他线程的对该变量的读可见
+- synchronized 代码块中 对变量的写，对其他线程 对改变量的 读可见
+- 线程start 前对变量的写，对该线程开始后对该变量的读可见
+- 线程结束前对变量的写，对其它线程得知它结束后的读可见(比如其它线程调用tlL.isAlive()或t1.join(等待它结束)
+- 线程tl打断 t2(interrupt}前对变量的写，对于其他线程得知 t2被打断后对变量的读可见（通过t2.interrupted或 t2.isInterrupted)
+- 对变量默认值(0,false，null)的写，对其它线程对该变量的读可见
+
+
+
+
+
+## 4、CAS 与 原子类
+
+
+
+### 4.1、CAS
+
+CAS即compare and Swap，它体现的一种乐观锁的思想，比如多个线程要对一个共享的整型变量执行+1操作:
+
+```java
+public class Demo1 {
+    private volatile static AtomicInteger atomicInteger = new AtomicInteger(0);
+    public static void main(String[] args) {
+        while (true){
+            int oldV = atomicInteger.get();// 获取当前值
+            int newV = oldV + 2;
+            if(atomicInteger.compareAndSet(oldV,newV)){
+                break;
+            }
+        }
+        System.out.println(atomicInteger.get());
+    }
+}
+```
+
+
+
+获取共享变量时，为了保证该变量的可见性，需要使用volatile修饰。结合CAS和volatile可以实现无锁并发，适用于竞争不激烈、多核CPU的场景下。
+
+- 因为没有使用 synchronized，所以线程不会陷入阻塞，这是效率提升的因素之一
+- 但如果竞争激烈，可以想到重试必然频繁发生，反而效率会受影响
+
+
+
+
+
+### 4.2、乐观锁与悲观锁
+
+- CAS是基于乐观锁的思想
+- synchronized 是基于悲观锁的思想
+
+
+
+
+
+### 4.3、原子操作类
+
+juc（java.util.concurent）中提供了原子操作类，可以提供线程安全类的操作。
+
+他们的底层都是通过 CAS 技术 + volatile 来实现的
+
+
+
+```java
+public void test(){
+    AtomicInteger atomicInteger = new AtomicInteger(0);
+    CountDownLatch countDownLatch = new CountDownLatch(1000);
+    new Thread(() -> {
+        for (int i = 0; i < 500; i++) {
+            atomicInteger.getAndIncrement();
+            countDownLatch.countDown();
+        }
+    }).start();
+    new Thread(() -> {
+        for (int i = 0; i < 500; i++) {
+            atomicInteger.getAndIncrement();
+            countDownLatch.countDown();
+        }
+    }).start();
+    try {
+        countDownLatch.await();
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+    System.out.println(atomicInteger.get());
+}
+```
+
+
+
+
+
+## 5、synchronized 优化
+
+Java HotSpot 虚拟机中，每个对象都有对象头（包括class 指针和Mark Word)。Mark Word平时存储这个对象的哈希码、分代年龄，当加锁时，这些信息就根据情况被替换为标记位、线程锁记录指针、重量级锁、指针线程ID等内容
+
+
+
+### 5.1、轻量级锁
+
+`多个线程，没有竞争 `
+
+
+
+如果一个对象虽然有多线程访问，但多线程访问的时间是错开的(也就是没有竞争)，那么可以使用轻量级锁来优化。这就好比:
+学生(线程A）用课本占座，上了半节课，出门了(CPU时间到)，回来一看，发现课本没变，说明没有竞争，继续上他的课。
+如果这期间有其它学生(线程B)来了，会告知(线程A）有并发访问，线程A随即升级为重量级锁，进入重量级锁的流程。
+而重量级锁就不是那么用课本占座那么简单了，可以想象线程A走之前，把座位用一个铁栅栏围起来
+
+
+
+每个线程的栈帧都会包含一个锁记录的结构，内部可以存储对象的Mark Word
+
+
+
+
+
+**建议查看JUC**
+
+
+
+### 5.2、锁膨胀
+
+如果在尝试加轻量级锁的过程中，CAS操作无法成功，这时一种情况就是有其他线程为此对象加上了轻量级锁（有竞争）。这时需要进行锁膨胀，将轻量级锁变成重量级锁，此时获得锁的线程继续运行，其他竞争线程阻塞
+
+
+
+
+
+### 5.3、重量所
+
+`多个线程有竞争`
+
+重量级锁竞争的时候，还可以使用自旋来进行优化，如果当前线程自旋成功（即这时候 持锁线程 已经退同步块，释放了锁），这时当前线程就可以避免阻塞。
+在Java 6之后自旋锁是自适应的，比如对象刚刚的一次自旋操作成功过，那么认为这次自旋成功的可能性会高，就多自旋几次;反之，就少自旋甚至不自旋，总之，比较智能。
+
+- 自旋会占用CPU时间，单核CPU自旋就是浪费，多核CPU自旋才能发挥优势。
+- 好比等红灯时汽车是不是熄火，不熄火相当于自旋(等待时间短了划算)，熄火了相当于阻塞长了划算)
+- Java 7之后不能控制是否开启自旋功能
+
+
+
+
+
+### 5.4、偏向锁
+
+轻量级锁在没有竞争时（就自己这个线程），每次重入仍然需要执行CAS操作。Java 6中引入了偏向锁来做进一步优化:只有第一次使用CAS将线程ID设置到对象的Mark Word头，之后发现这个线程D是自己的就表示没有竞争争不重新CAS
+
+
+
+- 撤销偏向需要将 持锁线程 升级为 轻量级锁，这个过程中所有线程需要暂停(STW)
+- 访问对象的 hashCode也会撤销偏向锁
+- 如果对象虽然被多个线程访问，但没有竞争，这时偏向了线程T1的对象仍有机会重新偏向T2，重偏向 会 重置对象的Thread ID
+- 撤销偏向和重偏向都是批量进行的，以类为单位
+- 如果撤销偏向到达某个阈值，整个类的所有对象都会变为不可偏向的
+- 可以主动使用-XX:-UseBiasedLocking禁用偏向锁
+
+
+
+### 5.5、其他优化
+
+
+
+#### 1）减少上锁时间
+
+
+
+同步代码块中尽量短
+
+
+
+#### 2）减少锁的粒度
+
+将一个锁拆分成多个锁提高并发度：
+
+- ConcurrentHashMap
+- LinkedBlockingQueue 入队和出队使用不同的锁，相对于LinkedBlockingArray只有一个锁效率高
+- LongAdder分为 base和cells两部分。没有并发争用的时候或者是cells数组正在初始化的时候，会使用CAS来累加值到base，有并发争用，会初始化cells数组，数组有多少个cell，就允许有多少线程并行修改，最后将数组中每个cell累加，再加上base就是最终的值
+
+
+
+
+
+#### 3）锁粗化
+
+
+
+多次循环进入同步块不如同步块内多次循环
+另外JVM可能会做如下优化，把多次append 的加锁操作粗化为一次(因为都是对同一个对象加锁，没必要重入多次)
+
+
+
+#### 4）锁消除
+
+JVM会进行代码的逃逸分析，例如某个加锁对象是方法内局部变量，不会被其它线程所访问到，这时候就会被即时编译器忽略掉所有同步操作。
+
+
+
+#### 5）读写分离
+
+CopyOnWriteArrayList
+
+ConyOnWriteSet
 
 
 
