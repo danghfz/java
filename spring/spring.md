@@ -59,7 +59,7 @@ AOP
 	
 ```
 
-![image-20220506211045028](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220506211045028.png)
+![image-20220506211045028](../image/image-20220506211045028.png)
 
 ```
 
@@ -114,11 +114,11 @@ public class User {
 
 ```
 
-![image-20220506214045505](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220506214045505.png)
+![image-20220506214045505](../image/image-20220506214045505.png)
 
 
 
-![image-20220508132324433](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220508132324433.png)
+![image-20220508132324433](../image/image-20220508132324433.png)
 
 ##### IOC原理
 
@@ -152,7 +152,7 @@ class Factory{
 3. ApplicationContext结构【实现类】
 ```
 
-![image-20220508134132709](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220508134132709.png)
+![image-20220508134132709](../image/image-20220508134132709.png)
 
 ```
 主要实现类:
@@ -921,7 +921,7 @@ public class UserService {
 	2 不通过修改源代码方式，往主干功能中添加新功能
 ```
 
-![image-20220510165130705](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220510165130705.png)
+![image-20220510165130705](../image/image-20220510165130705.png)
 
 
 
@@ -935,9 +935,9 @@ public class UserService {
     2 没有接口，使用CGLIB动态代理
 ```
 
-![image-20220510170918310](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220510170918310.png)
+![image-20220510170918310](../image/image-20220510170918310.png)
 
-![image-20220510190121265](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220510190121265.png)
+![image-20220510190121265](../image/image-20220510190121265.png)
 
 
 
@@ -1512,7 +1512,7 @@ public class UserService {
 	(2) 实现类：
 ```
 
-![image-20220512152227825](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220512152227825.png)
+![image-20220512152227825](../image/image-20220512152227825.png)
 
 ```
 Jdbc框架使用 DataSourceTransactionManager
@@ -1576,7 +1576,7 @@ public @interface Transactional {
 	(1)多事务方法直接进行调用，这个过程中事务如何处理
 ```
 
-![image-20220512154642479](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220512154642479.png)
+![image-20220512154642479](../image/image-20220512154642479.png)
 
 ```
 【2】isolation 事务隔离级别 
@@ -1586,7 +1586,7 @@ public @interface Transactional {
 	幻读：一个未提交事务读取到另一个已提交事务添加了的数据
 ```
 
-![image-20220512161030799](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220512161030799.png)
+![image-20220512161030799](../image/image-20220512161030799.png)
 
 ```
 【4】timeout 超时时间

@@ -284,9 +284,9 @@ cellpadding  表示单元格与内容的填充<br/>
 </body>
 ```
 
-<img src="C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220413214624215.png" alt="image-20220413214624215" style="zoom:50%;" />pcellspacing="0"
+<img src="../image/image-20220413214624215.png" alt="image-20220413214624215" style="zoom:50%;" />pcellspacing="0"
 
-<img src="C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220413214809454.png" alt="image-20220413214809454" style="zoom:50%;" />pcellspacing=  default
+<img src="../image/\image-20220413214809454.png" alt="image-20220413214809454" style="zoom:50%;" />pcellspacing=  default
 
 ###### 6.8 跨行跨列标签
 
@@ -1286,7 +1286,7 @@ obj.fun();
 
 ##### 8.1 document 对象
 
-![image-20220415193824291](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220415193824291.png)
+![image-20220415193824291](../image/image-20220415193824291.png)
 
 <div><font color='red'>document对象的理解</font></div><div>
     <font color='red'>1.document管理了所有的html文档内容</font>
@@ -2385,7 +2385,7 @@ xml主要作用：
 
 (1) 什么是xml元素
 
-![image-20220417162213698](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220417162213698.png)
+![image-20220417162213698](../image/image-20220417162213698.png)
 
 (2) xml元素命名规则
 
@@ -2446,7 +2446,7 @@ xml 是可扩展的 标记性语言
 	和html都是标记性语言,都可以使用w3c组织制定的 dom 技术解析
 ```
 
-![image-20220417164644988](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220417164644988.png)
+![image-20220417164644988](../image/image-20220417164644988.png)
 
 #### 4. dom4j(********)
 
@@ -2573,7 +2573,7 @@ webLogic:是oracle公司的产品，是目前应用最广泛的 web服务器，�
 
 #### 4.Tomcat服务器和 Servlet版本的对应关系
 
-![image-20220417180127477](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220417180127477.png)
+![image-20220417180127477](../image/image-20220417180127477.png)
 
 
 
@@ -2772,7 +2772,7 @@ http://localhost:8080/工程路径/资源路径
 http://localhost:8080/tomcat/hello
 ```
 
-![image-20220418142101058](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220418142101058.png)
+![image-20220418142101058](../image/image-20220418142101058.png)
 
 
 
@@ -2823,7 +2823,7 @@ web工程停止停止时才会执行
 
 #### 7. Servlet继承体系
 
-![image-20220418150409465](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220418150409465.png)
+![image-20220418150409465](../image/image-20220418150409465.png)
 
 
 
@@ -2993,7 +2993,7 @@ Http协议:
 	key : value组成   不同的键值对,有不同的含义
 ```
 
-![image-20220418205957650](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220418205957650.png)
+![image-20220418205957650](../image/image-20220418205957650.png)
 
 ```
 accept : 告诉服务器,客户端可以接收的数据类型(*/*任意)
@@ -3094,7 +3094,7 @@ POST请求:
 
 ##### 9.5 MIME类型说明
 
-![image-20220419110822455](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220419110822455.png)
+![image-20220419110822455](../image/image-20220419110822455.png)
 
 ## 07-Servlet2
 
@@ -3183,7 +3183,7 @@ POST请求:
 	服务器收到请求后,从一个资源[servlet-1]跳到另一个资源[servlet-2]
 ```
 
-![image-20220419134555264](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220419134555264.png)
+![image-20220419134555264](../image/image-20220419134555264.png)
 
 ```
 getRequestDispatcher() : 获取请求转发对象
@@ -3325,7 +3325,7 @@ web中 / 是一种绝对路径
 两个流同时只能使用一个
 ```
 
-![image-20220419172244995](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220419172244995.png)
+![image-20220419172244995](../image/image-20220419172244995.png)
 
 
 
@@ -3352,7 +3352,7 @@ protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws Se
 	是指客户端给服务器发请求,然后服务器告诉客户端一个新地址,让客户端去访问新地址
 ```
 
-![image-20220419174600813](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220419174600813.png)
+![image-20220419174600813](../image/image-20220419174600813.png)
 
 Response_old
 
@@ -3408,7 +3408,7 @@ public class Response_new extends HttpServlet {
 
 #### 7. JavaEE三层架构
 
-![image-20220419202300911](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220419202300911.png)
+![image-20220419202300911](1
 
 
 
@@ -3452,7 +3452,7 @@ jsp本质上是一个Servlet程序
 当访问jsp页面时,Tomcat会帮我们把jsp页面翻译成一个java源文件,并且编译成class字节码程序
 ```
 
-![image-20220420191601365](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220420191601365.png)
+![image-20220420191601365](../image/image-20220420191601365.png)
 
 ```
 
@@ -3645,7 +3645,7 @@ jsp文件继承了HttpBase( extend HttpServlet),翻译出来的是一个Servlet�
 
 
 
-![image-20220420201321711](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220420201321711.png)
+![image-20220420201321711](../image/image-20220420201321711.png)
 
 ```
 
@@ -3710,7 +3710,7 @@ Exception    异常对象
 </body>
 ```
 
-![image-20220420204109962](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220420204109962.png)
+![image-20220420204109962](../image/image-20220420204109962.png)
 
 
 
@@ -3763,7 +3763,7 @@ page属性是指定包含的jsp路径
 	也可以使用传递过来的request等对象获取参数...
 ```
 
-![image-20220420210518999](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220420210518999.png)
+![image-20220420210518999](../image/image-20220420210518999.png)
 
 
 
@@ -3780,7 +3780,7 @@ page属性是指定包含的jsp路径
 <jsp:forward page = "/"></jsp:forward>
 ```
 
-![image-20220420212414578](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220420212414578.png)
+![image-20220420212414578](../image/image-20220420212414578.png)
 
 ```
 注意：
@@ -4111,7 +4111,7 @@ cookie            Map<STring,Cookie>     获取当前请求Cookie信息
 initParam         Map<String,String>     获取web.xml中<context-param>上下文信息
 ```
 
-![image-20220421111602511](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220421111602511.png)
+![image-20220421111602511](../image/image-20220421111602511.png)
 
 
 
@@ -4140,9 +4140,9 @@ jstl标签库为了替换代码脚本<%  %>
 
 
 
-![image-20220421121506777](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220421121506777.png)
+![image-20220421121506777](../image/image-20220421121506777.png)
 
-![image-20220421121526483](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220421121526483.png)
+![image-20220421121526483](../image/image-20220421121526483.png)
 
 
 
@@ -4249,7 +4249,7 @@ jstl标签库为了替换代码脚本<%  %>
 
 
 
-![image-20220421133438868](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220421133438868.png)
+![image-20220421133438868](../image/image-20220421133438868.png)
 
 ```
 getCurrnet      当前数据
@@ -4383,7 +4383,7 @@ public class UploadServlet extends HttpServlet {
 
 
 
-![image-20220421191105743](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220421191105743.png)
+![image-20220421191105743](../image/image-20220421191105743.png)
 
 
 
@@ -4485,7 +4485,7 @@ MVC的目的是降低耦合
 
 ```
 
-![image-20220423151056858](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220423151056858.png)
+![image-20220423151056858](../image/image-20220423151056858.png)
 
 
 
@@ -4522,7 +4522,7 @@ Cookie (饼干) 是服务器通知客户端保存键值对的一种技术
 每个Cookie的大小不能大于 4kb
 ```
 
-![image-20220425213228761](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220425213228761.png)
+![image-20220425213228761](../image/image-20220425213228761.png)
 
 #### 2. Cookie生命控制
 
@@ -4789,7 +4789,7 @@ public void invalidate()使session马上无效(销毁)
 
 #### 5. 浏览器和Session之间的关联的技术内幕
 
-![image-20220428172626559](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220428172626559.png)
+![image-20220428172626559](../image/image-20220428172626559.png)
 
 ```
 
@@ -4861,7 +4861,7 @@ public class SessionServlet extends BaseServlet{
 	表单正常提交服务器,提交完成后,用户回退浏览器,重新提交
 ```
 
-![image-20220428192339856](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220428192339856.png)
+![image-20220428192339856](../image/image-20220428192339856.png)
 
 
 
@@ -5081,7 +5081,7 @@ filterChain.dofilter()方法：
 
 
 
-![image-20220430200232885](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220430200232885.png)
+![image-20220430200232885](../image/image-20220430200232885.png)
 
 ```
 配置文件觉定 Filter过滤器的执行顺序
@@ -5546,7 +5546,7 @@ $("#submit").click(function(){
 国际化相关要素
 ```
 
-![image-20220505210334786](C:\Users\lenvoo\AppData\Roaming\Typora\typora-user-images\image-20220505210334786.png)
+![image-20220505210334786](../image/image-20220505210334786.png)
 
 
 
