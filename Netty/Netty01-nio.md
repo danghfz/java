@@ -2134,9 +2134,278 @@ public class MultiThreadServer {
 
 
 
+**code - 1**
+
+```java
+@Slf4j
+public class MultiThreadServer {
+    public static void main(String[] args) throws IOException {
+        Thread.currentThread().setName("boss");
+        ServerSocketChannel server = ServerSocketChannel.open();
+        server.configureBlocking(false);
+        Selector boss = Selector.open();
+        server.register(boss, SelectionKey.OP_ACCEPT);
+        server.bind(new InetSocketAddress(InetAddress.getLocalHost(), 8080));
+        // 创建固定数量的 worker
+        Worker worker = new Worker("worker-01");
+        // selector.select(); 阻塞
+//        worker.register(); // 初始化，
+        while (true) {
+            boss.select();
+            Iterator<SelectionKey> keyIterator = boss.selectedKeys().iterator();
+            while (keyIterator.hasNext()) {
+                SelectionKey key = keyIterator.next();
+                keyIterator.remove();
+                if (key.isAcceptable()) {
+                    ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+                    SocketChannel accept = channel.accept();
+                    log.info(" accept successful {}", accept);
+                    accept.configureBlocking(false);
+                    // 将 用来通信的 channel 交给 工作线程
+                    log.info("before register worker ...{}", worker.name);
+//                    accept.register(worker.selector,SelectionKey.OP_READ);
+                    worker.register(accept);
+                    log.info("after register worker ...");
+                }
+            }
+        }
+    }
+
+    // work 检测 读写事件
+    static class Worker implements Runnable {
+        private Thread thread;
+        private Selector selector;
+        private String name;
+        private volatile boolean register = false; // 没有初始化
+        private final ConcurrentLinkedDeque<Runnable> queue = new ConcurrentLinkedDeque<>();
+
+        public Worker(String name) {
+            this.name = name;
+        }
+
+        // 初始化线程和 selector
+        public void register(SocketChannel accept) throws IOException {
+            log.info("{} 注册进 {}",accept,name);
+            if (!register) {
+                thread = new Thread(this, name);
+                selector = Selector.open();
+                thread.start();
+                register = true;
+            }
+            // 添加任务
+            queue.add(() -> {
+                try {
+                    accept.register(selector,SelectionKey.OP_READ);
+                }catch (IOException e){
+                    e.printStackTrace();
+                }
+            });
+            // 唤醒 selector 防止阻塞
+            selector.wakeup();
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    selector.select();
+                    Runnable task = queue.poll();
+                    // 有 连接 需要注册
+                    if (task != null) {
+                        // 注册
+                        task.run();
+                    }
+                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                    while (iterator.hasNext()) {
+                        SelectionKey key = iterator.next();
+                        iterator.remove();
+                        if (key.isReadable()) { // 读事件
+                            try {
+                                SocketChannel channel = (SocketChannel) key.channel();
+                                log.info("{} {} 收到读事件", name, channel);
+                                Object attachment = key.attachment();
+                                // 如果没有缓冲区
+                                if (attachment == null) {
+                                    attachment = ByteBuffer.allocate(18);
+                                    key.attach(attachment);
+                                }
+                                ByteBuffer buffer = (ByteBuffer) attachment;
+                                int read = channel.read(buffer);
+                                if (read == -1) { // 客户端断开
+                                    log.info("客户端断开");
+                                    key.cancel();
+                                    channel.close();
+                                } else if (read > 0) {
+                                    buffer.flip();
+                                    String mes = StandardCharsets.UTF_8.decode(buffer).toString();
+                                    log.info("获得消息 {}", mes);
+                                    // 如果没有读完 TODO
+                                    // ...
+                                    buffer.clear();
+                                }
+                            } catch (IOException e) {
+                                // 连接 异常 断开
+                                e.printStackTrace();
+                                key.cancel();
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+```
 
 
 
+- 如果不使用队列的话，可以使用
+
+  ```java
+  selector.wakeup();
+  accept.register(selector,SelectionKey.OP_READ);
+  ```
+
+
+
+**code - 2 多个 worker**
+
+```java
+@Slf4j
+public class MultiThreadServer {
+    public static void main(String[] args) throws IOException {
+        Thread.currentThread().setName("boss");
+        ServerSocketChannel server = ServerSocketChannel.open();
+        server.configureBlocking(false);
+        Selector boss = Selector.open();
+        server.register(boss, SelectionKey.OP_ACCEPT);
+        server.bind(new InetSocketAddress(InetAddress.getLocalHost(), 8080));
+        // 创建固定数量的 worker
+//        Worker worker = new Worker("worker-01");
+        // 创建worker 数组
+        int workerCount = 4;
+        Worker[] workers = new Worker[workerCount];
+        for (int i = 0; i < workerCount; i++) {
+            workers[i] = new Worker("worker - " + i);
+        }
+        // worker 计数器
+        AtomicInteger atomicInteger = new AtomicInteger();
+        // selector.select(); 阻塞
+//        worker.register(); // 初始化，
+        while (true) {
+            boss.select();
+            Iterator<SelectionKey> keyIterator = boss.selectedKeys().iterator();
+            while (keyIterator.hasNext()) {
+                SelectionKey key = keyIterator.next();
+                keyIterator.remove();
+                if (key.isAcceptable()) {
+                    ServerSocketChannel channel = (ServerSocketChannel) key.channel();
+                    SocketChannel accept = channel.accept();
+                    log.info(" accept successful {}", accept);
+                    accept.configureBlocking(false);
+                    // 将 用来通信的 channel 交给 工作线程
+//                    log.info("before register worker ...{}", worker.name);
+//                    accept.register(worker.selector,SelectionKey.OP_READ);
+                    // 负载均衡，轮询
+                    atomicInteger.set((atomicInteger.get()) % workerCount);
+                    workers[atomicInteger.getAndIncrement()].register(accept);
+//                    worker.register(accept);
+                    log.info("after register worker ...");
+                }
+            }
+        }
+    }
+
+    // work 检测 读写事件
+    static class Worker implements Runnable {
+        private Thread thread;
+        private Selector selector;
+        private String name;
+        private volatile boolean register = false; // 没有初始化
+        private final ConcurrentLinkedDeque<Runnable> queue = new ConcurrentLinkedDeque<>();
+
+        public Worker(String name) {
+            this.name = name;
+        }
+
+        // 初始化线程和 selector
+        public void register(SocketChannel accept) throws IOException {
+            log.info("{} 注册进 {}", accept, name);
+            if (!register) {
+                thread = new Thread(this, name);
+                selector = Selector.open();
+                thread.start();
+                register = true;
+            }
+            // 添加任务
+            queue.add(() -> {
+                try {
+                    accept.register(selector, SelectionKey.OP_READ);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            // 唤醒 selector 防止阻塞
+            selector.wakeup();
+//            accept.register(selector,SelectionKey.OP_READ);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    selector.select();
+                    Runnable task = queue.poll();
+                    // 有 连接 需要注册
+                    if (task != null) {
+                        // 注册
+                        task.run();
+                    }
+                    Iterator<SelectionKey> iterator = selector.selectedKeys().iterator();
+                    while (iterator.hasNext()) {
+                        SelectionKey key = iterator.next();
+                        iterator.remove();
+                        if (key.isReadable()) { // 读事件
+                            try {
+                                SocketChannel channel = (SocketChannel) key.channel();
+                                log.info("{} {} 收到读事件", name, channel);
+                                Object attachment = key.attachment();
+                                // 如果没有缓冲区
+                                if (attachment == null) {
+                                    attachment = ByteBuffer.allocate(18);
+                                    key.attach(attachment);
+                                }
+                                ByteBuffer buffer = (ByteBuffer) attachment;
+                                int read = channel.read(buffer);
+                                if (read == -1) { // 客户端断开
+                                    log.info("客户端断开");
+                                    key.cancel();
+                                    channel.close();
+                                } else if (read > 0) {
+                                    buffer.flip();
+                                    String mes = StandardCharsets.UTF_8.decode(buffer).toString();
+                                    log.info("获得消息 {}", mes);
+                                    // 如果没有读完 TODO
+                                    // ...
+                                    buffer.clear();
+                                }
+                            } catch (IOException e) {
+                                // 连接 异常 断开
+                                e.printStackTrace();
+                                key.cancel();
+                            }
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+```
 
 
 
@@ -2378,19 +2647,45 @@ public class UdpClient {
 
   ![](img/0039.png)
 
+  ```
+  用户线程 发起 read，就会从用户空间到内核空间，当网络中没有 数据发送过来，read方法就会阻塞。等到数据复制完了【从系统缓冲区复制到用户缓冲区】，再从内核空间 切换到 用户空间
+  ```
+
+  
+
 * 非阻塞  IO
 
   ![](img/0035.png)
 
+  ```
+  用户的 read方法发起请求后，发现没有数据，并不会阻塞，而是立刻返回，然后重复read，直达某次发现有数据了，此时不会立刻返回，完成数据复制后，返回。【多次内核空间的切换】
+  ```
+
+  
+
 * 多路复用
 
   ![](img/0038.png)
+
+  ```
+  使用 selector 去管理 多个事件，让事件之间不需要阻塞等待
+  eg:就是用select来管理所有阻塞io的响应，从而避免accept在将read阻塞住
+  ```
+
+  
 
 * 信号驱动
 
 * 异步 IO
 
   ![](img/0037.png)
+
+  ```
+  同步：线程自己获取结果
+  异步：自己去发起任务，由其他完成【至少两线程】
+  ```
+
+  
 
 * 阻塞 IO vs 多路复用
 
@@ -2509,6 +2804,51 @@ AIO 用来解决数据复制阶段的阻塞问题
 
 
 #### 文件 AIO
+
+```java
+public class Demo {
+    public static void main(String[] args) {
+        try (AsynchronousFileChannel fileChannel = AsynchronousFileChannel.open(Paths.get(FileUtil.RESOURCES_PATH+"/data.txt"),
+                StandardOpenOption.READ)) {
+            ByteBuffer buffer = ByteBuffer.allocate(6);
+            /**
+             * ByteBuffer
+             * position 起始位置
+             * attachment 附件
+             * CompletionHandler 回调对象
+             */
+            ByteBuffer byteBuffer = ByteBuffer.allocate(6);
+            log.info("begin ... ");
+            fileChannel.read(buffer, 0, buffer, new CompletionHandler<Integer, ByteBuffer>() {
+                @Override // 成功
+                public void completed(Integer result, ByteBuffer attachment) {
+                    log.info("read completed ... ");
+                    log.info("result: {}",result);
+                    // 一次没有读完，使用buffer继续
+                    attachment.flip();
+                    String mes = StandardCharsets.UTF_8.decode(attachment).toString();
+                    log.info("mes: {}",mes);
+                    attachment.clear();
+                }
+
+                @Override // 异常
+                public void failed(Throwable exc, ByteBuffer buffer) {
+                    exc.printStackTrace();
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        try {
+            System.in.read();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+
 
 先来看看 AsynchronousFileChannel
 
