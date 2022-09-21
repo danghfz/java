@@ -86,21 +86,42 @@ Netty 在 Java 网络应用框架中的地位就好比：Spring 框架在 JavaEE
 ### 2.2 服务器端
 
 ```java
-new ServerBootstrap()
-    .group(new NioEventLoopGroup()) // 1
-    .channel(NioServerSocketChannel.class) // 2
-    .childHandler(new ChannelInitializer<NioSocketChannel>() { // 3
-        protected void initChannel(NioSocketChannel ch) {
-            ch.pipeline().addLast(new StringDecoder()); // 5
-            ch.pipeline().addLast(new SimpleChannelInboundHandler<String>() { // 6
-                @Override
-                protected void channelRead0(ChannelHandlerContext ctx, String msg) {
-                    System.out.println(msg);
-                }
-            });
-        }
-    })
-    .bind(8080); // 4
+@Slf4j
+public class HelloServer {
+    public static void main(String[] args) throws UnknownHostException {
+        // 1. 服务器端启动器，负责组装 Netty 组件，启动服务
+        new ServerBootstrap()
+                // 2. 添加 NioEventLoopGroup 组件
+                // 里面相当于有多个线程取处理 事件【线程池】
+                // boss线程，work[]
+                // BossEventLoop WorkerEventLoop(selector,thread)
+                .group(new NioEventLoopGroup())
+                // 3.选则 ServerSocketChannel 实现
+                .channel(NioServerSocketChannel.class)
+                // 4. boss 处理连接的，worker(child)处理读写
+                // worker 需要做的任务处理(handler)
+                .childHandler(
+                        // 5.代表和客户端进行数据读写的通道
+                        // Initializer 初始化，添加其他 handler
+                        new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                        // 解码  ByteBuf --> str
+                        nioSocketChannel.pipeline().addLast(new StringDecoder());
+                        // ChannelInboundHandlerAdapter 自定义 handler处理
+                        nioSocketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter(){
+                            @Override
+                            // 处理 读事件
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                log.info("msg: {}",msg);
+                            }
+                        });
+                    }
+                })
+                // 监听端口
+                .bind(new InetSocketAddress(InetAddress.getLocalHost(),8080));
+    }
+}
 ```
 
 代码解读
@@ -124,19 +145,31 @@ new ServerBootstrap()
 ### 2.3 客户端
 
 ```java
-new Bootstrap()
-    .group(new NioEventLoopGroup()) // 1
-    .channel(NioSocketChannel.class) // 2
-    .handler(new ChannelInitializer<Channel>() { // 3
-        @Override
-        protected void initChannel(Channel ch) {
-            ch.pipeline().addLast(new StringEncoder()); // 8
-        }
-    })
-    .connect("127.0.0.1", 8080) // 4
-    .sync() // 5
-    .channel() // 6
-    .writeAndFlush(new Date() + ": hello world!"); // 7
+ublic class HelloClient {
+    public static void main(String[] args) throws UnknownHostException, InterruptedException {
+        // 1.启动类
+        new Bootstrap()
+                // 2. 添加 EventLoop
+                .group(new NioEventLoopGroup())
+                // 3.选则 客户端 channel
+                .channel(NioSocketChannel.class)
+                // 4. ChannelInitializer 连接建立后会被调用
+                .handler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                        // 对发送的数据进行编码
+                        nioSocketChannel.pipeline().addLast(new StringEncoder());
+
+                    }
+                })
+                // 5. 连接到服务器
+                .connect(new InetSocketAddress(InetAddress.getLocalHost(),8080))
+                .sync() // 阻塞方法，直到连接建立
+                .channel() // 代表连接对象
+                // 6. 向服务器 发送数据
+                .writeAndFlush("Hello World 中国");
+    }
+}
 ```
 
 代码解读
@@ -169,7 +202,7 @@ new Bootstrap()
 > * 把 msg 理解为流动的数据，最开始输入是 ByteBuf，但经过 pipeline 的加工，会变成其它类型对象，最后输出又变成 ByteBuf
 > * 把 handler 理解为数据的处理工序
 >   * 工序有多道，合在一起就是 pipeline，pipeline 负责发布事件（读、读取完成...）传播给每个 handler， handler 对自己感兴趣的事件进行处理（重写了相应事件处理方法）
->   * handler 分 Inbound 和 Outbound 两类
+>   * handler 分 Inbound 【入站，接收数据】和 Outbound【出站，写出数据】 两类
 > * 把 eventLoop 理解为处理数据的工人
 >   * 工人可以管理多个 channel 的 io 操作，并且一旦工人负责了某个 channel，就要负责到底（绑定）
 >   * 工人既可以执行 io 操作，也可以进行任务处理，每位工人有任务队列，队列里可以堆放多个 channel 的待处理任务，任务分为普通任务、定时任务
@@ -251,25 +284,34 @@ io.netty.channel.DefaultEventLoop@35f983a6
 服务器端两个 nio worker 工人
 
 ```java
-new ServerBootstrap()
-    .group(new NioEventLoopGroup(1), new NioEventLoopGroup(2))
-    .channel(NioServerSocketChannel.class)
-    .childHandler(new ChannelInitializer<NioSocketChannel>() {
-        @Override
-        protected void initChannel(NioSocketChannel ch) {
-            ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                @Override
-                public void channelRead(ChannelHandlerContext ctx, Object msg) {
-                    ByteBuf byteBuf = msg instanceof ByteBuf ? ((ByteBuf) msg) : null;
-                    if (byteBuf != null) {
-                        byte[] buf = new byte[16];
-                        ByteBuf len = byteBuf.readBytes(buf, 0, byteBuf.readableBytes());
-                        log.debug(new String(buf));
+@Slf4j
+public class EventLoopServer {
+    public static void main(String[] args) throws InterruptedException {
+        new ServerBootstrap()
+                // boss worker
+                // 第一个只负责accept事件，后面的负责读写事件
+                // group(group) -> this.group(group,group)
+                .group(new NioEventLoopGroup(),new NioEventLoopGroup())
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+//                        nioSocketChannel.pipeline().addLast(new StringDecoder());
+                        nioSocketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                if (msg instanceof ByteBuf) {
+                                    ByteBuf buf = (ByteBuf) msg;
+                                    String string = buf.toString(StandardCharsets.UTF_8);
+                                    log.info("msg {}",string);
+                                }
+                            }
+                        });
                     }
-                }
-            });
-        }
-    }).bind(8080).sync();
+                })
+                .bind(8080);
+    }
+}
 ```
 
 客户端，启动三次，分别修改发送字符串为 zhangsan（第一次），lisi（第二次），wangwu（第三次）
@@ -407,6 +449,55 @@ new ServerBootstrap()
 
 
 
+```java
+@Slf4j
+public class EventLoopServer {
+    public static void main(String[] args) throws InterruptedException {
+        // 细分2. 创建一个独立的 eventLoop 处理耗时任务
+        DefaultEventLoopGroup group = new DefaultEventLoopGroup();
+        new ServerBootstrap()
+                // boss worker
+                //细分1.  第一个只负责accept事件，后面的负责读写事件
+                // group(group) -> this.group(group,group)
+                .group(new NioEventLoopGroup(), new NioEventLoopGroup())
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+
+                        nioSocketChannel.pipeline().addLast("handler0", new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                if (msg instanceof ByteBuf) {
+                                    ByteBuf buf = (ByteBuf) msg;
+                                    String string = buf.toString(StandardCharsets.UTF_8);
+                                    //[nioEventLoopGroup-4-1] INFO com.dhf.building.eventloop.EventLoopServer - msg 1
+                                    log.info("msg {}", string);
+                                }
+                                // 让消息传递给下一个handler
+                                ctx.fireChannelRead(msg);
+                            }
+                            // 三个参数，执行任务时不使用 worker线程而使用 group 中的线程
+                        }).addLast(group, "handler1", new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                if (msg instanceof ByteBuf) {
+                                    ByteBuf buf = (ByteBuf) msg;
+                                    String string = buf.toString(StandardCharsets.UTF_8);
+                                    // [defaultEventLoopGroup-2-1] INFO com.dhf.building.eventloop.EventLoopServer - msg 1
+                                    log.info("msg {}", string);
+                                }
+                            }
+                        });
+                    }
+                })
+                .bind(8080);
+    }
+}
+```
+
+
+
 #### 💡 handler 执行中如何换人？
 
 关键代码 `io.netty.channel.AbstractChannelHandlerContext#invokeChannelRead()`
@@ -443,20 +534,38 @@ static void invokeChannelRead(final AbstractChannelHandlerContext next, Object m
 NioEventLoop 除了可以处理 io 事件，同样可以向它提交普通任务
 
 ```java
-NioEventLoopGroup nioWorkers = new NioEventLoopGroup(2);
-
-log.debug("server start...");
-Thread.sleep(2000);
-nioWorkers.execute(()->{
-    log.debug("normal task...");
-});
+public class TestEventLoop {
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
+        // 1. 创建事件循环组
+        // io任务，普通任务，定时任务
+        // 参数，线程数
+        NioEventLoopGroup group = new NioEventLoopGroup(2);
+        // 普通任务，定时任务
+//        DefaultEventLoop eventExecutors1 = new DefaultEventLoop();
+        // 2.轮询获取
+        System.out.println(group.next()); // NioEventLoop@7c30a502
+        System.out.println(group.next()); // NioEventLoop@49e4cb85
+        System.out.println(group.next()); // NioEventLoop@7c30a502
+        System.out.println(group.next()); // NioEventLoop@49e4cb85
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        // 3. 普通任务，继承线程池，拥有线程池中的所有任务
+//        group.submit(()->{}); // this.next.submit()
+        group.next().submit(() -> {
+            log.info("执行任务test");
+            countDownLatch.countDown();
+        });
+        countDownLatch.await();
+        group.shutdown();
+    }
+}
 ```
 
 输出
 
 ```
-22:30:36 [DEBUG] [main] c.i.o.EventLoopTest2 - server start...
-22:30:38 [DEBUG] [nioEventLoopGroup-2-1] c.i.o.EventLoopTest2 - normal task...
+[nioEventLoopGroup-2-1] INFO com.dhf.building.eventloop.TestEventLoop - 执行任务test
+[nioEventLoopGroup-2-1] DEBUG io.netty.util.internal.InternalThreadLocalMap - -Dio.netty.threadLocalMap.stringBuilder.initialSize: 1024
+[nioEventLoopGroup-2-1] DEBUG io.netty.util.internal.InternalThreadLocalMap - -Dio.netty.threadLocalMap.stringBuilder.maxSize: 4096
 ```
 
 > 可以用来执行耗时较长的任务
@@ -466,13 +575,13 @@ nioWorkers.execute(()->{
 #### 演示 NioEventLoop 处理定时任务
 
 ```java
-NioEventLoopGroup nioWorkers = new NioEventLoopGroup(2);
-
-log.debug("server start...");
-Thread.sleep(2000);
-nioWorkers.scheduleAtFixedRate(() -> {
-    log.debug("running...");
-}, 0, 1, TimeUnit.SECONDS);
+// 4.定时任务
+// Runnable var1, long var2, long var4, TimeUnit var6
+// var2 初始延时时间
+// var3 间隔时间
+group.next().scheduleAtFixedRate(() -> {
+    log.info("你好");
+}, 0,1, TimeUnit.SECONDS);
 ```
 
 输出
@@ -560,6 +669,7 @@ ChannelFuture channelFuture = new Bootstrap()
     .connect("127.0.0.1", 8080);
 
 System.out.println(channelFuture.channel()); // 1
+// 使用 sync方法同步处理结果
 channelFuture.sync(); // 2
 System.out.println(channelFuture.channel()); // 3
 ```
@@ -582,8 +692,14 @@ ChannelFuture channelFuture = new Bootstrap()
     })
     .connect("127.0.0.1", 8080);
 System.out.println(channelFuture.channel()); // 1
-channelFuture.addListener((ChannelFutureListener) future -> {
-    System.out.println(future.channel()); // 2
+// 2.2 使用 addListen(回调对象) 方法异步处理结果
+channelFuture.addListener(new ChannelFutureListener() {
+    @Override// nio线程 连接建立好后，调用 operationComplete
+    public void operationComplete(ChannelFuture channelFuture) throws Exception {
+        // 参数中的 channelFuture  就是 调用addListener的 channelFuture
+        Channel channel = channelFuture.channel();
+        log.info("{}",channel);
+    }
 });
 ```
 
