@@ -842,6 +842,125 @@ public class CloseFutureClient {
 
 
 
+#### JDK Future
+
+```java
+public void testJDKFuture() throws ExecutionException, InterruptedException {
+        // 1. 线程池
+        ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(2,
+                4,
+                3,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(5),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+        // 2.提交任务
+        Future<Integer> future = poolExecutor.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                log.info(""); // [pool-1-thread-1]
+                TimeUnit.SECONDS.sleep(1);
+                return 10;
+            }
+        });
+        // 3. 主线程通过 future 获取结果
+        // 阻塞，同步获取结果
+        Integer integer = future.get(); // 获取结果
+        // main
+        log.info("{}",integer);
+    }
+```
+
+```java
+09:48:38.494 [pool-1-thread-1] INFO com.dhf.building.futureAndpromise.Demo - 
+09:48:39.502 [main] INFO com.dhf.building.futureAndpromise.Demo - 10
+```
+
+
+
+#### NettyFuture
+
+```java
+public void nettyFuture() throws ExecutionException, InterruptedException {
+        // 1. EventLoop
+        NioEventLoopGroup group = new NioEventLoopGroup();
+        // 任何一个  eventLoop 是单线程
+        EventLoop eventLoop = group.next();
+        io.netty.util.concurrent.Future<Object> future = eventLoop.submit(new Callable<Object>() {
+            @Override
+            public Integer call() throws Exception {
+                TimeUnit.SECONDS.sleep(1);
+                //nioEventLoopGroup-2-1
+                log.info("");
+                return 4;
+            }
+        });
+        // 1.同步获取结果
+//        Object now = future.getNow();
+//        log.info("now {}",now);//main null
+//        // 阻塞到获取结果
+//        Object o = future.get();
+//        log.info("o {}",o);//main  4
+
+        // 2.异步获取结果
+        future.addListener(new GenericFutureListener<io.netty.util.concurrent.Future<? super Object>>() {
+            @Override
+            public void operationComplete(io.netty.util.concurrent.Future<? super Object> future) throws Exception {
+                Object o = future.getNow();
+//                future.get() // 都可
+                // nioEventLoopGroup-2-1
+                log.info("o {}",o);
+            }
+        });
+        TimeUnit.SECONDS.sleep(2);
+    }
+```
+
+
+
+#### NettyPromise
+
+```java
+public void testNettyPromise() throws ExecutionException, InterruptedException {
+    // 1.eventLoop
+    NioEventLoopGroup group = new NioEventLoopGroup();
+    EventLoop next = group.next();
+    // 2. 构造 DefaultPromise，结果容器
+    DefaultPromise<Integer> promise = new DefaultPromise<>(next);
+
+    new Thread(() -> {
+        // 3. 任意一个线程计算结果
+        log.info("开始计算");
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            promise.setFailure(e);
+        }
+        log.info("计算结束");
+        // 将结果 装入 promise
+        promise.setSuccess(6);
+    }).start();
+
+    // 4，接收结果的线程
+    // 4.1 同步获取结果
+    Integer integer = promise.get();
+    // main 6
+    log.info("得到结果{}", integer);
+    // 4.2 异步获取结果
+    promise.addListener(new GenericFutureListener<io.netty.util.concurrent.Future<? super Integer>>() {
+        @Override
+        public void operationComplete(io.netty.util.concurrent.Future<? super Integer> future) throws Exception {
+            Object object = future.get();
+            // nioEventLoopGroup-2-1
+            log.info("object {}",object);
+        }
+    });
+}
+```
+
+
+
 #### 例1
 
 同步处理任务成功
@@ -1099,7 +1218,7 @@ io.netty.util.concurrent.BlockingOperationException: DefaultPromise@47499c2a(inc
 
 ### 3.4 Handler & Pipeline
 
-ChannelHandler 用来处理 Channel 上的各种事件，分为入站、出站两种。所有 ChannelHandler 被连成一串，就是 Pipeline
+ChannelHandler 用来处理 Channel 上的各种事件，分为入站【数据读取】、出站【数据写出】两种。所有 ChannelHandler 被连成一串，就是 Pipeline
 
 * 入站处理器通常是 ChannelInboundHandlerAdapter 的子类，主要用来读取客户端数据，写回结果
 * 出站处理器通常是 ChannelOutboundHandlerAdapter 的子类，主要对写回结果进行加工
@@ -1120,6 +1239,7 @@ new ServerBootstrap()
                 @Override
                 public void channelRead(ChannelHandlerContext ctx, Object msg) {
                     System.out.println(1);
+                    // 调用下一个入站处理器
                     ctx.fireChannelRead(msg); // 1
                 }
             });
@@ -1127,6 +1247,7 @@ new ServerBootstrap()
                 @Override
                 public void channelRead(ChannelHandlerContext ctx, Object msg) {
                     System.out.println(2);
+                    // 调用下一个入站处理器
                     ctx.fireChannelRead(msg); // 2
                 }
             });
@@ -1134,6 +1255,7 @@ new ServerBootstrap()
                 @Override
                 public void channelRead(ChannelHandlerContext ctx, Object msg) {
                     System.out.println(3);
+                    // 从尾部开始调用上一个出站处理器
                     ctx.channel().write(msg); // 3
                 }
             });
@@ -1142,6 +1264,7 @@ new ServerBootstrap()
                 public void write(ChannelHandlerContext ctx, Object msg, 
                                   ChannelPromise promise) {
                     System.out.println(4);
+                    // 调用上一个出站处理器
                     ctx.write(msg, promise); // 4
                 }
             });
@@ -1150,6 +1273,7 @@ new ServerBootstrap()
                 public void write(ChannelHandlerContext ctx, Object msg, 
                                   ChannelPromise promise) {
                     System.out.println(5);
+                    // 调用上一个出站处理器
                     ctx.write(msg, promise); // 5
                 }
             });
@@ -1158,6 +1282,7 @@ new ServerBootstrap()
                 public void write(ChannelHandlerContext ctx, Object msg, 
                                   ChannelPromise promise) {
                     System.out.println(6);
+                    // 调用上一个出站处理器
                     ctx.write(msg, promise); // 6
                 }
             });
@@ -1195,7 +1320,7 @@ new Bootstrap()
 4
 ```
 
-可以看到，ChannelInboundHandlerAdapter 是按照 addLast 的顺序执行的，而 ChannelOutboundHandlerAdapter 是按照 addLast 的逆序执行的。ChannelPipeline 的实现是一个 ChannelHandlerContext（包装了 ChannelHandler） 组成的双向链表
+可以看到，**ChannelInboundHandlerAdapter 是按照 addLast 的顺序执行的，而 ChannelOutboundHandlerAdapter 是按照 addLast 的逆序执行的**。ChannelPipeline 的实现是一个 ChannelHandlerContext（包装了 ChannelHandler） 组成的双向链表
 
 ![](img/0008.png)
 
@@ -1218,6 +1343,50 @@ new Bootstrap()
 图1 - 服务端 pipeline 触发的原始流程，图中数字代表了处理步骤的先后次序
 
 ![](img/0009.png)
+
+
+
+#### Netty调式工具类  EmbeddedChannel
+
+```java
+@Slf4j
+public class TestEmbeddedChannel {
+    public static void main(String[] args) {
+        ChannelInboundHandlerAdapter h1 = new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                log.info("1");
+                super.channelRead(ctx, msg);
+            }
+        };
+        ChannelInboundHandlerAdapter h2 = new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                log.info("2");
+                // 到末尾出站
+//                ctx.channel().writeAndFlush(ByteBufAllocator.DEFAULT.buffer().writeBytes("msg".getBytes(StandardCharsets.UTF_8)));
+                super.channelRead(ctx, msg);
+            }
+        };
+        ChannelOutboundHandlerAdapter h3 = new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                log.info("3");
+                super.write(ctx, msg, promise);
+            }
+        };
+        ChannelOutboundHandlerAdapter h4 = new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                log.info("4");
+                super.write(ctx, msg, promise);
+            }
+        };
+        EmbeddedChannel channel = new EmbeddedChannel(h1,h2,h3,h4);
+        channel.writeInbound(ByteBufAllocator.DEFAULT.buffer().writeBytes("hello".getBytes(StandardCharsets.UTF_8)));
+    }
+}
+```
 
 
 
