@@ -1737,6 +1737,32 @@ public static boolean release(Object msg) {
 例，原始 ByteBuf 进行一些初始操作
 
 ```java
+public void testSlice() {
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(10);
+        buffer.writeBytes(new byte[]{1, 2, 3, 4});
+        // (ridx: 0, widx: 4, cap: 10)
+        log.info("{}", buffer);
+        // slice(start, length)
+        // 切片过程中没有发生 数据复制
+        // 切片是在原来buf的内存上进行
+        // (ridx: 0, widx: 2, cap: 2/2, unwrapped: PooledUnsafeDirectByteBuf(ridx: 0, widx: 4, cap: 10))
+        ByteBuf f1 = buffer.slice(0, 2);
+        // (ridx: 0, widx: 2, cap: 2/2, unwrapped: PooledUnsafeDirectByteBuf(ridx: 0, widx: 4, cap: 10))
+        ByteBuf f2 = buffer.slice(2, 2);
+        // 切片的长度不可以改变，会影响到后面的 切片
+        log.info("{}", f1);
+        log.info("{}", f2);
+        // (ridx: 0, widx: 4, cap: 10)
+        log.info("{}", buffer);
+        // 释放buffer 内存
+//        buffer.release();
+        ReferenceCountUtil.release(buffer);
+        // UnpooledSlicedByteBuf(freed)
+        log.info("{}",f1);
+    }
+```
+
+```java
 ByteBuf origin = ByteBufAllocator.DEFAULT.buffer(10);
 origin.writeBytes(new byte[]{1, 2, 3, 4});
 origin.readByte();
@@ -1932,6 +1958,24 @@ CompositeByteBuf 是一个组合的 ByteBuf，它内部维护了一个 Component
 * 优点，对外是一个虚拟视图，组合这些 ByteBuf 不会产生内存复制
 * 缺点，复杂了很多，多次操作会带来性能的损耗
 
+```java
+public void testComponents(){
+    ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(5);
+    buffer.writeBytes(new byte[]{1,2,3,4,5});
+    ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(5);
+    buf.writeBytes(new byte[]{6,7,8,9,10});
+
+    CompositeByteBuf byteBuf = ByteBufAllocator.DEFAULT.compositeBuffer();
+    // 第一个参数 ： 是否自动调整读写指针，false，不调整
+    // 不调整 (ridx: 0, widx: 0, cap: 10, components=2)
+    // true：调整
+    byteBuf.addComponents(true,buffer,buf);
+    // CompositeByteBuf(ridx: 0, widx: 10, cap: 10, components=2)
+    log.info("byteBuf {}",byteBuf);
+
+}
+```
+
 
 
 #### 13）Unpooled
@@ -1997,6 +2041,81 @@ class io.netty.buffer.CompositeByteBuf
 ### 4.1 练习
 
 实现一个 echo server
+
+```java
+@Slf4j
+public class Server {
+    public static void main(String[] args) {
+        NioEventLoopGroup parentGroup = new NioEventLoopGroup();
+        NioEventLoopGroup childGroup = new NioEventLoopGroup();
+        new ServerBootstrap()
+                .group(parentGroup, childGroup)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                        nioSocketChannel.pipeline()
+                                .addLast(new ChannelInboundHandlerAdapter() {
+                                    @Override
+                                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                        ByteBuf buf = (ByteBuf) msg;
+                                        log.info("服务端阶段接收到消息: {}", buf.toString(StandardCharsets.UTF_8));
+                                        // 调用出站处理器
+                                        ctx.channel().writeAndFlush(msg);
+                                    }
+                                }).addLast(new ChannelOutboundHandlerAdapter() {
+                                    @Override
+                                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                                        ctx.write(msg, promise);
+                                    }
+                                });
+                    }
+                })
+                .bind(8080);
+    }
+}
+```
+
+
+
+```java
+@Slf4j
+public class Client {
+    public static void main(String[] args) throws UnknownHostException, InterruptedException {
+        NioEventLoopGroup group = new NioEventLoopGroup();
+        ChannelFuture channelFuture = new Bootstrap()
+                .group(group)
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<NioSocketChannel>() {
+                    @Override
+                    protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {
+                        nioSocketChannel.pipeline()
+                                .addLast(new StringDecoder())
+                                .addLast(new ChannelInboundHandlerAdapter(){
+                                    @Override
+                                    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                        log.info("客户端收到 {}",msg);
+                                    }
+                                })
+                                .addLast(new ChannelOutboundHandlerAdapter(){
+                                    @Override
+                                    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                                        super.write(ctx, msg, promise);
+                                    }
+                                });
+                    }
+                }).connect(new InetSocketAddress(InetAddress.getLocalHost(), 8080));
+        channelFuture.sync();
+        Channel channel = channelFuture.channel();
+
+        System.out.println();
+    }
+}
+```
+
+
+
+
 
 编写 server
 
