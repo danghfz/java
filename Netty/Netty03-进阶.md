@@ -8,19 +8,20 @@
 
 ```java
 public class HelloWorldServer {
-    static final Logger log = LoggerFactory.getLogger(HelloWorldServer.class);
     void start() {
-        NioEventLoopGroup boss = new NioEventLoopGroup(1);
+        NioEventLoopGroup parentGroup = new NioEventLoopGroup(1);
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {
             ServerBootstrap serverBootstrap = new ServerBootstrap();
             serverBootstrap.channel(NioServerSocketChannel.class);
-            serverBootstrap.group(boss, worker);
+            // 接收缓冲区 只有 10 字节
+            // serverBootstrap.option(ChannelOption.SO_RCVBUF, 10);
+            serverBootstrap.group(parentGroup, worker);
             serverBootstrap.childHandler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
                     ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        // channel 建立链接后，触发 active事件
                         @Override
                         public void channelActive(ChannelHandlerContext ctx) throws Exception {
                             log.debug("connected {}", ctx.channel());
@@ -28,22 +29,21 @@ public class HelloWorldServer {
                         }
 
                         @Override
-                        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                            log.debug("disconnect {}", ctx.channel());
-                            super.channelInactive(ctx);
+                        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                            ByteBuf buf = (ByteBuf) msg;
+                            log.info("服务端收到 {}", buf.toString(StandardCharsets.UTF_8));
+                            super.channelRead(ctx, msg);
                         }
                     });
                 }
             });
-            ChannelFuture channelFuture = serverBootstrap.bind(8080);
-            log.debug("{} binding...", channelFuture.channel());
-            channelFuture.sync();
-            log.debug("{} bound...", channelFuture.channel());
-            channelFuture.channel().closeFuture().sync();
-        } catch (InterruptedException e) {
-            log.error("server error", e);
+            ChannelFuture future = serverBootstrap.bind(8080);
+            future.sync();
+            future.channel().closeFuture().sync();
+        } catch (Exception e) {
+            e.printStackTrace();
         } finally {
-            boss.shutdownGracefully();
+            parentGroup.shutdownGracefully();
             worker.shutdownGracefully();
             log.debug("stoped");
         }
@@ -53,14 +53,13 @@ public class HelloWorldServer {
         new HelloWorldServer().start();
     }
 }
+
 ```
 
 客户端代码希望发送 10 个消息，每个消息是 16 字节
 
 ```java
-public class HelloWorldClient {
-    static final Logger log = LoggerFactory.getLogger(HelloWorldClient.class);
-    public static void main(String[] args) {
+public static void main(String[] args) {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {
             Bootstrap bootstrap = new Bootstrap();
@@ -74,19 +73,17 @@ public class HelloWorldClient {
                         @Override
                         public void channelActive(ChannelHandlerContext ctx) throws Exception {
                             log.debug("sending...");
-                            Random r = new Random();
-                            char c = 'a';
                             for (int i = 0; i < 10; i++) {
                                 ByteBuf buffer = ctx.alloc().buffer();
-                                buffer.writeBytes(new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15});
+                                buffer.writeBytes("0123456789abcdef".getBytes(StandardCharsets.UTF_8));
                                 ctx.writeAndFlush(buffer);
                             }
                         }
                     });
                 }
             });
-            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8080).sync();
-            channelFuture.channel().closeFuture().sync();
+            ChannelFuture channelFuture = bootstrap.connect("127.0.0.1", 8080);
+            channelFuture.sync();
 
         } catch (InterruptedException e) {
             log.error("client error", e);
@@ -94,7 +91,6 @@ public class HelloWorldClient {
             worker.shutdownGracefully();
         }
     }
-}
 ```
 
 服务器端的某次输出，可以看到一次就接收了 160 个字节，而非分 10 次接收
@@ -242,7 +238,7 @@ serverBootstrap.option(ChannelOption.SO_RCVBUF, 10);
 >   * TCP 在传递大量数据时，会按照 MSS 大小将数据进行分割发送
 >   * MSS 的值在三次握手时通知对方自己 MSS 的值，然后在两者之间选择一个小值作为 MSS
 >
->   <img src="img/0031.jpg" style="zoom:50%;" />
+>   <img src="img/0031.jpg"  />
 
 
 
