@@ -1,4 +1,4 @@
-**Docker与微服务实战2022 尚硅谷讲师:周阳**
+# **Docker与微服务实战2022 尚硅谷讲师:周阳**
 
 ![](image/media/image1.png){width="1.0413429571303587in"
 height="0.7093842957130359in"}
@@ -6,57 +6,15 @@ height="0.7093842957130359in"}
 ![](image/media/image2.png){width="4.306310148731408in"
 height="2.6264490376202976in"}
 
-1\. 基础篇(零基小白) [1](#_Toc256000000)
 
-1.1. Docker简介 [2](#_Toc256000001)
 
-1.2. Docker安装 [15](#_Toc256000002)
+## 1、基础篇
 
-1.3. Docker常用命令 [29](#_Toc256000003)
+### 1.1、docker简介
 
-1.4. Docker镜像 [43](#_Toc256000004)
+####  是什么
 
-1.5. 本地镜像发布到阿里云 [50](#_Toc256000005)
-
-1.6. 本地镜像发布到私有库 [57](#_Toc256000006)
-
-1.7. Docker容器数据卷 [64](#_Toc256000007)
-
-1.8. Docker常规安装简介 [70](#_Toc256000008)
-
-2\. 高级篇(大厂进阶) [115](#_Toc256000009)
-
-2.1. Docker复杂安装详说 [115](#_Toc256000010)
-
-2.2. DockerFile解析 [149](#_Toc256000011)
-
-2.3. Docker微服务实战 [162](#_Toc256000012)
-
-2.4. Docker网络 [169](#_Toc256000013)
-
-2.5. Docker-compose容器编排 [186](#_Toc256000014)
-
-2.6. Docker轻量级可视化工具Portainer [225](#_Toc256000015)
-
-2.7. Docker容器监控之 CAdvisor+InfluxDB+Granfana [228](#_Toc256000016)
-
-2.8. 终章の总结 [238](#_Toc256000017)
-
-1.  []{#_Toc256000000 .anchor}基础篇(零基小白)
-
-> ![]( image/media/image3.png){width="0.5in"
-> height="0.5in"}
-
-1.  []{#_Toc256000001 .anchor}**Docker简介**
-
-> ![]( image/media/image4.png){width="0.3704735345581802in"
-> height="0.3704735345581802in"}
-
-1.  前提知识+课程定位+开场闲聊
-
-2.  **是什么**
-
-    -   问题：为什么会有docker出现
+-   问题：为什么会有docker出现
 
 > 假定您在开发一个尚硅谷的谷粒商城，您使用的是一台笔记本电脑而且您的开发环境具有特定的配置。其他开发人员身处的环境配置也各有不同。您正在开发的应用依赖于您当前的配置且还要依赖于某些配置文件。此外，您的企业还拥有标准化的测试和生产环境，且具有自身的配置和一系列支持文件。您希望尽可能多在本地模拟这些环境而不产生重新创建服务器环境的开销。请问？
 >
@@ -73,7 +31,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image5.jpeg){width="4.6194444444444445in"
+>  ![graphic](image/media/image5.jpeg){width="4.6194444444444445in"
 > height="2.2868536745406822in"}
 >
 > 之前在服务器配置一个应用的运行环境，要安装各种软件，就拿尚硅谷电商项目的环境来说，Java/RabbitMQ/MySQL/JDBC驱动包等。安装和配置这些东西有多麻烦就不说了，它还不能跨平台。假如我们是在
@@ -82,14 +40,14 @@ height="2.6264490376202976in"}
 >
 > 传统上认为，软件编码开发/测试结束后，所产出的成果即是程序或是能够编译执行的二进制字节码等(java为例)。而为了让这些程序可以顺利执行，开发团队也得准备完整的部署文件，让维运团队得以部署应用程式，开发需要清楚的告诉运维部署团队，用的全部配置文件+所有软件环境。不过，即便如此，仍然常常发生部署失败的状况。Docker的出现使得Docker得以打破过去「程序即应用」的观念。透过镜像(images)将作业系统核心除外，运作应用程式所需要的系统环境，由下而上打包，达到应用程式跨平台间的无缝接轨运作。
 
--   docker理念
+#### docker理念
 
 > Docker是基于Go语言实现的云开源项目。
 >
 > Docker的主要目标是"Build，Ship and Run Any
 > App,Anywhere"，也就是通过对应用组件的封装、分发、部署、运行等生命周期的管理，使用户的APP（可以是一个WEB应用或数据库应用等等）及其运行环境能够做到"一次镜像，处处运行"。
 >
-> ![graphic]( image/media/image6.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image6.jpeg){width="4.6194444444444445in"
 > height="2.0984448818897636in"}
 >
 > Linux容器技术的出现就解决了这样一个问题，而 Docker
@@ -101,18 +59,18 @@ height="2.6264490376202976in"}
     -   解决了运行环境和配置问题的软件容器，
         方便做持续集成并有助于整体发布的容器虚拟化技术。
 
-3.  **容器与虚拟机比较**
+#### 容器与虚拟机比较
 
-    -   容器发展简史
+-   容器发展简史
 
 >  
 >
-> ![graphic]( image/media/image7.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image7.jpeg){width="4.6194444444444445in"
 > height="1.484821741032371in"}
 >
 >  
 >
-> ![graphic]( image/media/image8.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image8.jpeg){width="4.6194444444444445in"
 > height="3.2209470691163604in"}
 
 -   传统虚拟机技术
@@ -126,10 +84,10 @@ height="2.6264490376202976in"}
 
 -------------- -------------- ------------ ---------------------------------- ------------
 
->  ![graphic]( image/media/image9.png){width="4.6194444444444445in"
+>  ![graphic](image/media/image9.png){width="4.6194444444444445in"
 > height="0.6280216535433071in"}
 >
-> ![graphic]( image/media/image10.png){width="4.6194444444444445in"
+> ![graphic](image/media/image10.png){width="4.6194444444444445in"
 > height="3.377308617672791in"}
 >
 > 虚拟机的缺点：
@@ -150,10 +108,10 @@ height="2.6264490376202976in"}
 > Linux
 > 容器不是模拟一个完整的操作系统而是对进程进行隔离。有了容器，就可以将软件运行所需的所有资源打包到一个隔离的容器中。容器与虚拟机不同，不需要捆绑一整套操作系统，只需要软件工作所需的库资源和设置。系统因此而变得高效轻量并保证部署在任何环境中的软件都能始终如一地运行。
 >
->  ![graphic]( image/media/image11.png){width="4.6194444444444445in"
+>  ![graphic](image/media/image11.png){width="4.6194444444444445in"
 > height="3.5437970253718287in"}
 >
-> ![graphic]( image/media/image12.png){width="4.6194444444444445in"
+> ![graphic](image/media/image12.png){width="4.6194444444444445in"
 > height="0.6085498687664042in"}
 >
 >  
@@ -166,7 +124,7 @@ height="2.6264490376202976in"}
 
   ---------------- ------------------------------------------------------
 
->  ![graphic]( image/media/image13.jpeg){width="4.6194444444444445in"
+>  ![graphic](image/media/image13.jpeg){width="4.6194444444444445in"
 > height="2.079408355205599in"}
 >
 > 比较了 Docker 和传统虚拟化方式的不同之处：
@@ -178,23 +136,23 @@ height="2.6264490376202976in"}
 > \* 每个容器之间互相隔离，每个容器有自己的文件系统
 > ，容器之间进程不会相互影响，能区分计算资源。
 
-4.  **能干嘛**
+#### 能干嘛
 
-    -   技术职级变化
+-   技术职级变化
 
-        -   coder
+    -   coder
 
-            -   programmer
+        -   programmer
 
-                -   software engineer
+            -   software engineer
 
-                    -   DevOps engineer
+                -   DevOps engineer
 
-    -   开发/运维（DevOps）新一代开发工程师
+-   开发/运维（DevOps）新一代开发工程师
 
-        -   一次构建、随处运行
+    -   一次构建、随处运行
 
-            -   更快速的应用交付和部署
+        -   更快速的应用交付和部署
 
 >  
 >
@@ -222,19 +180,19 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image14.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image14.jpeg){width="4.4527777777777775in"
 > height="3.2406332020997377in"}
 
 -   哪些企业在使用
 
     -   新浪
 
-> ![graphic]( image/media/image15.jpeg){width="4.4527777777777775in"
-> height="2.893530183727034in"}![graphic]( image/media/image16.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image15.jpeg){width="4.4527777777777775in"
+> height="2.893530183727034in"}![graphic](image/media/image16.jpeg){width="4.4527777777777775in"
 > height="3.008634076990376in"}
 >
-> ![graphic]( image/media/image17.jpeg){width="4.4527777777777775in"
-> height="3.3299037620297463in"}![graphic]( image/media/image18.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image17.jpeg){width="4.4527777777777775in"
+> height="3.3299037620297463in"}![graphic](image/media/image18.jpeg){width="4.4527777777777775in"
 > height="3.487211286089239in"}
 >
 >  
@@ -243,43 +201,40 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image19.jpeg){width="4.4527777777777775in"
-> height="3.220087489063867in"}![graphic]( image/media/image20.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image19.jpeg){width="4.4527777777777775in"
+> height="3.220087489063867in"}![graphic](image/media/image20.jpeg){width="4.4527777777777775in"
 > height="3.1258989501312335in"}
 
 -   蘑菇街
 
 >  
 >
-> ![graphic]( image/media/image21.jpeg){width="4.4527777777777775in"
-> height="3.5738134295713038in"}![graphic]( image/media/image22.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image21.jpeg){width="4.4527777777777775in"
+> height="3.5738134295713038in"}![graphic](image/media/image22.jpeg){width="4.4527777777777775in"
 > height="3.270703193350831in"}
 
--   \...\...
+- \...\...
 
-5.  **去哪下**
+  #### 去哪下
 
-    -   官网
+-   官网
 
-        -   docker官网：http://www.docker.com
+    -   docker官网：http://www.docker.com
 
-    -   仓库
+-   仓库
 
-        -   Docker Hub官网: https://hub.docker.com/
+    -   Docker Hub官网: https://hub.docker.com/
 
-```{=html}
-<!-- -->
-```
-2.  []{#_Toc256000002 .anchor}**Docker安装**
+### 1.2、Docker安装
 
-> ![]( image/media/image23.png){width="0.3645844269466317in"
+> ![](image/media/image23.png){width="0.3645844269466317in"
 > height="0.3645844269466317in"}
 
 1.  前提说明
 
 > **CentOS Docker 安装**
 >
-> ![graphic]( image/media/image24.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image24.jpeg){width="4.591666666666667in"
 > height="2.1930347769028873in"}
 >
 > **前提条件**
@@ -295,7 +250,7 @@ height="2.6264490376202976in"}
 >
 > uname命令用于打印当前系统相关信息（内核版本号、硬件架构、主机名称和操作系统类型等）。
 >
-> ![graphic]( image/media/image25.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image25.jpeg){width="4.591666666666667in"
 > height="1.306317804024497in"}
 
 2.  **Docker的基本组成**
@@ -314,7 +269,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image26.png){width="4.6194444444444445in"
+> ![graphic](image/media/image26.png){width="4.6194444444444445in"
 > height="1.1018110236220473in"}
 >
 >  
@@ -401,10 +356,10 @@ height="2.6264490376202976in"}
 > Docker 是一个 C/S
 > 模式的架构，后端是一个松耦合架构，众多模块各司其职。 
 >
-> ![graphic]( image/media/image27.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image27.jpeg){width="4.6194444444444445in"
 > height="1.3088429571303588in"}
 >
-> ![graphic]( image/media/image28.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image28.jpeg){width="4.6194444444444445in"
 > height="6.4259984689413825in"}
 
 4.  **安装步骤**
@@ -427,14 +382,14 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image29.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image29.jpeg){width="4.4527777777777775in"
 > height="2.9034864391951007in"}
 
 -   yum安装gcc相关
 
     -   CentOS7能上外网
 
-        ![]( image/media/image30.png){width="3.4270833333333335in"
+        ![](image/media/image30.png){width="3.4270833333333335in"
         height="2.2604166666666665in"}
 
     -   yum -y install gcc
@@ -445,7 +400,7 @@ height="2.6264490376202976in"}
 
     -   官网要求
 
-> ![graphic]( image/media/image31.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image31.jpeg){width="4.4527777777777775in"
 > height="2.9514577865266842in"}
 
 -   执行命令
@@ -460,7 +415,7 @@ height="2.6264490376202976in"}
     -   大坑
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![]( image/media/image32.png){width="0.1527777777777778in"
+  单图标    ![](image/media/image32.png){width="0.1527777777777778in"
             height="0.1527777777777778in"} CustomIcon-663735520; \[\"\",
             \"4MyPJwAAAAAAAAAAAAAAAA==\"\]
 
@@ -469,7 +424,7 @@ height="2.6264490376202976in"}
 -   yum-config-manager \--add-repo
     https://download.docker.com/linux/centos/docker-ce.repo
 
-> ![graphic]( image/media/image33.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image33.jpeg){width="4.4527777777777775in"
 > height="0.830437445319335in"} 
 >
 >  
@@ -488,7 +443,7 @@ height="2.6264490376202976in"}
 
 -   官网要求
 
-> ![graphic]( image/media/image33.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image33.jpeg){width="4.4527777777777775in"
 > height="0.830437445319335in"} 
 >
 >  
@@ -508,20 +463,19 @@ height="2.6264490376202976in"}
 -   推荐
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![]( image/media/image34.png){width="0.1527777777777778in"
+  单图标    ![](image/media/image34.png){width="0.1527777777777778in"
             height="0.1527777777777778in"} CustomIcon\--1664269521; \[\"\",
             \"L0PNnAAAAAAAAAAAAAAAAA==\"\]
 
   --------- -----------------------------------------------------------------------------------
 
--   yum-config-manager \--add-repo
-    http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
-
+-   yum-config-manager \--add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+    
 -   我们自己
 
 >  
 >
-> ![graphic]( image/media/image35.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image35.jpeg){width="4.4527777777777775in"
 > height="0.5570297462817148in"}
 
 -   更新yum软件包索引
@@ -536,15 +490,15 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image36.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image36.jpeg){width="4.4527777777777775in"
 > height="1.1422080052493437in"}
 
 -   执行结果
 
-> ![graphic]( image/media/image37.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image37.jpeg){width="4.4527777777777775in"
 > height="1.2479593175853019in"}
 >
-> ![graphic]( image/media/image38.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image38.jpeg){width="4.4527777777777775in"
 > height="1.1779254155730534in"}
 
 -   启动docker
@@ -563,21 +517,21 @@ height="2.6264490376202976in"}
 >
 >   
 >
-> ![graphic]( image/media/image39.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image39.jpeg){width="4.4527777777777775in"
 > height="3.3534120734908135in"}
 
 -   docker run hello-world
 
 >  
 >
-> ![graphic]( image/media/image40.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image40.jpeg){width="4.4527777777777775in"
 > height="1.6076662292213473in"}
 
 -   卸载
 
 >  
 >
-> ![graphic]( image/media/image41.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image41.jpeg){width="4.4527777777777775in"
 > height="2.060411198600175in"}
 
 -   systemctl stop docker
@@ -600,28 +554,28 @@ height="2.6264490376202976in"}
 
         -   登陆阿里云开发者平台
 
-> ![graphic]( image/media/image42.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image42.jpeg){width="4.4527777777777775in"
 > height="1.984666447944007in"}
 
 -   点击控制台
 
 >  
 >
-> ![graphic]( image/media/image43.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image43.jpeg){width="4.4527777777777775in"
 > height="2.1197036307961503in"}
 
 -   选择容器镜像服务
 
 >  
 >
-> ![graphic]( image/media/image44.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image44.jpeg){width="4.4527777777777775in"
 > height="2.1768405511811024in"}
 
 -   获取加速器地址
 
 >  
 >
-> ![graphic]( image/media/image45.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image45.jpeg){width="4.4527777777777775in"
 > height="3.0000984251968505in"}
 
 -   粘贴脚本直接执行
@@ -646,7 +600,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image46.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image46.jpeg){width="4.4527777777777775in"
 > height="2.0486165791776028in"}
 
 -   或者分步骤都行
@@ -682,7 +636,7 @@ height="2.6264490376202976in"}
 
         -   docker run hello-world
 
-> ![graphic]( image/media/image47.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image47.jpeg){width="4.4527777777777775in"
 > height="2.104288057742782in"}
 >
 > 输出这段提示以后，hello world就会停止运行，容器自动终止。
@@ -691,7 +645,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image48.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image48.jpeg){width="4.4527777777777775in"
 > height="2.17417104111986in"}
 
 7.  []{#DsC1I8EsDk+9cwDs84NUPw== .anchor}**底层原理**
@@ -712,73 +666,62 @@ height="2.6264490376202976in"}
 >
 >    当新建一个容器时,docker不需要和虚拟机一样重新加载一个操作系统内核。进而避免引寻、加载操作系统内核返回等比较费时费资源的过程,当新建一个虚拟机时,虚拟机软件需要加载OS,返回新建过程是分钟级别的。而docker由于直接利用宿主机的操作系统,则省略了返回过程,因此新建一个docker容器只需要几秒钟。
 >
->  ![graphic]( image/media/image49.jpeg){width="4.6194444444444445in"
+>  ![graphic](image/media/image49.jpeg){width="4.6194444444444445in"
 > height="2.470216535433071in"}
 >
->  ![graphic]( image/media/image50.png){width="4.6194444444444445in"
+>  ![graphic](image/media/image50.png){width="4.6194444444444445in"
 > height="1.9047714348206475in"}
 >
 >  
 >
 >  
 
-3.  []{#_Toc256000003 .anchor}**Docker常用命令**
+### 1.3、Docker常用命令
 
-> ![]( image/media/image51.png){width="0.38465004374453193in"
+> ![](image/media/image51.png){width="0.38465004374453193in"
 > height="0.38465004374453193in"}
 
-1.  **帮助启动类命令**
+#### 1.3.1、帮助启动类命令
 
-    -   启动docker： systemctl start docker
+-   启动docker： systemctl start docker
 
-    -   停止docker： systemctl stop docker
+-   停止docker： systemctl stop docker
 
-    -   重启docker： systemctl restart docker
+-   重启docker： systemctl restart docker
 
-    -   查看docker状态： systemctl status docker
+-   查看docker状态： systemctl status docker
 
-    -   开机启动： systemctl enable docker
+-   开机启动： systemctl enable docker
 
-    -   查看docker概要信息： docker info
+-   查看docker概要信息： docker info
 
-    -   查看docker总体帮助文档： docker \--help
+-   查看docker总体帮助文档： docker \--help
 
-    -   查看docker命令帮助文档： docker 具体命令 \--help
+-   查看docker命令帮助文档： docker 具体命令 \--help
 
-2.  **镜像命令**
+#### 1.3.2、镜像命令
 
-    -   docker images
+```shell
+docker images #列出本地主机上的镜像
+	EPOSITORY：表示镜像的仓库源 
+	TAG：镜像的标签版本号  
+	IMAGE ID：镜像ID 
+	CREATED：镜像创建时间 
+	SIZE：镜像大小 
+```
 
-        -   列出本地主机上的镜像
-
-> ![graphic]( image/media/image52.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image52.jpeg){width="4.4527777777777775in"
 > height="0.33870844269466316in"}
 >
 >  
 >
 > 各个选项说明:
 
-+-----------------------------------------------------------------------+
-| REPOSITORY：表示镜像的仓库源                                          |
-|                                                                       |
-| TAG：镜像的标签版本号                                                 |
-|                                                                       |
-| IMAGE ID：镜像ID                                                      |
-|                                                                       |
-| CREATED：镜像创建时间                                                 |
-|                                                                       |
-| SIZE：镜像大小                                                        |
-+-----------------------------------------------------------------------+
-
 >  同一仓库源可以有多个 TAG版本，代表这个仓库源的不同个版本，我们使用
 > REPOSITORY:TAG 来定义不同的镜像。
 >
 > 如果你不指定一个镜像的版本标签，例如你只使用 ubuntu，docker 将默认使用
 > ubuntu:latest 镜像
->
->  
->
->  
 
 -   OPTIONS说明：
 
@@ -786,25 +729,26 @@ height="2.6264490376202976in"}
 
     -   -q :只显示镜像ID。
 
-```{=html}
-<!-- -->
+
+
+```shell
+docker search 某个XXX镜像名字  # 搜索
 ```
--   docker search 某个XXX镜像名字
 
-    -   网站
+-   网站
 
-        -   https://hub.docker.com
+    -   https://hub.docker.com
 
-    -   命令
+-   命令
 
-        -   docker search \[OPTIONS\] 镜像名字
+    -   docker search \[OPTIONS\] 镜像名字
 
-        -   案例
+    -   案例
 
-> ![graphic]( image/media/image53.png){width="4.4527777777777775in"
+> ![graphic](image/media/image53.png){width="4.4527777777777775in"
 > height="1.3153488626421697in"}
 >
-> ![graphic]( image/media/image54.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image54.jpeg){width="4.4527777777777775in"
 > height="1.062509842519685in"}
 >
 >  
@@ -817,52 +761,57 @@ height="2.6264490376202976in"}
 
     -   docker search \--limit 5 redis
 
-```{=html}
-<!-- -->
+
+
+```shell
+docker pull 某个XXX镜像名字 # 下载镜像
 ```
--   docker pull 某个XXX镜像名字
 
-    -   下载镜像
+下载镜像
 
-    -   docker pull 镜像名字\[:TAG\]
+-   docker pull 镜像名字\[:TAG\]
 
-    -   docker pull 镜像名字
+-   docker pull 镜像名字
 
-        -   没有TAG就是最新版
+    -   没有TAG就是最新版
 
-        -   等价于
+    -   等价于
 
-        -   docker pull 镜像名字:latest
+    -   docker pull 镜像名字:latest
 
-        -   docker pull ubuntu
+    -   docker pull ubuntu
 
 >  
 >
-> ![graphic]( image/media/image55.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image55.jpeg){width="4.4527777777777775in"
 > height="1.4272353455818023in"}
 
--   docker system df 查看镜像/容器/数据卷所占的空间
+```shell
+docker system df # 查看镜像/容器/数据卷所占的空间
+```
 
 >  
 >
-> ![graphic]( image/media/image56.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image56.jpeg){width="4.6194444444444445in"
 > height="0.9913254593175853in"}
 
--   docker rmi 某个XXX镜像名字ID
+```shell
+docker rmi 某个XXX镜像名字ID # 删除镜像
+```
 
-    -   删除镜像
+-   删除镜像
 
-    -   删除单个
+-   删除单个
 
-        -   docker rmi -f 镜像ID
+    -   docker rmi -f 镜像ID
 
-    -   删除多个
+-   删除多个
 
-        -   docker rmi -f 镜像名1:TAG 镜像名2:TAG
+    -   docker rmi -f 镜像名1:TAG 镜像名2:TAG
 
-    -   删除全部
+-   删除全部
 
-        -   docker rmi -f \$(docker images -qa)
+    -   docker rmi -f \$(docker images -qa)
 
 -   面试题：谈谈docker虚悬镜像是什么？
 
@@ -876,32 +825,30 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image57.png){width="4.4527777777777775in"
+> ![graphic](image/media/image57.png){width="4.4527777777777775in"
 > height="0.42043416447944004in"}
 
 -   后续Dockerfile章节再介绍
 
-```{=html}
-<!-- -->
-```
+
+
 -   思考
 
-> ![]( image/media/image58.png){width="0.31441272965879263in"
+> ![](image/media/image58.png){width="0.31441272965879263in"
 > height="0.31441272965879263in"}
 
 -   结合我们Git的学习心得，大家猜猜是否会有 docker commit /docker
     push？？
 
-3.  ***容器命令***
+#### 1.3.3、容器命令
 
-    -   **有镜像才能创建容器，
-        这是根本前提(下载一个CentOS或者ubuntu镜像演示)**
-
-        -   说明
+-   **有镜像才能创建容器，
+    这是根本前提(下载一个CentOS或者ubuntu镜像演示)**
+    -   说明
 
 >  
 >
-> ![graphic]( image/media/image59.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image59.jpeg){width="4.4527777777777775in"
 > height="1.7891076115485565in"}
 
 -   docker pull centos
@@ -910,46 +857,38 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image55.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image55.jpeg){width="4.4527777777777775in"
 > height="1.4272353455818023in"}
 
 -   本次演示用ubuntu演示
 
-```{=html}
-<!-- -->
+
+
+```shell
+docker run [options] image [command][agr] # 新建 + 启动容器
 ```
--   新建+启动容器
 
-    -   docker run \[OPTIONS\] **IMAGE** \[COMMAND\] \[ARG\...\]
+- OPTIONS说明
 
-        -   OPTIONS说明
+  ```
+  OPTIONS说明（常用）：有些是一个减号，有些是两个减号
+  --name="容器新名字"       为容器指定一个名称；
+  
+  -d: 后台运行容器并返回容器ID，也即启动守护式容器(后台运行)
+  
+  -i：以交互模式运行容器，通常与 -t 同时使用；
+  -t：为容器重新分配一个伪输入终端，通常与 -i 同时使用；也即启动交互式容器(前台有伪终端，等待交互)；
+  
+  -P: 随机端口映射，大写P
+  -p: 指定端口映射，小写p
+  ```
 
->  OPTIONS说明（常用）：有些是一个减号，有些是两个减号
->
->  
->
-> \--name=\"容器新名字\"       为容器指定一个名称；
->
-> -d: 后台运行容器并返回容器ID，也即启动守护式容器(后台运行)；
->
->  
->
-> -i：以交互模式运行容器，通常与 -t 同时使用；
->
-> -t：为容器重新分配一个伪输入终端，通常与 -i 同时使用；
->
-> 也即启动交互式容器(前台有伪终端，等待交互)；
->
->  
->
-> -P: 随机端口映射，大写P
->
-> -p: 指定端口映射，小写p
->
-> ![graphic]( image/media/image60.jpeg){width="4.4527777777777775in"
-> height="1.4327712160979877in"}
+  
 
--   []{#suy8QK+FjE2usYWm/p04cg== .anchor}启动交互式容器(前台命令行)
+> ![graphic](image/media/image60.jpeg){width="4.4527777777777775in"
+>height="1.4327712160979877in"}
+
+-   启动交互式容器(前台命令行)
 
   --------- -----------------------------------------------------------------------
   关系      前后对比 - 开始
@@ -957,71 +896,46 @@ height="2.6264490376202976in"}
 
   --------- -----------------------------------------------------------------------
 
-> ![graphic]( image/media/image61.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image61.jpeg){width="4.4527777777777775in"
 > height="1.3704713473315835in"}
 >
 > #使用镜像centos:latest以交互模式启动一个容器,在容器内执行/bin/bash命令。
 >
-> docker run -it centos /bin/bash
->
->  
+> ```shell
+> docker run -it  --name="ubuntu-con" ubuntu /bin/bash
+> docker run -it ubuntu bash
+> ```
 
-+-----------------------------------------------------------------------+
-| 参数说明：                                                            |
-|                                                                       |
-| -i: 交互式操作。                                                      |
-|                                                                       |
-| -t: 终端。                                                            |
-|                                                                       |
-| centos : centos 镜像。                                                |
-|                                                                       |
-| /bin/bash：放在镜像名后的是命令，这里我们希望有个交互式               |
-| Shell，因此用的是 /bin/bash。                                         |
-|                                                                       |
-| 要退出终端，直接输入 exit:                                            |
-+-----------------------------------------------------------------------+
-
->  
-
--   列出当前所有正在运行的容器
-
-    -   docker ps \[OPTIONS\]
-
-        -   OPTIONS说明
-
-> OPTIONS说明（常用）：
->
->  
->
-> -a :列出当前所有正在运行的容器+历史上运行过的
->
-> -l :显示最近创建的容器。
->
-> -n：显示最近n个创建的容器。
->
-> -q :静默模式，只显示容器编号。
-
--   []{#H51mnUNRmUykhMP+ErdHbA== .anchor}退出容器
-
-  --------- -----------------------------------------------------------------------------
-  关系      指向
-            [[进入正在运行的容器并以命令行交互]{.underline}](#vk3j/d/47E6/eS6lZsCBtw==)
-
-  --------- -----------------------------------------------------------------------------
-
--   两种退出方式
-
-    -   exit
-
-        -   run进去容器，exit退出，容器停止
-
-    -   ctrl+p+q
-
-        -   run进去容器，ctrl+p+q退出，容器不停止
-
-```{=html}
-<!-- -->
 ```
+参数说明：
+-i: 交互式操作。
+-t: 终端。
+ubuntu : ubuntu 镜像。
+/bin/bash：放在镜像名后的是命令，这里我们希望有个交互式 Shell，因此用的是 /bin/bash。         要退出终端，直接输入 exit: 
+```
+
+
+
+```shell
+docker ps [OPTIONS] #列出当前所有正在运行的容器
+	# OPTIONS说明
+    -a :列出当前所有正在运行的容器+历史上运行过的
+    -l :显示最近创建的容器。
+    -n：显示最近n个创建的容器。
+    -q :静默模式，只显示容器编号。
+```
+
+
+
+-   退出容器
+-   exit
+  
+      -   run进去容器，exit退出，容器停止
+  
+-   ctrl+p+q
+  
+    -   run进去容器，ctrl+p+q退出，容器不停止
+
 -   启动已停止运行的容器
 
     -   docker start 容器ID或者容器名
@@ -1052,13 +966,7 @@ height="2.6264490376202976in"}
 
     -   **有镜像才能创建容器，这是根本前提(下载一个Redis6.0.8镜像演示)**
 
-    -   []{#QRvvQPSoeUSyQ50ciz6Q/g== .anchor}启动守护式容器(后台服务器)
-
-  --------- -----------------------------------------------------------------------
-  关系      前后对比 - 指向
-            [[启动交互式容器(前台命令行)]{.underline}](#suy8QK+FjE2usYWm/p04cg==)
-
-  --------- -----------------------------------------------------------------------
+    --------- -----------------------------------------------------------------------
 
 -   在大部分的场景下，我们希望 docker 的服务是在后台运行的， 我们可以过
     -d 指定容器的后台运行模式。
@@ -1103,9 +1011,8 @@ height="2.6264490376202976in"}
 
         -   docker run -d redis:6.0.8
 
-```{=html}
-<!-- -->
-```
+
+
 -   查看容器日志
 
     -   docker logs 容器ID
@@ -1129,10 +1036,10 @@ height="2.6264490376202976in"}
 
 -   docker exec -it 容器ID bashShell
 
-> ![graphic]( image/media/image62.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image62.jpeg){width="4.4527777777777775in"
 > height="0.6850426509186351in"}
 >
-> ![graphic]( image/media/image63.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image63.jpeg){width="4.4527777777777775in"
 > height="1.8109623797025372in"}
 
 -   重新进入docker attach 容器ID
@@ -1146,7 +1053,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image64.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image64.jpeg){width="4.4527777777777775in"
 > height="1.0432841207349082in"}
 
 -   exec 是在容器中打开新的终端，并且可以启动新的进程
@@ -1154,7 +1061,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image65.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image65.jpeg){width="4.4527777777777775in"
 > height="1.0165069991251094in"}
 
 -   推荐大家使用 docker exec
@@ -1181,7 +1088,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image66.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image66.jpeg){width="4.4527777777777775in"
 > height="0.8015004374453193in"}
 >
 >  
@@ -1203,14 +1110,14 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image67.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image67.jpeg){width="4.4527777777777775in"
 > height="2.03496062992126in"}
 
 -   cat 文件名.tar \| docker import - 镜像用户/镜像名:镜像版本号
 
 >  
 >
-> ![graphic]( image/media/image68.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image68.jpeg){width="4.4527777777777775in"
 > height="2.0307994313210846in"}
 
 4.  **小总结**
@@ -1219,7 +1126,7 @@ height="2.6264490376202976in"}
 
 > 图片正下方还有命令
 >
-> ![graphic]( image/media/image69.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image69.jpeg){width="4.6194444444444445in"
 > height="3.274673009623797in"}
 >
 >  
@@ -1335,9 +1242,9 @@ height="2.6264490376202976in"}
 >
 >  
 
-4.  []{#_Toc256000004 .anchor}**Docker镜像**
+### 1.4、Docker镜像
 
-> ![]( image/media/image70.png){width="0.37124015748031497in"
+> ![](image/media/image70.png){width="0.37124015748031497in"
 > height="0.37124015748031497in"}
 
 1.  **是什么**
@@ -1364,7 +1271,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image71.png){width="4.6194444444444445in"
+>  ![graphic](image/media/image71.png){width="4.6194444444444445in"
 > height="2.6513003062117235in"}
 
 -   UnionFS（联合文件系统）
@@ -1374,7 +1281,7 @@ height="2.6264490376202976in"}
 > 文件系统是 Docker
 > 镜像的基础。镜像可以通过分层来进行继承，基于基础镜像（没有父镜像），可以制作各种具体的应用镜像。
 >
-> ![graphic]( image/media/image72.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image72.jpeg){width="4.6194444444444445in"
 > height="2.7576148293963256in"} 
 >
 > 特性：一次同时加载多个文件系统，但从外面看起来，只能看到一个文件系统，联合加载会把各层文件系统叠加起来，这样最终的文件系统会包含所有底层的文件和目录
@@ -1397,12 +1304,12 @@ height="2.6264490376202976in"}
 > 系统中的 /dev, /proc, /bin, /etc
 > 等标准目录和文件。rootfs就是各种不同的操作系统发行版，比如Ubuntu，Centos等等。 
 >
-> 。 ![graphic]( image/media/image73.jpeg){width="4.5625in"
+> 。 ![graphic](image/media/image73.jpeg){width="4.5625in"
 > height="3.1770833333333335in"}
 >
 >  平时我们安装进虚拟机的CentOS都是好几个G，为什么docker这里才200M？？
 >
-> ![graphic]( image/media/image74.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image74.jpeg){width="4.6194444444444445in"
 > height="0.6063024934383202in"}
 >
 > 对于一个精简的OS，rootfs可以很小，只需要包括最基本的命令、工具和程序库就可以了，因为底层直接用Host的kernel，自己只需要提供
@@ -1442,7 +1349,7 @@ height="2.6264490376202976in"}
 > 所有对容器的改动 -
 > 无论添加、删除、还是修改文件都只会发生在容器层中。只有容器层是可写的，容器层下面的所有镜像层都是只读的。
 >
-> ![graphic]( image/media/image75.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image75.jpeg){width="4.6194444444444445in"
 > height="3.8910673665791777in"}
 
 3.  **Docker镜像commit操作案例**
@@ -1460,12 +1367,12 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image76.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image76.jpeg){width="4.4527777777777775in"
 > height="1.4345767716535434in"}
 
 -   外网连通的情况下，安装vim
 
->  ![graphic]( image/media/image77.jpeg){width="2.4375in"
+>  ![graphic](image/media/image77.jpeg){width="2.4375in"
 > height="1.0104166666666667in"}
 >
 > docker容器内执行上述两条命令：
@@ -1476,20 +1383,20 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image78.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image78.jpeg){width="4.4527777777777775in"
 > height="1.523876859142607in"}
 >
-> ![graphic]( image/media/image79.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image79.jpeg){width="4.4527777777777775in"
 > height="1.0152023184601924in"}
 >
 >  
 
 -   安装完成后，commit我们自己的新镜像
 
-> ![graphic]( image/media/image80.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image80.jpeg){width="4.4527777777777775in"
 > height="1.0152023184601924in"}
 >
-> ![graphic]( image/media/image81.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image81.jpeg){width="4.4527777777777775in"
 > height="1.0192661854768155in"}
 >
 >  
@@ -1500,7 +1407,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image82.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image82.jpeg){width="4.4527777777777775in"
 > height="1.0192661854768155in"}
 >
 > 1 官网是默认下载的Ubuntu没有vim命令
@@ -1518,19 +1425,19 @@ height="2.6264490376202976in"}
 > 新镜像是从 base
 > 镜像一层一层叠加生成的。每安装一个软件，就在现有镜像的基础上增加一层
 >
-> ![graphic]( image/media/image83.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image83.jpeg){width="4.6194444444444445in"
 > height="1.5091797900262467in"}
 
-5.  []{#_Toc256000005 .anchor}**本地镜像发布到阿里云**
+### 1.5、本地镜像发布到阿里云
 
-> ![]( image/media/image84.png){width="0.372412510936133in"
+> ![](image/media/image84.png){width="0.372412510936133in"
 > height="0.372412510936133in"}
 
 1.  **本地镜像发布到阿里云流程**
 
 >  
 >
-> ![graphic]( image/media/image85.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image85.jpeg){width="4.591666666666667in"
 > height="4.083865923009624in"}
 >
 >  
@@ -1550,12 +1457,12 @@ height="2.6264490376202976in"}
 >
 > 本次案例centos+ubuntu两个，当堂讲解一个，家庭作业一个，请大家务必动手，亲自实操。
 >
-> ![graphic]( image/media/image86.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image86.jpeg){width="4.4527777777777775in"
 > height="1.789841426071741in"}
 >
 >  
 >
-> ![graphic]( image/media/image87.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image87.jpeg){width="4.4527777777777775in"
 > height="2.1856124234470693in"}
 
 -   后面的DockerFile章节，第2种方法
@@ -1566,7 +1473,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image88.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image88.jpeg){width="4.6194444444444445in"
 > height="0.31581364829396325in"}
 >
 >  
@@ -1579,7 +1486,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image89.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image89.jpeg){width="4.6194444444444445in"
 > height="0.4188921697287839in"}
 
 -   阿里云开发者平台
@@ -1588,45 +1495,45 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image90.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image90.jpeg){width="4.4527777777777775in"
 > height="1.9681561679790027in"}
 
 -   创建仓库镜像
 
 >  
 >
-> ![graphic]( image/media/image91.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image91.jpeg){width="4.6194444444444445in"
 > height="2.2145122484689415in"}
 
 -   选择控制台，进入容器镜像服务
 
 >  
 >
-> ![graphic]( image/media/image92.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image92.jpeg){width="4.4527777777777775in"
 > height="3.4143602362204724in"}
 
 -   选择个人实例
 
 >  
 >
-> ![graphic]( image/media/image93.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image93.jpeg){width="4.4527777777777775in"
 > height="1.919760498687664in"}
 
 -   命名空间
 
-> ![graphic]( image/media/image94.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image94.jpeg){width="4.4527777777777775in"
 > height="2.2819925634295712in"}
 >
 >  
 
 -   继续
 
-> ![graphic]( image/media/image95.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image95.jpeg){width="4.4527777777777775in"
 > height="2.3883081802274715in"}
 
 -   仓库名称
 
->  ![graphic]( image/media/image96.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image96.jpeg){width="4.4527777777777775in"
 > height="2.221363735783027in"}
 >
 >  
@@ -1635,17 +1542,17 @@ height="2.6264490376202976in"}
 
 -   继续
 
-> ![graphic]( image/media/image97.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image97.jpeg){width="4.4527777777777775in"
 > height="1.976738845144357in"}
 >
-> ![graphic]( image/media/image98.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image98.jpeg){width="4.4527777777777775in"
 > height="2.103383639545057in"}
 
 -   进入管理界面获得脚本
 
 >  
 >
-> ![graphic]( image/media/image99.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image99.jpeg){width="4.4527777777777775in"
 > height="1.4118558617672792in"}
 
 -   将镜像推送到阿里云
@@ -1654,7 +1561,7 @@ height="2.6264490376202976in"}
 
         -   管理界面脚本
 
-> ![graphic]( image/media/image100.png){width="4.4527777777777775in"
+> ![graphic](image/media/image100.png){width="4.4527777777777775in"
 > height="3.063432852143482in"}
 
 -   脚本实例
@@ -1670,7 +1577,7 @@ height="2.6264490376202976in"}
   上面命令是阳哥自己本地的，你自己酌情处理，不要粘贴我的。
   -----------------------------------------------------------------------
 
->  ![graphic]( image/media/image101.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image101.jpeg){width="4.4527777777777775in"
 > height="2.0170319335083113in"}
 
 4.  **将阿里云上的镜像下载到本地**
@@ -1679,23 +1586,23 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image102.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image102.jpeg){width="4.6194444444444445in"
 > height="1.6466535433070866in"}
 >
 >  
 >
 > docker pull registry.cn-hangzhou.aliyuncs.com/atguiguwh/myubuntu:1.1
 
-6.  []{#_Toc256000006 .anchor}**本地镜像发布到私有库**
+### 1.6、本地镜像发布到私有库
 
-> ![]( image/media/image103.png){width="0.3691994750656168in"
+> ![](image/media/image103.png){width="0.3691994750656168in"
 > height="0.3691994750656168in"}
 
 1.  **本地镜像发布到私有库流程**
 
 >  
 >
->  ![graphic]( image/media/image104.png){width="4.591666666666667in"
+>  ![graphic](image/media/image104.png){width="4.591666666666667in"
 > height="4.083865923009624in"}
 
 2.  **是什么**
@@ -1722,10 +1629,10 @@ height="2.6264490376202976in"}
 
 > docker pull registry 
 >
-> ![graphic]( image/media/image105.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image105.jpeg){width="4.6194444444444445in"
 > height="0.8635444006999126in"}
 >
-> ![graphic]( image/media/image106.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image106.jpeg){width="4.6194444444444445in"
 > height="1.2777187226596676in"}
 >
 >  
@@ -1745,7 +1652,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image107.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image107.jpeg){width="4.6194444444444445in"
 > height="0.785340113735783in"}
 >
 >  
@@ -1760,7 +1667,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image108.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image108.jpeg){width="4.4527777777777775in"
 > height="1.688766404199475in"}
 
 -   外网连通的情况下，安装ifconfig命令并测试通过
@@ -1771,10 +1678,10 @@ height="2.6264490376202976in"}
 >
 > apt-get install net-tools
 >
-> ![graphic]( image/media/image109.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image109.jpeg){width="4.4527777777777775in"
 > height="2.933522528433946in"}
 >
-> ![graphic]( image/media/image110.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image110.jpeg){width="4.4527777777777775in"
 > height="2.180952537182852in"}
 
 -   安装完成后，commit我们自己的新镜像
@@ -1791,7 +1698,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image111.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image111.jpeg){width="4.4527777777777775in"
 > height="1.7596609798775154in"}
 >
 >  
@@ -1802,7 +1709,7 @@ height="2.6264490376202976in"}
 >
 > 2我们自己commit构建的新镜像，新增加了ifconfig功能，可以成功使用。
 >
-> ![graphic]( image/media/image112.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image112.jpeg){width="4.4527777777777775in"
 > height="2.4045002187226596in"}
 >
 >  
@@ -1817,7 +1724,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image113.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image113.jpeg){width="4.6194444444444445in"
 > height="0.6772736220472441in"}
 
 -   将新镜像zzyyubuntu:1.2修改符合私服规范的Tag
@@ -1837,14 +1744,14 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image114.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image114.jpeg){width="4.6194444444444445in"
 > height="1.2104429133858268in"}
 
 -   修改配置文件使之支持http
 
 >  
 >
-> ![graphic]( image/media/image115.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image115.jpeg){width="4.6194444444444445in"
 > height="1.0329593175853018in"}
 >
 >  
@@ -1886,7 +1793,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image116.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image116.jpeg){width="4.6194444444444445in"
 > height="1.4643897637795276in"}
 >
 >  
@@ -1901,30 +1808,30 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image117.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image117.jpeg){width="4.6194444444444445in"
 > height="1.1749650043744533in"}
 
 -   pull到本地并运行
 
 > docker pull 192.168.111.162:5000/zzyyubuntu:1.2
 >
-> ![graphic]( image/media/image118.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image118.jpeg){width="4.6194444444444445in"
 > height="2.094864391951006in"}
 >
 > docker run -it 镜像ID /bin/bash
 >
-> ![graphic]( image/media/image119.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image119.jpeg){width="4.6194444444444445in"
 > height="1.3721609798775154in"}
 
-7.  []{#_Toc256000007 .anchor}**Docker容器数据卷**
+### 1.7、Docker容器数据卷
 
-> ![]( image/media/image120.png){width="0.3671894138232721in"
+> ![](image/media/image120.png){width="0.3671894138232721in"
 > height="0.3671894138232721in"}
 
 1.  **坑：容器卷记得加入**
 
 --------- -----------------------------------------------------------------------------------
-  单图标    ![]( image/media/image32.png){width="0.1527777777777778in"
+  单图标    ![](image/media/image32.png){width="0.1527777777777778in"
             height="0.1527777777777778in"} CustomIcon-663735520; \[\"\",
             \"4MyPJwAAAAAAAAAAAAAAAA==\"\]
 
@@ -1959,7 +1866,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image121.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image121.jpeg){width="4.591666666666667in"
 > height="1.2266415135608049in"}
 
 3.  **是什么**
@@ -2027,7 +1934,7 @@ height="2.6264490376202976in"}
 
 -----------------------------------------------------------------------
 
->  ![graphic]( image/media/image122.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image122.jpeg){width="4.4527777777777775in"
 > height="2.6652438757655292in"}
 
 -   docker run -it \--privileged=true -v /宿主机绝对路径目录:/容器内目录
@@ -2046,7 +1953,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image123.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image123.jpeg){width="4.4527777777777775in"
 > height="1.6582753718285215in"}
 
 -   容器和宿主机之间数据共享
@@ -2057,21 +1964,21 @@ height="2.6264490376202976in"}
 >
 > 3 docker容器stop，主机修改，docker容器重启看数据是否同步。
 >
-> ![graphic]( image/media/image124.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image124.jpeg){width="4.4527777777777775in"
 > height="1.444963910761155in"}
 
 -   读写规则映射添加说明
 
     -   读写(默认)
 
-> ![graphic]( image/media/image125.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image125.jpeg){width="4.4527777777777775in"
 > height="0.8049956255468067in"}
 >
 >  
 >
 >  rw = read + write
 >
-> ![graphic]( image/media/image126.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image126.jpeg){width="4.4527777777777775in"
 > height="2.1592136920384952in"}
 >
 >  
@@ -2092,7 +1999,7 @@ height="2.6264490376202976in"}
 
     -   容器实例内部被限制，只能读取不能写
 
-> ![graphic]( image/media/image127.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image127.jpeg){width="4.4527777777777775in"
 > height="1.2316196412948381in"}
 >
 >  
@@ -2125,25 +2032,25 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image128.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image128.jpeg){width="4.4527777777777775in"
 > height="0.8501607611548556in"}
 >
 >  
 >
-> ![graphic]( image/media/image129.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image129.jpeg){width="4.4527777777777775in"
 > height="0.8570472440944882in"}
 
 -   容器2继承容器1的卷规则
 
-> ![graphic]( image/media/image130.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image130.jpeg){width="4.4527777777777775in"
 > height="1.275767716535433in"}
 
 -   docker run -it \--privileged=true \--volumes-from 父类 \--name u2
     ubuntu
 
-8.  []{#_Toc256000008 .anchor}**Docker常规安装简介**
+### 1.8、Docker常规安装简介
 
-> ![]( image/media/image131.png){width="0.37124015748031497in"
+> ![](image/media/image131.png){width="0.37124015748031497in"
 > height="0.37124015748031497in"}
 
 1.  **总体步骤**
@@ -2168,17 +2075,17 @@ height="2.6264490376202976in"}
 
         -   docker search tomcat
 
-> ![graphic]( image/media/image132.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image132.jpeg){width="4.4527777777777775in"
 > height="2.2307370953630796in"}
 
 -   从docker hub上拉取tomcat镜像到本地
 
     -   docker pull tomcat
 
-> ![graphic]( image/media/image133.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image133.jpeg){width="4.4527777777777775in"
 > height="2.5556430446194227in"}
 >
-> ![graphic]( image/media/image134.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image134.jpeg){width="4.4527777777777775in"
 > height="0.7568613298337707in"}
 
 -   docker images查看是否有拉取到的tomcat
@@ -2187,7 +2094,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image135.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image135.jpeg){width="4.6194444444444445in"
 > height="0.7397145669291338in"}
 
 -   使用tomcat镜像创建容器实例(也叫运行镜像)
@@ -2198,7 +2105,7 @@ height="2.6264490376202976in"}
 
         -   -P 大写，随机分配端口
 
-> ![graphic]( image/media/image136.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image136.jpeg){width="4.4527777777777775in"
 > height="1.1679418197725284in"}
 
 -   i:交互
@@ -2216,28 +2123,28 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image137.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image137.jpeg){width="4.4527777777777775in"
 > height="1.5483147419072616in"}
 
 -   解决
 
     -   可能没有映射端口或者没有关闭防火墙
 
-> ![graphic]( image/media/image136.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image136.jpeg){width="4.4527777777777775in"
 > height="1.1679418197725284in"}
 
 -   把webapps.dist目录换成webapps
 
     -   先成功启动tomcat
 
-> ![graphic]( image/media/image138.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image138.jpeg){width="4.4527777777777775in"
 > height="1.2833475503062117in"}
 
 -   查看webapps 文件夹查看为空
 
 >  
 >
-> ![graphic]( image/media/image139.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image139.jpeg){width="4.4527777777777775in"
 > height="2.7858694225721785in"}
 
 -   免修改版说明
@@ -2247,7 +2154,7 @@ height="2.6264490376202976in"}
     -   docker run -d -p 8080:8080 \--name mytomcat8
         billygoo/tomcat8-jdk8
 
-> ![graphic]( image/media/image140.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image140.jpeg){width="4.4527777777777775in"
 > height="2.1375623359580054in"}
 
 3.  **安装mysql**
@@ -2256,21 +2163,21 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image141.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image141.jpeg){width="4.6194444444444445in"
 > height="1.1520734908136483in"}
 
 -   从docker hub上(阿里云加速器)拉取mysql镜像到本地标签为5.7
 
 >  
 >
-> ![graphic]( image/media/image142.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image142.jpeg){width="4.6194444444444445in"
 > height="2.0387489063867017in"}
 
 -   使用mysql5.7镜像创建容器(也叫运行镜像)
 
     -   命令出处，哪里来的？
 
-> ![graphic]( image/media/image143.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image143.jpeg){width="4.4527777777777775in"
 > height="1.1372583114610673in"}
 
 -   简单版
@@ -2289,19 +2196,19 @@ height="2.6264490376202976in"}
 
 >   
 >
-> ![graphic]( image/media/image144.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image144.jpeg){width="4.4527777777777775in"
 > height="1.4710662729658792in"}
 
 -   建库建表插入数据
 
-> ![graphic]( image/media/image145.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image145.jpeg){width="4.4527777777777775in"
 > height="3.828556430446194in"}
 
 -   外部Win10也来连接运行在dokcer上的mysql容器实例服务
 
 >  
 >
-> ![graphic]( image/media/image146.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image146.jpeg){width="4.4527777777777775in"
 > height="3.277244094488189in"}
 
 -   问题
@@ -2310,7 +2217,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image147.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image147.jpeg){width="4.4527777777777775in"
 > height="1.8205489938757655in"}
 
 -   为什么报错?
@@ -2327,7 +2234,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image148.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image148.jpeg){width="4.4527777777777775in"
 > height="2.416826334208224in"}
 
 -   删除容器后，里面的mysql数据如何办
@@ -2351,7 +2258,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image149.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image149.jpeg){width="4.4527777777777775in"
 > height="1.6595220909886264in"}
 
 -   新建my.cnf
@@ -2374,23 +2281,23 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image150.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image150.jpeg){width="4.4527777777777775in"
 > height="1.584387576552931in"}
 
 -   重新启动mysql容器实例再重新进入并查看字符编码
 
->  ![graphic]( image/media/image151.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image151.jpeg){width="4.4527777777777775in"
 > height="2.039745188101487in"}
 >
-> ![graphic]( image/media/image152.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image152.jpeg){width="4.4527777777777775in"
 > height="1.9842443132108487in"}
 
 -   再新建库新建表再插入中文测试
 
-> ![graphic]( image/media/image153.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image153.jpeg){width="4.4527777777777775in"
 > height="1.9169181977252843in"}
 >
-> ![graphic]( image/media/image154.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image154.jpeg){width="4.4527777777777775in"
 > height="2.598105861767279in"}
 
 -   结论
@@ -2413,7 +2320,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image155.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image155.jpeg){width="4.4527777777777775in"
 > height="3.114886264216973in"}
 
 -   假如将当前容器实例删除，再重新来一次，之前建的db01实例还有吗？trytry
@@ -2424,14 +2331,14 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image156.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image156.jpeg){width="4.6194444444444445in"
 > height="1.4730850831146107in"}
 
 -   入门命令
 
 >  
 >
-> ![graphic]( image/media/image157.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image157.jpeg){width="4.6194444444444445in"
 > height="1.4371609798775153in"}
 
 -   **命令提醒：容器卷记得加入**\--privileged=true
@@ -2447,7 +2354,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image158.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image158.jpeg){width="4.6194444444444445in"
 > height="1.63915791776028in"}
 >
 >  
@@ -2465,7 +2372,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image159.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image159.jpeg){width="4.6194444444444445in"
 > height="2.1603718285214346in"}
 >
 > 2 拷贝配置文件
@@ -2488,7 +2395,7 @@ height="2.6264490376202976in"}
 >
 >      注释掉 \# bind 127.0.0.1
 >
-> ![graphic]( image/media/image160.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image160.jpeg){width="4.6194444444444445in"
 > height="0.6256583552055993in"}
 >
 >  
@@ -2498,7 +2405,7 @@ height="2.6264490376202976in"}
 >      将daemonize yes注释起来或者 daemonize no设置，因为该配置和docker
 > run中-d参数冲突，会导致容器一直启动失败
 >
->  ![graphic]( image/media/image161.jpeg){width="4.6194444444444445in"
+>  ![graphic](image/media/image161.jpeg){width="4.6194444444444445in"
 > height="0.690485564304462in"}
 >
 >   3.4 开启redis数据持久化  appendonly yes  可选
@@ -5829,14 +5736,14 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image162.jpeg){width="4.6194444444444445in"
+>  ![graphic](image/media/image162.jpeg){width="4.6194444444444445in"
 > height="0.744851268591426in"}
 
 -   测试redis-cli连接上来
 
 >  
 >
-> ![graphic]( image/media/image163.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image163.jpeg){width="4.6194444444444445in"
 > height="1.6534076990376203in"}
 >
 >  docker exec -it 运行着Rediis服务的容器ID redis-cli
@@ -5847,7 +5754,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image164.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image164.jpeg){width="4.4527777777777775in"
 > height="2.02833552055993in"}
 >
 >  
@@ -5856,7 +5763,7 @@ height="2.6264490376202976in"}
 
 -   修改后
 
-> ![graphic]( image/media/image165.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image165.jpeg){width="4.4527777777777775in"
 > height="1.910369641294838in"}
 >
 >  
@@ -5870,35 +5777,33 @@ height="2.6264490376202976in"}
 ```
 -   测试redis-cli连接上来第2次
 
-> ![graphic]( image/media/image166.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image166.jpeg){width="4.6194444444444445in"
 > height="1.6716437007874017in"}
 
 5.  **安装Nginx**
-
-    -   见高级篇Portainer
+-   见高级篇Portainer
 
 ```{=html}
 <!-- -->
 ```
-2.  []{#_Toc256000009 .anchor}高级篇(大厂进阶)
+## 2、高级篇(大厂进阶)
 
-> ![]( image/media/image167.png){width="0.5in"
+> ![](image/media/image167.png){width="0.5in"
 > height="0.5in"}
 
-1.  []{#_Toc256000010 .anchor}**Docker复杂安装详说**
+### 2.1、Docker复杂安装详说
 
-> ![]( image/media/image168.png){width="0.3733300524934383in"
+> ![](image/media/image168.png){width="0.3733300524934383in"
 > height="0.3733300524934383in"}
 
 1.  **安装mysql主从复制**
-
-    -   主从复制原理
-
-        -   默认你懂
-
-    -   主从搭建步骤
-
-        -   新建主服务器容器实例3307
+-   主从复制原理
+    
+    -   默认你懂
+    
+-   主从搭建步骤
+    
+    -   新建主服务器容器实例3307
 
 >  
 >
@@ -6059,7 +5964,7 @@ height="2.6264490376202976in"}
 
   -----------------------------------------------------------------------
 
->  ![graphic]( image/media/image169.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image169.jpeg){width="4.4527777777777775in"
 > height="1.2684470691163605in"}
 >
 >  
@@ -6082,7 +5987,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image170.png){width="4.4527777777777775in"
+> ![graphic](image/media/image170.png){width="4.4527777777777775in"
 > height="1.3966272965879265in"}
 >
 >  
@@ -6093,19 +5998,19 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image170.png){width="4.4527777777777775in"
+> ![graphic](image/media/image170.png){width="4.4527777777777775in"
 > height="1.3966272965879265in"}
 
 -   在从数据库中开启主从同步
 
-    ![]( image/media/image171.png){width="4.052083333333333in"
+    ![](image/media/image171.png){width="4.052083333333333in"
     height="0.7083333333333334in"}
 
 -   查看从数据库状态发现已经同步
 
 >  
 >
-> ![graphic]( image/media/image172.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image172.jpeg){width="4.4527777777777775in"
 > height="3.095304024496938in"}
 
 -   主从复制测试
@@ -6131,7 +6036,7 @@ height="2.6264490376202976in"}
 
                 -   哈希取余分区
 
-> ![graphic]( image/media/image173.png){width="4.4527777777777775in"
+> ![graphic](image/media/image173.png){width="4.4527777777777775in"
 > height="3.686012685914261in"}
 
 +-----------------------------------------------------------------------+
@@ -6167,7 +6072,7 @@ height="2.6264490376202976in"}
 
 -   缺点那？？？
 
-> ![graphic]( image/media/image173.png){width="4.4527777777777775in"
+> ![graphic](image/media/image173.png){width="4.4527777777777775in"
 > height="3.686012685914261in"}
 
 +-----------------------------------------------------------------------+
@@ -6229,7 +6134,7 @@ height="2.6264490376202976in"}
 >    它也是按照使用取模的方法，前面笔记介绍的节点取模法是对节点（服务器）的数量进行取模。而一致性Hash算法是对2\^32取模，简单来说，一致性Hash算法将整个哈希值空间组织成一个虚拟的圆环，如假设某哈希函数H的值空间为0-2\^32-1（即哈希值是一个32位无符号整形），整个哈希环如下图：整个空间按顺时针方向组织，圆环的正上方的点代表0，0点右侧的第一个点代表1，以此类推，2、3、4、......直到2\^32-1，也就是说0点左侧的第一个点代表2\^32-1，
 > 0和2\^32-1在零点中方向重合，我们把这个由2\^32个点组成的圆环称为Hash环。
 >
-> ![graphic]( image/media/image174.jpeg){width="4.135416666666667in"
+> ![graphic](image/media/image174.jpeg){width="4.135416666666667in"
 > height="4.322916666666667in"}
 
 -   服务器IP节点映射
@@ -6240,7 +6145,7 @@ height="2.6264490376202976in"}
 >
 >    将各个服务器使用Hash进行一个哈希，具体可以选择服务器的IP或主机名作为关键字进行哈希，这样每台机器就能确定其在哈希环上的位置。假如4个节点NodeA、B、C、D，经过IP地址的哈希函数计算(hash(ip))，使用IP地址哈希后在环空间的位置如下：  
 >
-> ![graphic]( image/media/image175.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image175.jpeg){width="4.4527777777777775in"
 > height="4.313917322834645in"}
 
 -   key落到服务器的落键规则
@@ -6251,7 +6156,7 @@ height="2.6264490376202976in"}
 > D四个数据对象，经过哈希计算后，在环空间上的位置如下：根据一致性Hash算法，数据A会被定为到Node
 > A上，B被定为到Node B上，C被定为到Node C上，D被定为到Node D上。
 >
-> ![graphic]( image/media/image176.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image176.jpeg){width="4.4527777777777775in"
 > height="4.4970395888014in"}
 
 -   优点
@@ -6264,7 +6169,7 @@ height="2.6264490376202976in"}
 > C宕机，可以看到此时对象A、B、D不会受到影响，只有C对象被重定位到Node
 > D。一般的，在一致性Hash算法中，如果一台服务器不可用，则受影响的数据仅仅是此服务器到其环空间中前一台服务器（即沿着逆时针方向行走遇到的第一台服务器）之间数据，其它不会受到影响。简单说，就是C挂了，受到影响的只是B、C之间的数据，并且这些数据会转移到D进行存储。
 >
-> ![graphic]( image/media/image177.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image177.jpeg){width="4.4527777777777775in"
 > height="4.514014654418197in"}
 >
 >  
@@ -6277,7 +6182,7 @@ height="2.6264490376202976in"}
 >
 > 不会导致hash取余全部数据重新洗牌。
 >
-> ![graphic]( image/media/image178.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image178.jpeg){width="4.4527777777777775in"
 > height="4.05659230096238in"}
 >
 >  
@@ -6294,7 +6199,7 @@ height="2.6264490376202976in"}
 >
 > 例如系统中只有两台服务器：
 >
->  ![graphic]( image/media/image179.jpeg){width="3.6875in"
+>  ![graphic](image/media/image179.jpeg){width="3.6875in"
 > height="3.8125in"}
 
 -   小总结
@@ -6327,7 +6232,7 @@ height="2.6264490376202976in"}
 >
 > 1 为什么出现
 >
-> ![graphic]( image/media/image180.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image180.jpeg){width="4.4527777777777775in"
 > height="0.687755905511811in"}
 >
 > 哈希槽实质就是一个数组，数组\[0,2\^14 -1\]形成hash slot空间。
@@ -6338,7 +6243,7 @@ height="2.6264490376202976in"}
 >
 > 解决均匀分配的问题，在数据和节点之间又加入了一层，把这层称为哈希槽（slot），用于管理数据和节点之间的关系，现在就相当于节点上放的是槽，槽里放的是数据。
 >
-> ![graphic]( image/media/image181.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image181.jpeg){width="4.4527777777777775in"
 > height="1.361593394575678in"}
 >
 > 槽解决的是粒度问题，相当于把粒度变大了，这样便于数据移动。
@@ -6369,8 +6274,8 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image182.jpeg){width="4.4527777777777775in"
-> height="3.1080391513560803in"}![graphic]( image/media/image183.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image182.jpeg){width="4.4527777777777775in"
+> height="3.1080391513560803in"}![graphic](image/media/image183.jpeg){width="4.4527777777777775in"
 > height="1.4820133420822397in"}
 
 -   3主3从redis集群扩缩容配置案例架构说明
@@ -6389,7 +6294,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image184.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image184.jpeg){width="4.4527777777777775in"
 > height="0.11608705161854768in"}
 
 -   systemctl start docker
@@ -6435,7 +6340,7 @@ height="2.6264490376202976in"}
 >
 > **如果运行成功，效果如下：**
 >
-> ![graphic]( image/media/image185.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image185.jpeg){width="4.4527777777777775in"
 > height="1.2147331583552057in"}
 
 -   命令分步解释
@@ -6502,16 +6407,16 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image186.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image186.jpeg){width="4.4527777777777775in"
 > height="0.24060148731408573in"}
 >
-> ![graphic]( image/media/image187.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image187.jpeg){width="4.4527777777777775in"
 > height="2.75704615048119in"}
 >
-> ![graphic]( image/media/image188.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image188.jpeg){width="4.4527777777777775in"
 > height="2.782985564304462in"}
 >
-> ![graphic]( image/media/image189.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image189.jpeg){width="4.4527777777777775in"
 > height="1.218781714785652in"}
 >
 >  
@@ -6527,12 +6432,12 @@ height="2.6264490376202976in"}
 
     -   链接进入6381作为切入点，查看节点状态
 
->  ![graphic]( image/media/image190.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image190.jpeg){width="4.4527777777777775in"
 > height="4.372627952755906in"}
 >
 >  
 >
-> ![graphic]( image/media/image191.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image191.jpeg){width="4.4527777777777775in"
 > height="0.9043678915135608in"}
 
 -   cluster info
@@ -6554,12 +6459,12 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image192.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image192.jpeg){width="4.4527777777777775in"
 > height="0.5506966316710411in"}
 >
 > 加入参数-c，优化路由
 >
-> ![graphic]( image/media/image193.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image193.jpeg){width="4.4527777777777775in"
 > height="1.6396314523184603in"}
 
 -   查看集群信息
@@ -6573,10 +6478,10 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image194.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image194.jpeg){width="4.4527777777777775in"
 > height="2.528461286089239in"}
 >
-> ![graphic]( image/media/image195.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image195.jpeg){width="4.4527777777777775in"
 > height="2.6106386701662294in"}
 
 -   容错切换迁移
@@ -6591,7 +6496,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image196.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image196.jpeg){width="4.4527777777777775in"
 > height="0.9649879702537183in"}
 >
 >  
@@ -6608,7 +6513,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image197.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image197.jpeg){width="4.4527777777777775in"
 > height="1.4994050743657044in"}
 >
 >  
@@ -6617,7 +6522,7 @@ height="2.6264490376202976in"}
 
 -   先启6381
 
-> ![graphic]( image/media/image198.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image198.jpeg){width="4.4527777777777775in"
 > height="1.571761811023622in"}
 
 -   docker start redis-node-1
@@ -6626,7 +6531,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image199.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image199.jpeg){width="4.4527777777777775in"
 > height="0.7366972878390201in"}
 
 -   docker stop redis-node-5
@@ -6635,7 +6540,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image200.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image200.jpeg){width="4.4527777777777775in"
 > height="0.7913856080489938in"}
 
 -   docker start redis-node-5
@@ -6651,7 +6556,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image201.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image201.jpeg){width="4.4527777777777775in"
 > height="3.0659492563429573in"}
 
 -   主从扩容案例
@@ -6694,10 +6599,10 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image202.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image202.jpeg){width="4.4527777777777775in"
 > height="2.0452515310586175in"}
 >
-> ![graphic]( image/media/image203.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image203.jpeg){width="4.4527777777777775in"
 > height="0.9900535870516185in"}
 
 -   检查集群情况第1次
@@ -6713,10 +6618,10 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image204.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image204.jpeg){width="4.4527777777777775in"
 > height="2.898943569553806in"}
 >
-> ![graphic]( image/media/image205.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image205.jpeg){width="4.4527777777777775in"
 > height="1.1424037620297463in"}
 
 -   重新分派槽号
@@ -6729,10 +6634,10 @@ height="2.6264490376202976in"}
 | redis-cli \--cluster reshard 192.168.111.147:6381                     |
 +-----------------------------------------------------------------------+
 
-> ![graphic]( image/media/image206.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image206.jpeg){width="4.4527777777777775in"
 > height="2.9620647419072617in"}
 >
-> ![graphic]( image/media/image207.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image207.jpeg){width="4.4527777777777775in"
 > height="2.9950590551181104in"}
 
 -   检查集群情况第2次
@@ -6746,10 +6651,10 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image208.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image208.jpeg){width="4.4527777777777775in"
 > height="3.0851848206474193in"}
 >
-> ![graphic]( image/media/image209.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image209.jpeg){width="4.4527777777777775in"
 > height="1.1383508311461068in"}
 
 -   槽号分派说明
@@ -6765,7 +6670,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image210.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image210.jpeg){width="4.4527777777777775in"
 > height="2.7054090113735785in"}
 
 -   为主节点6387分配从节点6388
@@ -6786,10 +6691,10 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image211.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image211.jpeg){width="4.4527777777777775in"
 > height="1.7534634733158356in"}
 >
-> ![graphic]( image/media/image212.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image212.jpeg){width="4.4527777777777775in"
 > height="1.0647944006999126in"}
 
 -   检查集群情况第3次
@@ -6803,10 +6708,10 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image213.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image213.jpeg){width="4.4527777777777775in"
 > height="0.9715146544181977in"}
 >
-> ![graphic]( image/media/image214.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image214.jpeg){width="4.4527777777777775in"
 > height="3.2044553805774276in"}
 
 -   主从缩容案例
@@ -6826,7 +6731,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image215.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image215.jpeg){width="4.4527777777777775in"
 > height="0.991509186351706in"}
 >
 >  
@@ -6848,7 +6753,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image216.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image216.jpeg){width="4.4527777777777775in"
 > height="0.6891655730533683in"}
 
 -----------------------------------------------------------------------
@@ -6860,7 +6765,7 @@ height="2.6264490376202976in"}
 >
 >  检查一下发现，6388被删除了，只剩下7台机器了。
 >
->  ![graphic]( image/media/image217.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image217.jpeg){width="4.4527777777777775in"
 > height="2.711793525809274in"}
 >
 >  
@@ -6874,13 +6779,13 @@ height="2.6264490376202976in"}
 
 >  
 >
->  ![graphic]( image/media/image218.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image218.jpeg){width="4.4527777777777775in"
 > height="2.9054046369203848in"}
 >
-> ![graphic]( image/media/image219.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image219.jpeg){width="4.4527777777777775in"
 > height="2.3898458005249346in"}
 >
-> ![graphic]( image/media/image220.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image220.jpeg){width="4.4527777777777775in"
 > height="0.20239938757655293in"}
 
 -   检查集群情况第二次
@@ -6898,7 +6803,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image221.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image221.jpeg){width="4.4527777777777775in"
 > height="2.8805194663167106in"}
 
 -   将6387删除
@@ -6916,7 +6821,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image222.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image222.jpeg){width="4.4527777777777775in"
 > height="0.4654615048118985in"}
 
 -   检查集群情况第三次
@@ -6930,12 +6835,12 @@ height="2.6264490376202976in"}
 
 >  
 >
->  ![graphic]( image/media/image223.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image223.jpeg){width="4.4527777777777775in"
 > height="2.995618985126859in"}
 
-2.  []{#_Toc256000011 .anchor}**DockerFile解析**
+### 2.2、DockerFile解析
 
-> ![]( image/media/image224.png){width="0.3645833333333333in"
+> ![](image/media/image224.png){width="0.3645833333333333in"
 > height="0.3645833333333333in"}
 
 1.  **是什么**
@@ -6946,7 +6851,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image225.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image225.jpeg){width="4.6194444444444445in"
 > height="3.804248687664042in"}
 
 -   官网
@@ -6999,7 +6904,7 @@ height="2.6264490376202976in"}
 >
 > Dockerfile面向开发，Docker镜像成为交付标准，Docker容器则涉及部署与运维，三者缺一不可，合力充当Docker体系的基石。
 >
-> ![graphic]( image/media/image226.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image226.jpeg){width="4.6194444444444445in"
 > height="1.9680916447944008in"}
 >
 > 1
@@ -7042,7 +6947,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image227.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image227.jpeg){width="4.4527777777777775in"
 > height="0.7497484689413824in"}
 >
 >  
@@ -7057,7 +6962,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image228.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image228.jpeg){width="4.4527777777777775in"
 > height="0.698982939632546in"}
 
 -   RUN是在 docker build时运行
@@ -7120,7 +7025,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image229.png){width="4.4527777777777775in"
+> ![graphic](image/media/image229.png){width="4.4527777777777775in"
 > height="1.2867574365704286in"}
 
 -   注意
@@ -7132,12 +7037,12 @@ height="2.6264490376202976in"}
 
         -   官网最后一行命令
 
-            ![]( image/media/image230.png){width="3.1041666666666665in"
+            ![](image/media/image230.png){width="3.1041666666666665in"
             height="0.6145833333333334in"}
 
         -   我们演示自己的覆盖操作
 
-            ![]( image/media/image231.png){width="4.527777777777778in"
+            ![](image/media/image231.png){width="4.527777777777778in"
             height="0.3116524496937883in"}
 
 -   它和前面RUN命令的区别
@@ -7160,20 +7065,20 @@ height="2.6264490376202976in"}
 
 >  
 >
-> 命令格式：![graphic]( image/media/image232.jpeg){width="4.4527777777777775in"
+> 命令格式：![graphic](image/media/image232.jpeg){width="4.4527777777777775in"
 > height="0.3810258092738408in"}
 >
 > ENTRYPOINT可以和CMD一起用，一般是变参才会使用 CMD ，这里的 CMD
 > 等于是在给 ENTRYPOINT 传参。
 >
-> 当指定了ENTRYPOINT后，CMD的含义就发生了变化，不再是直接运行其命令而是将CMD的内容作为参数传递给ENTRYPOINT指令，他两个组合会变成![graphic]( image/media/image233.jpeg){width="2.6458333333333335in"
+> 当指定了ENTRYPOINT后，CMD的含义就发生了变化，不再是直接运行其命令而是将CMD的内容作为参数传递给ENTRYPOINT指令，他两个组合会变成![graphic](image/media/image233.jpeg){width="2.6458333333333335in"
 > height="0.46875in"}
 >
 >  
 >
 > 案例如下：假设已通过 Dockerfile 构建了 nginx:test 镜像：
 >
-> ![graphic]( image/media/image234.jpeg){width="3.84375in"
+> ![graphic](image/media/image234.jpeg){width="3.84375in"
 > height="1.1875in"}
 
 ------------------ ------------------------ --------------------------------
@@ -7203,7 +7108,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image235.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image235.jpeg){width="4.6194444444444445in"
 > height="3.1775765529308835in"}
 
 4.  **案例**
@@ -7224,7 +7129,7 @@ height="2.6264490376202976in"}
 >
 > https://www.oracle.com/java/technologies/downloads/#java8
 >
-> ![graphic]( image/media/image236.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image236.jpeg){width="4.4527777777777775in"
 > height="1.5339370078740158in"}
 
 -   https://mirrors.yangxingzhen.com/jdk/
@@ -7236,7 +7141,7 @@ height="2.6264490376202976in"}
 
     -   准备编写Dockerfile文件
 
-> ![graphic]( image/media/image237.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image237.jpeg){width="4.4527777777777775in"
 > height="1.1525437445319335in"}
 >
 >  
@@ -7314,10 +7219,10 @@ height="2.6264490376202976in"}
 >
 >  
 >
->  ![graphic]( image/media/image238.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image238.jpeg){width="4.4527777777777775in"
 > height="3.195122484689414in"}
 >
-> ![graphic]( image/media/image239.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image239.jpeg){width="4.4527777777777775in"
 > height="3.2797758092738407in"}
 
 -   注意，上面TAG后面有个空格，有个点
@@ -7333,7 +7238,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image240.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image240.jpeg){width="4.4527777777777775in"
 > height="2.472648731408574in"}
 
 -   再体会下UnionFS（联合文件系统）
@@ -7343,7 +7248,7 @@ height="2.6264490376202976in"}
 > 文件系统是 Docker
 > 镜像的基础。镜像可以通过分层来进行继承，基于基础镜像（没有父镜像），可以制作各种具体的应用镜像。
 >
-> ![graphic]( image/media/image72.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image72.jpeg){width="4.4527777777777775in"
 > height="2.658122265966754in"} 
 >
 > 特性：一次同时加载多个文件系统，但从外面看起来，只能看到一个文件系统，联合加载会把各层文件系统叠加起来，这样最终的文件系统会包含所有底层的文件和目录
@@ -7372,7 +7277,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image241.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image241.jpeg){width="4.4527777777777775in"
 > height="0.42043416447944004in"}
 
 -   查看
@@ -7383,7 +7288,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image242.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image242.jpeg){width="4.4527777777777775in"
 > height="0.6032797462817148in"}
 
 -   删除
@@ -7398,7 +7303,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image243.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image243.jpeg){width="4.4527777777777775in"
 > height="1.547917760279965in"}
 
 -   家庭作业-自定义镜像myubuntu
@@ -7407,7 +7312,7 @@ height="2.6264490376202976in"}
 
         -   准备编写DockerFile文件
 
-> ![graphic]( image/media/image244.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image244.jpeg){width="4.4527777777777775in"
 > height="0.8187095363079615in"}
 >
 >  
@@ -7461,12 +7366,12 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image225.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image225.jpeg){width="4.591666666666667in"
 > height="3.7813724846894137in"}
 
-3.  []{#_Toc256000012 .anchor}**Docker微服务实战**
+### 2.3、Docker微服务实战
 
-> ![]( image/media/image245.png){width="0.3733300524934383in"
+> ![](image/media/image245.png){width="0.3733300524934383in"
 > height="0.3733300524934383in"}
 
 1.  通过IDEA新建一个普通微服务模块
@@ -7621,7 +7526,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image246.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image246.jpeg){width="4.6194444444444445in"
 > height="2.000711942257218in"}
 
 -   编写Dockerfile
@@ -7661,7 +7566,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image247.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image247.jpeg){width="4.4527777777777775in"
 > height="1.0552537182852144in"}
 >
 >  
@@ -7674,7 +7579,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image248.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image248.jpeg){width="4.6194444444444445in"
 > height="2.9927898075240593in"}
 
 -   docker build -t zzyy_docker:1.6 .
@@ -7683,33 +7588,33 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image248.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image248.jpeg){width="4.4527777777777775in"
 > height="2.884811898512686in"}
 
 -   运行容器
 
 >  docker run -d -p 6001:6001 zzyy_docker:1.6
 >
-> ![graphic]( image/media/image249.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image249.jpeg){width="4.6194444444444445in"
 > height="2.105784120734908in"}
 
 -   访问测试
 
 >  
 >
-> ![graphic]( image/media/image250.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image250.jpeg){width="4.6194444444444445in"
 > height="1.4159219160104988in"}
 
-4.  []{#_Toc256000013 .anchor}**Docker网络**
+### 2.4、Docker网络
 
-> ![]( image/media/image251.png){width="0.3691994750656168in"
+> ![](image/media/image251.png){width="0.3691994750656168in"
 > height="0.3691994750656168in"}
 
 1.  是什么
 
     -   docker不启动，默认网络情况
 
-> ![graphic]( image/media/image252.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image252.jpeg){width="4.6194444444444445in"
 > height="3.0944553805774277in"}
 
 -   ens33
@@ -7733,7 +7638,7 @@ height="2.6264490376202976in"}
 
 > **会产生一个名为docker0的虚拟网桥**
 >
-> ![graphic]( image/media/image253.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image253.jpeg){width="4.6194444444444445in"
 > height="2.8863648293963253in"}
 
 -   查看docker网络模式命令
@@ -7742,14 +7647,14 @@ height="2.6264490376202976in"}
 >
 > 默认创建3大网络模式
 >
-> ![graphic]( image/media/image254.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image254.jpeg){width="4.4527777777777775in"
 > height="1.8627668416447944in"}
 
 2.  常用基本命令
 
     -   All命令
 
-> ![graphic]( image/media/image255.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image255.jpeg){width="4.6194444444444445in"
 > height="2.5588396762904635in"}
 
 -   查看网络
@@ -7768,7 +7673,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image256.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image256.jpeg){width="4.6194444444444445in"
 > height="3.07704615048119in"}
 
 3.  能干嘛
@@ -7781,7 +7686,7 @@ height="2.6264490376202976in"}
 
     -   总体介绍
 
-> ![graphic]( image/media/image257.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image257.jpeg){width="4.6194444444444445in"
 > height="2.4292279090113738in"}
 
 -   bridge模式：使用\--network bridge指定，默认使用docker0
@@ -7801,17 +7706,17 @@ height="2.6264490376202976in"}
 
 > 1 先启动两个ubuntu容器实例
 >
-> ![graphic]( image/media/image258.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image258.jpeg){width="4.4527777777777775in"
 > height="1.233779527559055in"}
 >
 > 2 docker inspect 容器ID or 容器名字
 >
->  ![graphic]( image/media/image259.jpeg){width="4.4527777777777775in"
+>  ![graphic](image/media/image259.jpeg){width="4.4527777777777775in"
 > height="1.785725065616798in"}
 >
 > 3  关闭u2实例，新建u3，查看ip变化
 >
-> ![graphic]( image/media/image260.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image260.jpeg){width="4.4527777777777775in"
 > height="1.894251968503937in"}
 
 -   结论
@@ -7840,14 +7745,14 @@ height="2.6264490376202976in"}
 >
 > docker network inspect bridge \| grep name
 >
-> ![graphic]( image/media/image261.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image261.jpeg){width="4.4527777777777775in"
 > height="0.5902176290463692in"}
 >
 >  
 >
 > ifconfig
 >
-> ![graphic]( image/media/image262.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image262.jpeg){width="4.4527777777777775in"
 > height="0.6714501312335958in"}
 
 -   案例
@@ -7879,7 +7784,7 @@ height="2.6264490376202976in"}
 >
 >  通过上述，将宿主机上的所有容器都连接到这个内部网络上，两个容器在同一个网络下,会从这个网关下各自拿到分配的ip，此时两个容器的网络是互通的。
 >
-> ![graphic]( image/media/image263.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image263.jpeg){width="4.4527777777777775in"
 > height="2.2299628171478565in"}
 
 -   代码
@@ -7892,7 +7797,7 @@ height="2.6264490376202976in"}
 
 -   两两匹配验证
 
-> ![graphic]( image/media/image264.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image264.jpeg){width="4.4527777777777775in"
 > height="1.8699518810148732in"}
 
 -   host
@@ -7913,7 +7818,7 @@ height="2.6264490376202976in"}
 > 而是和宿主机共用一个Network
 > Namespace。容器将不会虚拟出自己的网卡而是使用宿主机的IP和端口。
 >
-> ![graphic]( image/media/image265.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image265.jpeg){width="4.4527777777777775in"
 > height="2.2176345144356957in"}
 
 -   代码
@@ -7925,7 +7830,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image266.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image266.jpeg){width="4.4527777777777775in"
 > height="0.8256277340332459in"}
 >
 >  
@@ -7958,7 +7863,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image267.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image267.jpeg){width="4.4527777777777775in"
 > height="3.085754593175853in"}
 
 -   没有设置-p的端口映射了，如何访问启动的tomcat83？？
@@ -8001,12 +7906,12 @@ height="2.6264490376202976in"}
 >
 >  进入容器内部查看
 >
-> ![graphic]( image/media/image268.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image268.jpeg){width="4.4527777777777775in"
 > height="1.247234251968504in"}
 >
 > 在容器外部查看
 >
-> ![graphic]( image/media/image269.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image269.jpeg){width="4.4527777777777775in"
 > height="2.9685181539807526in"}
 
 -   docker run -d -p 8084:8080 \--network none \--name tomcat84
@@ -8023,13 +7928,13 @@ height="2.6264490376202976in"}
 >
 > 新建的容器和已经存在的一个容器共享一个网络ip配置而不是和宿主机共享。新创建的容器不会创建自己的网卡，配置自己的IP，而是和一个指定的容器共享IP、端口范围等。同样，两个容器除了网络方面，其他的如文件系统、进程列表等还是隔离的。
 >
-> ![graphic]( image/media/image270.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image270.jpeg){width="4.4527777777777775in"
 > height="2.3621095800524934in"}
 
 -   案例
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![]( image/media/image32.png){width="0.1527777777777778in"
+  单图标    ![](image/media/image32.png){width="0.1527777777777778in"
             height="0.1527777777777778in"} CustomIcon-663735520; \[\"\",
             \"4MyPJwAAAAAAAAAAAAAAAA==\"\]
 
@@ -8044,7 +7949,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image271.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image271.jpeg){width="4.4527777777777775in"
 > height="0.4596675415573053in"}
 >
 >  
@@ -8064,7 +7969,7 @@ height="2.6264490376202976in"}
 -   案例2
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![]( image/media/image34.png){width="0.1527777777777778in"
+  单图标    ![](image/media/image34.png){width="0.1527777777777778in"
             height="0.1527777777777778in"} CustomIcon\--1664269521; \[\"\",
             \"L0PNnAAAAAAAAAAAAAAAAA==\"\]
 
@@ -8089,24 +7994,24 @@ height="2.6264490376202976in"}
 
 -   运行结果，验证共用搭桥
 
-> ![graphic]( image/media/image272.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image272.jpeg){width="4.4527777777777775in"
 > height="2.3926859142607175in"}
 
 -   假如此时关闭alpine1，再看看alpine2
 
-> ![graphic]( image/media/image273.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image273.jpeg){width="4.4527777777777775in"
 > height="0.6302548118985127in"}
 >
 > 15: eth0@if16: 消失了。。。。。。关闭alpine1，再看看alpine2
 >
-> ![graphic]( image/media/image274.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image274.jpeg){width="4.4527777777777775in"
 > height="1.7925524934383201in"}
 
 -   自定义网络
 
     -   过时的link
 
-> ![graphic]( image/media/image275.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image275.jpeg){width="4.4527777777777775in"
 > height="2.7500021872265967in"}
 
 -   是什么
@@ -8129,22 +8034,22 @@ height="2.6264490376202976in"}
 
             -   按照IP地址ping是OK的
 
-> ![graphic]( image/media/image276.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image276.jpeg){width="4.4527777777777775in"
 > height="1.2695352143482064in"}
 >
-> ![graphic]( image/media/image277.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image277.jpeg){width="4.4527777777777775in"
 > height="1.216075021872266in"}
 
 -   按照服务名ping结果???
 
 >  
 >
-> ![graphic]( image/media/image278.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image278.jpeg){width="4.4527777777777775in"
 > height="0.740757874015748in"}
 >
 >  
 >
-> ![graphic]( image/media/image279.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image279.jpeg){width="4.4527777777777775in"
 > height="0.7305336832895888in"}
 
 -   after
@@ -8157,7 +8062,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image280.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image280.jpeg){width="4.4527777777777775in"
 > height="2.571804461942257in"}
 
 -   新建容器加入上一步新建的自定义网络
@@ -8170,10 +8075,10 @@ height="2.6264490376202976in"}
 
 -   互相ping测试
 
-> ![graphic]( image/media/image281.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image281.jpeg){width="4.4527777777777775in"
 > height="1.313137576552931in"}
 >
-> ![graphic]( image/media/image282.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image282.jpeg){width="4.4527777777777775in"
 > height="1.2006889763779527in"}
 
 -   问题结论
@@ -8221,12 +8126,12 @@ height="2.6264490376202976in"}
 
 -   整体架构
 
-> ![graphic]( image/media/image28.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image28.jpeg){width="4.6194444444444445in"
 > height="6.4259984689413825in"}
 
-5.  []{#_Toc256000014 .anchor}**Docker-compose容器编排**
+### 2.5、Docker-compose容器编排
 
-> ![]( image/media/image283.png){width="0.3666622922134733in"
+> ![](image/media/image283.png){width="0.3666622922134733in"
 > height="0.3666622922134733in"}
 
 1.  是什么
@@ -8284,11 +8189,10 @@ height="2.6264490376202976in"}
   chmod +x /usr/local/bin/docker-compose
 
   docker-compose \--version
-  --------------------------------------------------------------------------------------
 
 >  
 >
-> ![graphic]( image/media/image284.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image284.jpeg){width="4.6194444444444445in"
 > height="1.2563659230096238in"}
 
 -   卸载步骤
@@ -8297,7 +8201,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image285.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image285.jpeg){width="4.6194444444444445in"
 > height="1.4888276465441819in"}
 
 4.  Compose核心概念
@@ -8374,7 +8278,7 @@ height="2.6264490376202976in"}
 
         -   以前的基础版
 
-> ![graphic]( image/media/image286.jpeg){width="3.5104166666666665in"
+> ![graphic](image/media/image286.jpeg){width="3.5104166666666665in"
 > height="5.0625in"}
 
 -   SQL建表建库
@@ -9468,7 +9372,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image287.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image287.jpeg){width="4.4527777777777775in"
 > height="0.6953182414698162in"}
 
 -   swagger测试
@@ -9673,14 +9577,14 @@ height="2.6264490376202976in"}
 ```
 -   执行 docker-compose up 或者 执行 docker-compose up -d
 
-> ![graphic]( image/media/image288.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image288.jpeg){width="4.4527777777777775in"
 > height="0.5452384076990376in"}
 >
 >  
 >
 >  
 >
-> ![graphic]( image/media/image289.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image289.jpeg){width="4.4527777777777775in"
 > height="0.7877996500437445in"}
 
 -   进入mysql容器实例并新建库db2021+新建表t_user
@@ -9771,12 +9675,12 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image290.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image290.jpeg){width="4.4527777777777775in"
 > height="2.188946850393701in"}
 
-6.  []{#_Toc256000015 .anchor}**Docker轻量级可视化工具Portainer**
+### 2.6、Docker轻量级可视化工具Portainer
 
-> ![]( image/media/image291.png){width="0.36666338582677166in"
+> ![](image/media/image291.png){width="0.36666338582677166in"
 > height="0.36666338582677166in"}
 
 1.  是什么
@@ -9811,7 +9715,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image292.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image292.jpeg){width="4.4527777777777775in"
 > height="2.211709317585302in"}
 
 -   第一次登录需创建admin，访问地址：xxx.xxx.xxx.xxx:9000
@@ -9822,30 +9726,29 @@ height="2.6264490376202976in"}
   用户名，直接用默认admin
 
   密码记得8位，随便你写
-  -----------------------------------------------------------------------
 
 >  
 >
 >  
 >
-> ![graphic]( image/media/image293.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image293.jpeg){width="4.4527777777777775in"
 > height="2.8479440069991253in"}
 
 -   设置admin用户和密码后首次登陆
 
-> ![graphic]( image/media/image294.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image294.jpeg){width="4.4527777777777775in"
 > height="1.9731594488188977in"}
 
 -   选择local选项卡后本地docker详细信息展示
 
-> ![graphic]( image/media/image295.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image295.jpeg){width="4.4527777777777775in"
 > height="2.4539938757655295in"}
 
 -   上一步的图形展示，能想得起对应命令吗？
 
 >  
 >
-> ![graphic]( image/media/image296.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image296.jpeg){width="4.4527777777777775in"
 > height="1.307668416447944in"}
 
 3.  登陆并演示介绍常用操作case
@@ -9853,22 +9756,21 @@ height="2.6264490376202976in"}
 ```{=html}
 <!-- -->
 ```
-7.  []{#_Toc256000016 .anchor}**Docker容器监控之
-    CAdvisor+InfluxDB+Granfana**
+### 2.7、Docker容器监控之CAdvisor+InfluxDB+Granfana
 
-> ![]( image/media/image297.png){width="0.37332895888014in"
+> ![](image/media/image297.png){width="0.37332895888014in"
 > height="0.37332895888014in"}
 
 1.  原生命令
 
     -   操作
 
-> ![graphic]( image/media/image298.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image298.jpeg){width="4.6194444444444445in"
 > height="1.2575984251968504in"}
 >
 > **docker stats命令的结果**
 >
-> ![graphic]( image/media/image299.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image299.jpeg){width="4.6194444444444445in"
 > height="0.6336734470691163in"}
 >
 >  
@@ -9901,7 +9803,7 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image300.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image300.jpeg){width="4.4527777777777775in"
 > height="2.92046697287839in"}
 
 -   CAdvisor监控收集+InfluxDB存储数据+Granfana展示图表
@@ -9913,26 +9815,26 @@ height="2.6264490376202976in"}
 
 >  
 >
-> ![graphic]( image/media/image301.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image301.jpeg){width="4.4527777777777775in"
 > height="2.0338506124234472in"}
 
 -   InfluxDB
 
-> ![graphic]( image/media/image302.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image302.jpeg){width="4.4527777777777775in"
 > height="2.443924978127734in"}
 
 -   Granfana
 
 >  
 >
-> ![graphic]( image/media/image303.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image303.jpeg){width="4.4527777777777775in"
 > height="2.1832622484689415in"}
 
 -   总结
 
 >  
 >
-> ![graphic]( image/media/image304.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image304.jpeg){width="4.4527777777777775in"
 > height="2.3065496500437446in"}
 
 3.  compose容器编排，一套带走
@@ -9943,7 +9845,7 @@ height="2.6264490376202976in"}
 >
 >  
 >
-> ![graphic]( image/media/image305.jpeg){width="3.65625in"
+> ![graphic](image/media/image305.jpeg){width="3.65625in"
 > height="1.3125in"}
 
 -   新建3件套组合的 docker-compose.yml
@@ -10053,22 +9955,22 @@ height="2.6264490376202976in"}
 
     -   docker-compose up
 
-> ![graphic]( image/media/image306.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image306.jpeg){width="4.4527777777777775in"
 > height="2.01248031496063in"}
 >
-> ![graphic]( image/media/image307.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image307.jpeg){width="4.4527777777777775in"
 > height="1.8949168853893263in"}
 
 -   查看三个服务容器是否启动
 
-> ![graphic]( image/media/image308.jpeg){width="4.6194444444444445in"
+> ![graphic](image/media/image308.jpeg){width="4.6194444444444445in"
 > height="1.2789818460192477in"}
 
 -   测试
 
     -   浏览cAdvisor收集服务，http://ip:8080/
 
-> ![graphic]( image/media/image309.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image309.jpeg){width="4.4527777777777775in"
 > height="2.9188484251968503in"}
 
 -   第一次访问慢，请稍等
@@ -10084,87 +9986,87 @@ height="2.6264490376202976in"}
 
     -   ip+3000端口的方式访问,默认帐户密码（admin/admin）
 
-> ![graphic]( image/media/image310.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image310.jpeg){width="4.4527777777777775in"
 > height="2.034430227471566in"}
 
 -   配置步骤
 
     -   配置数据源
 
-> ![graphic]( image/media/image311.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image311.jpeg){width="4.4527777777777775in"
 > height="2.563040244969379in"}
 
 -   选择influxdb数据源
 
 >  
 >
-> ![graphic]( image/media/image312.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image312.jpeg){width="4.4527777777777775in"
 > height="1.4964249781277341in"}
 
 -   配置细节
 
     -   1
 
-> ![graphic]( image/media/image313.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image313.jpeg){width="4.4527777777777775in"
 > height="3.755994094488189in"}
 
 -   2
 
 >  
 >
-> ![graphic]( image/media/image314.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image314.jpeg){width="4.4527777777777775in"
 > height="2.028487532808399in"}
 >
-> ![graphic]( image/media/image315.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image315.jpeg){width="4.4527777777777775in"
 > height="3.6024989063867014in"}
 
 -   配置面板panel
 
     -   1
 
-> ![graphic]( image/media/image316.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image316.jpeg){width="4.4527777777777775in"
 > height="1.7339162292213472in"}
 
 -   2
 
-> ![graphic]( image/media/image317.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image317.jpeg){width="4.4527777777777775in"
 > height="2.6088713910761157in"}
 
 -   3
 
-> ![graphic]( image/media/image318.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image318.jpeg){width="4.4527777777777775in"
 > height="1.4975415573053368in"}
 
 -   4
 
-> ![graphic]( image/media/image319.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image319.jpeg){width="4.4527777777777775in"
 > height="1.517992125984252in"}
 
 -   5
 
-> ![graphic]( image/media/image320.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image320.jpeg){width="4.4527777777777775in"
 > height="3.13865157480315in"}
 
 -   6
 
 >  
 >
-> ![graphic]( image/media/image321.jpeg){width="4.4527777777777775in"
+> ![graphic](image/media/image321.jpeg){width="4.4527777777777775in"
 > height="1.8157436570428696in"}
 
 -   到这里cAdvisor+InfluxDB+Grafana容器监控系统就部署完成了
 
-8.  []{#_Toc256000017 .anchor}**终章の总结**
+### 2.8、终章の总结
 
-> ![]( image/media/image322.png){width="0.3681517935258093in"
+> ![](image/media/image322.png){width="0.3681517935258093in"
 > height="0.3681517935258093in"}
 
 1.  知识回顾简单串讲和总结
 
-> ![graphic]( image/media/image323.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image323.jpeg){width="4.591666666666667in"
 > height="2.0107874015748033in"}
 
 2.  进阶篇：雷丰阳老师的K8S
 
-> ![graphic]( image/media/image324.jpeg){width="4.591666666666667in"
+> ![graphic](image/media/image324.jpeg){width="4.591666666666667in"
 > height="2.3455457130358703in"}加油
