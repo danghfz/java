@@ -444,21 +444,17 @@ height="2.6264490376202976in"}
 -   官网要求
 
 > ![](image/image33.jpeg){width="4.4527777777777775in"
-> height="0.830437445319335in"} 
+> height="0.830437445319335in"}
 >
->  
+>  报错：
 >
->  
+>  1   \[Errno 14\] curl#35 - TCP connection reset by peer
 >
-> 报错：
+> 
 >
-> 1   \[Errno 14\] curl#35 - TCP connection reset by peer
+> 
 >
->  
->
->  
->
-> 2   \[Errno 12\] curl#35 - Timeout
+>  2   \[Errno 12\] curl#35 - Timeout
 
 -   推荐
 
@@ -962,7 +958,7 @@ docker ps [OPTIONS] #列出当前所有正在运行的容器
 
       -   一次性删除多个容器实例
 
-          -   docker rm -f \$(docker ps -a -q)
+          -   docker rm -f $(docker ps -a -q)
 
           -   docker ps -a -q \| xargs docker rm
 
@@ -1338,23 +1334,16 @@ import后变成了image
 
 -   为什么 Docker 镜像要采用这种分层结构呢
 
->  
+>  镜像分层最大的一个好处就是共享资源，方便复制迁移，就是为了复用。
 >
->  
+>  比如说有多个镜像都从相同的 base 镜像构建而来，那么 Docker Host
+>只需在磁盘上保存一份 base 镜像；
+> 
+>同时内存中也只需加载一份 base
+>  镜像，就可以为所有容器服务了。而且镜像的每一层都可以被共享。
 >
-> 镜像分层最大的一个好处就是共享资源，方便复制迁移，就是为了复用。
->
->  
->
-> 比如说有多个镜像都从相同的 base 镜像构建而来，那么 Docker Host
-> 只需在磁盘上保存一份 base 镜像；
->
-> 同时内存中也只需加载一份 base
-> 镜像，就可以为所有容器服务了。而且镜像的每一层都可以被共享。
->
->  
->
->  
+> 
+> 
 
 2.  **重点理解**
 
@@ -1436,15 +1425,13 @@ import后变成了image
 
 -   小总结
 
->  
->
-> Docker中的镜像分层，支持通过扩展现有镜像，创建新的镜像。类似Java继承于一个Base基础类，自己再按需扩展。
+>  Docker中的镜像分层，支持通过扩展现有镜像，创建新的镜像。类似Java继承于一个Base基础类，自己再按需扩展。
 >
 > 新镜像是从 base
-> 镜像一层一层叠加生成的。每安装一个软件，就在现有镜像的基础上增加一层
->
+>镜像一层一层叠加生成的。每安装一个软件，就在现有镜像的基础上增加一层
+> 
 > ![](image/image83.jpeg){width="4.6194444444444445in"
-> height="1.5091797900262467in"}
+>height="1.5091797900262467in"}
 
 ### 1.5、本地镜像发布到阿里云
 
@@ -1664,7 +1651,7 @@ import后变成了image
 
 
 ```shell
-docker run -d -p 5000:5000 -v /usr/local/docker-repository/:/usr/local/registry --privileged=true registry
+docker run -d -p 5000:5000 -v /usr/local/docker-repository/:/tmp/registry --privileged=true registry
 	-p 端口映射，指定端口映射，格式为：主机(宿主)端口:容器端口
 	-v 绑定一个卷
 ```
@@ -1673,16 +1660,14 @@ docker run -d -p 5000:5000 -v /usr/local/docker-repository/:/usr/local/registry 
 
 
 
->  默认情况，仓库被创建在容器的/var/lib/registry目录下，建议自行用容器卷映射，方便于宿主机联调
+>  库内部的挂载目录一定要是 /tmp/registry，因为 docker registry 在运行后会在 /tmp/ 下面生成一个叫 docker-registry.db 的库文件，默认就是 /tmp/registry 目录来存放 images
 >
-> 
-> 
->![](image/image107.jpeg){width="4.6194444444444445in"
+> ![](image/image107.jpeg){width="4.6194444444444445in"
 > height="0.785340113735783in"}
 >
->  
->
 > 
+>
+>  
 
 -   案例演示创建一个新镜像，ubuntu安装ifconfig命令
 
@@ -3226,8 +3211,7 @@ redis-cli --cluster check 真实ip地址:6381
 
 
 
->  ![](image/image210.jpeg){width="4.4527777777777775in"
->height="2.7054090113735785in"}
+>  ![](image/image210.jpeg)
 
 -   为主节点6387分配从节点6388
 
@@ -3240,11 +3224,9 @@ redis-cli --cluster add-node 192.168.152.134:6388 192.168.152.134:6387 --cluster
 
 >  
 >
-> ![](image/image211.jpeg){width="4.4527777777777775in"
-> height="1.7534634733158356in"}
->
-> ![](image/image212.jpeg){width="4.4527777777777775in"
-> height="1.0647944006999126in"}
+> ![](image/image211.jpeg)
+> 
+>![](image/image212.jpeg)
 
 -   检查集群情况第3次
 
@@ -3259,11 +3241,9 @@ redis-cli --cluster add-node 192.168.152.134:6388 192.168.152.134:6387 --cluster
 
 >  
 >
-> ![](image/image213.jpeg){width="4.4527777777777775in"
-> height="0.9715146544181977in"}
->
-> ![](image/image214.jpeg){width="4.4527777777777775in"
-> height="3.2044553805774276in"}
+> ![](image/image213.jpeg)
+> 
+>![](image/image214.jpeg)
 
 ##### 主从缩容案例
 
@@ -3280,12 +3260,11 @@ redis-cli --cluster add-node 192.168.152.134:6388 192.168.152.134:6387 --cluster
 >
 >  
 >
-> ![](image/image215.jpeg){width="4.4527777777777775in"
-> height="0.991509186351706in"}
+> ![](image/image215.jpeg)
+> 
 >
 >  
 >
->  
 
 -   将6388删除 从集群中将4号从节点6388删除
 
@@ -3296,9 +3275,9 @@ redis-cli --cluster del-node 192.168.152.134:6388 5d149074b7e57b802287d1797a874e
 
 
 
->  
->
-> ![](image/Snipaste_2022-10-09_20-40-26.png)
+
+
+>  ![](image/Snipaste_2022-10-09_20-40-26.png)
 
 -----------------------------------------------------------------------
 ```shell
@@ -3309,33 +3288,30 @@ redis-cli --cluster check 192.168.152.134:6382
 
 >   检查一下发现，6388被删除了，只剩下7台机器了。
 >
->  ![](image/image217.jpeg){width="4.4527777777777775in"
->height="2.711793525809274in"}
-> 
+>  ![](image/image217.jpeg)
+>
 > 
 
 -   将6387的槽号清空，重新分配，本例将清出来的槽号都给6381
 
   
-  
+
   ```shell
   redis-cli --cluster reshard 192.168.152.134:6381
   ```
+
   
-  
-  
-  -----------------------------------------------------------------------
+
+-----------------------------------------------------------------------
 
 >  
 >
->  ![](image/image218.jpeg){width="4.4527777777777775in"
-> height="2.9054046369203848in"}
->
-> ![](image/image219.jpeg){width="4.4527777777777775in"
-> height="2.3898458005249346in"}
->
+>  ![](image/image218.jpeg)
+> 
+>![](image/image219.jpeg)
+> 
 > ![](image/image220.jpeg){width="4.4527777777777775in"
-> height="0.20239938757655293in"}
+>height="0.20239938757655293in"}
 
 -   检查集群情况第二次
 
@@ -3348,10 +3324,9 @@ redis-cli --cluster check 192.168.152.134:6382
 | 6381，它变成了8192个槽位，相当于全部都给6381了，不然要输入3次，一锅端 |
 +-----------------------------------------------------------------------+
 
->  
->
-> ![](image/image221.jpeg){width="4.4527777777777775in"
-> height="2.8805194663167106in"}
+
+
+>  ![](image/image221.jpeg)
 
 -   将6387删除
 
@@ -3364,8 +3339,7 @@ redis-cli \--cluster del-node 192.168.152.134:6387 e4781f644d4a4e4d4b4d107157b9b
 
 >  
 >
-> ![](image/image222.jpeg){width="4.4527777777777775in"
-> height="0.4654615048118985in"}
+> ![](image/image222.jpeg)
 
 -   检查集群情况第三次
 
@@ -3382,8 +3356,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 >  
 >
->  ![](image/image223.jpeg){width="4.4527777777777775in"
-> height="2.995618985126859in"}
+>  ![](image/image223.jpeg)
 
 ### 2.2、DockerFile解析
 
@@ -3392,7 +3365,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 1.  **是什么**
 
-    -   Dockerfile是用来构建Docker镜像的文本文件，是由一条条构建镜像所需的指令和参数构成的脚本。
+    -   Dockerfile是用来构建Docker镜像的文本文件，**是由一条条构建镜像所需的指令和参数构成的脚本**。
 
     -   概述
 
@@ -3414,34 +3387,33 @@ redis-cli --cluster check 192.168.152.134:6381
             -   docker run依镜像运行容器实例
 
 2.  **DockerFile构建过程解析**
+-   Dockerfile内容基础知识
+    
+    -   1：每条保留**字指令** 都必须为**大写**字母且后面要跟随至少一个参数
+    
+    -   2：指令按照从上到下，顺序执行
+    
+    -   3：#表示注释 
+    
+    -   4：每条指令都会创建一个新的镜像层并对镜像进行提交
+    
+-   Docker执行Dockerfile的大致流程
+    
+    -   （1）docker从基础镜像运行一个容器
+    
+    -   （2）执行一条指令并对容器作出修改
+    
+    -   （3）执行类似docker commit的操作提交一个新的镜像层
+    
+    -   （4）docker再基于刚提交的镜像运行一个新容器
+    
+    -   （5）执行dockerfile中的下一条指令直到所有指令都执行完成
+    
+-   **小总结**
 
-    -   Dockerfile内容基础知识
 
-        -   1：每条保留字指令都必须为大写字母且后面要跟随至少一个参数
 
-        -   2：指令按照从上到下，顺序执行
-
-        -   3：#表示注释
-
-        -   4：每条指令都会创建一个新的镜像层并对镜像进行提交
-
-    -   Docker执行Dockerfile的大致流程
-
-        -   （1）docker从基础镜像运行一个容器
-
-        -   （2）执行一条指令并对容器作出修改
-
-        -   （3）执行类似docker commit的操作提交一个新的镜像层
-
-        -   （4）docker再基于刚提交的镜像运行一个新容器
-
-        -   （5）执行dockerfile中的下一条指令直到所有指令都执行完成
-
-    -   **小总结**
-
->  
->
-> 从应用软件的角度来看，Dockerfile、Docker镜像与Docker容器分别代表软件的三个不同阶段，
+>  从应用软件的角度来看，Dockerfile、Docker镜像与Docker容器分别代表软件的三个不同阶段，
 >
 > \*  Dockerfile是软件的原材料
 >
@@ -3452,45 +3424,44 @@ redis-cli --cluster check 192.168.152.134:6381
 > Dockerfile面向开发，Docker镜像成为交付标准，Docker容器则涉及部署与运维，三者缺一不可，合力充当Docker体系的基石。
 >
 > ![](image/image226.jpeg){width="4.6194444444444445in"
-> height="1.9680916447944008in"}
->
+>height="1.9680916447944008in"}
+> 
 > 1
-> Dockerfile，需要定义一个Dockerfile，Dockerfile定义了进程需要的一切东西。Dockerfile涉及的内容包括执行代码或者是文件、环境变量、依赖包、运行时环境、动态链接库、操作系统的发行版、服务进程和内核进程(当应用进程需要和系统服务和内核进程打交道，这时需要考虑如何设计namespace的权限控制)等等;
+>Dockerfile，需要定义一个Dockerfile，Dockerfile定义了进程需要的一切东西。Dockerfile涉及的内容包括执行代码或者是文件、环境变量、依赖包、运行时环境、动态链接库、操作系统的发行版、服务进程和内核进程(当应用进程需要和系统服务和内核进程打交道，这时需要考虑如何设计namespace的权限控制)等等;
+> 
+> 
 >
->  
+>  2 Docker镜像，在用Dockerfile定义一个文件之后，docker
+>build时会产生一个Docker镜像，当运行 Docker镜像时会真正开始提供服务;
+> 
+> 
 >
-> 2 Docker镜像，在用Dockerfile定义一个文件之后，docker
-> build时会产生一个Docker镜像，当运行 Docker镜像时会真正开始提供服务;
+>  3 Docker容器，容器是直接提供服务的。
 >
->  
+> 
 >
-> 3 Docker容器，容器是直接提供服务的。
->
->  
->
->  
 
-3.  **DockerFile常用保留字指令**
+#### DockerFile常用保留字指令
 
-    -   参考tomcat8的dockerfile入门
+-   参考tomcat8的dockerfile入门
 
-        -   https://github.com/docker-library/tomcat
+    -   https://github.com/docker-library/tomcat
 
-    -   FROM
+-   FROM
 
-        -   基础镜像，当前新镜像是基于哪个镜像的，指定一个已经存在的镜像作为模板，第一条必须是from
+    -   基础镜像，当前新镜像是基于哪个镜像的，指定一个已经存在的镜像作为模板，第一条必须是from
 
-    -   MAINTAINER
+-   MAINTAINER
 
-        -   镜像维护者的姓名和邮箱地址
+    -   镜像维护者的姓名和邮箱地址
 
-    -   RUN
+-   RUN
 
-        -   容器构建时需要运行的命令
+    -   容器构建时需要运行的命令
 
-        -   两种格式
+    -   两种格式
 
-            -   shell格式
+        -   shell格式
 
 >  
 >
@@ -3514,7 +3485,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 -   RUN是在 docker build时运行
 
-```{=html}
+```html
 <!-- -->
 ```
 -   EXPOSE
@@ -3553,18 +3524,17 @@ redis-cli --cluster check 192.168.152.134:6381
 
     -   类似ADD，拷贝文件和目录到镜像中。 将从构建上下文目录中
         \<源路径\> 的文件/目录复制到新的一层的镜像内的 \<目标路径\> 位置
-
         -   COPY src dest
-
+        
         -   COPY \[\"src\", \"dest\"\]
-
+        
         -   \<src源路径\>：源文件或者源目录
-
+        
         -   \<dest目标路径\>：容器内的指定路径，该路径不用事先建好，路径不存在的话，会自动创建。
-
+    
 -   VOLUME
 
-    -   容器数据卷，用于数据保存和持久化工作
+    -   容器数据卷，用于数据保存和持久化工作【-v容器卷】
 
 -   CMD
 
@@ -3598,7 +3568,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
     -   RUN是在 docker build时运行。
 
-```{=html}
+```html
 <!-- -->
 ```
 -   ENTRYPOINT
