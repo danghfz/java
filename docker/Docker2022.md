@@ -3571,7 +3571,7 @@ redis-cli --cluster check 192.168.152.134:6381
 ```html
 <!-- -->
 ```
--   ENTRYPOINT
+-   ENTRYPOINT  【entrypoint】
 
     -   也是用来指定一个容器启动时要运行的命令
 
@@ -3651,7 +3651,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 -   https://mirrors.yangxingzhen.com/jdk/
 
-```{=html}
+```html
 <!-- -->
 ```
 -   编写
@@ -3663,69 +3663,38 @@ redis-cli --cluster check 192.168.152.134:6381
 >
 >  
 
-+-----------------------------------------------------------------------+
-| FROM centos                                                           |
-|                                                                       |
-| MAINTAINER zzyy\<zzyybs@126.com\>                                     |
-|                                                                       |
-|                                                                       |
-|                                                                       |
-| ENV MYPATH /usr/local                                                 |
-|                                                                       |
-| WORKDIR \$MYPATH                                                      |
-|                                                                       |
-|                                                                       |
-|                                                                       |
-| #安装vim编辑器                                                        |
-|                                                                       |
-| RUN yum -y install vim                                                |
-|                                                                       |
-| #安装ifconfig命令查看网络IP                                           |
-|                                                                       |
-| RUN yum -y install net-tools                                          |
-|                                                                       |
-| #安装java8及lib库                                                     |
-|                                                                       |
-| RUN yum -y install glibc.i686                                         |
-|                                                                       |
-| RUN mkdir /usr/local/java                                             |
-|                                                                       |
-| #ADD                                                                  |
-| 是相对路径jar,把jdk-8u17                                              |
-| 1-linux-x64.tar.gz添加到容器中,安装包必须要和Dockerfile文件在同一位置 |
-|                                                                       |
-| ADD jdk-8u171-linux-x64.tar.gz /usr/local/java/                       |
-|                                                                       |
-| #配置java环境变量                                                     |
-|                                                                       |
-| ENV JAVA_HOME /usr/local/java/jdk1.8.0_171                            |
-|                                                                       |
-| ENV JRE_HOME \$JAVA_HOME/jre                                          |
-|                                                                       |
-| ENV CLASSPATH                                                         |
-| \$JAVA                                                                |
-| _HOME/lib/dt.jar:\$JAVA_HOME/lib/tools.jar:\$JRE_HOME/lib:\$CLASSPATH |
-|                                                                       |
-| ENV PATH \$JAVA_HOME/bin:\$PATH                                       |
-|                                                                       |
-|                                                                       |
-|                                                                       |
-| EXPOSE 80                                                             |
-|                                                                       |
-|                                                                       |
-|                                                                       |
-| CMD echo \$MYPATH                                                     |
-|                                                                       |
-| CMD echo \"success\-\-\-\-\-\-\-\-\-\-\-\-\--ok\"                     |
-|                                                                       |
-| CMD /bin/bash                                                         |
-+-----------------------------------------------------------------------+
+```dockerfile
+FROM ubuntu
+MAINTAINER danghf<1049334207@qq.com>
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+# vim
+R
+RUN apt-get -y install vim
+# net-tools
+RUN apt-get -y install net-tools
+# java8 lib
+RUN apt-get -y install glibc.i686
+RUN mkdir /usr/local/java
+# ADD tar.gz and Dockerfile same path
+ADD jdk-8u351-linux-x64.tar.gz /usr/local/java
+# ENV
 
->  
+ENV JAVA_HOME /usr/local/java/jdk1.8.0_351
+ENV JRE_HOME $JAVA_HOME/jre
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib:$CLASSPATH
+ENV PATH $JAVA_HOME/bin:$PATH
+EXPOSE 80
+CMD echo $MYPATH
+CMD echo "success-----ok"
+CMD /bin/bash
+```
+
+
 
 -   大写字母D
 
-```{=html}
+```html
 <!-- -->
 ```
 -   构建
@@ -3744,7 +3713,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 -   注意，上面TAG后面有个空格，有个点
 
-```{=html}
+```html
 <!-- -->
 ```
 -   运行
@@ -3899,139 +3868,83 @@ redis-cli --cluster check 192.168.152.134:6381
 
     -   改POM
 
-> *\<?***xml version=\"1.0\" encoding=\"UTF-8\"***?\>\
-> *\<**project xmlns=\"http://maven.apache.org/POM/4.0.0\"
-> xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
->          xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0
-> https://maven.apache.org/xsd/maven-4.0.0.xsd\"**\>\
->     \<**modelVersion**\>4.0.0\</**modelVersion**\>\
->     \<**parent**\>\
->         \<**groupId**\>org.springframework.boot\</**groupId**\>\
->         \<**artifactId**\>spring-boot-starter-parent\</**artifactId**\>\
->         \<**version**\>2.5.6\</**version**\>\
->         \<**relativePath**/\>\
->     \</**parent**\>\
-> \
->     \<**groupId**\>com.atguigu.docker\</**groupId**\>\
->     \<**artifactId**\>docker_boot\</**artifactId**\>\
->     \<**version**\>0.0.1-SNAPSHOT\</**version**\>\
-> \
->     \<**properties**\>\
->         \<**project.build.sourceEncoding**\>UTF-8\</**project.build.sourceEncoding**\>\
->         \<**maven.compiler.source**\>1.8\</**maven.compiler.source**\>\
->         \<**maven.compiler.target**\>1.8\</**maven.compiler.target**\>\
->         \<**junit.version**\>4.12\</**junit.version**\>\
->         \<**log4j.version**\>1.2.17\</**log4j.version**\>\
->         \<**lombok.version**\>1.16.18\</**lombok.version**\>\
->         \<**mysql.version**\>5.1.47\</**mysql.version**\>\
->         \<**druid.version**\>1.1.16\</**druid.version**\>\
->         \<**mapper.version**\>4.1.5\</**mapper.version**\>\
->         \<**mybatis.spring.boot.version**\>1.3.0\</**mybatis.spring.boot.version**\>\
->     \</**properties**\>\
-> \
->     \<**dependencies**\>\
->         *\<!\--SpringBoot通用依赖模块\--\>\
->         *\<**dependency**\>\
->             \<**groupId**\>org.springframework.boot\</**groupId**\>\
->             \<**artifactId**\>spring-boot-starter-web\</**artifactId**\>\
->         \</**dependency**\>\
->         \<**dependency**\>\
->             \<**groupId**\>org.springframework.boot\</**groupId**\>\
->             \<**artifactId**\>spring-boot-starter-actuator\</**artifactId**\>\
->         \</**dependency**\>\
->         *\<!\--test\--\>\
->         *\<**dependency**\>\
->             \<**groupId**\>org.springframework.boot\</**groupId**\>\
->             \<**artifactId**\>spring-boot-starter-test\</**artifactId**\>\
->             \<**scope**\>test\</**scope**\>\
->         \</**dependency**\>\
->     \</**dependencies**\>\
-> \
->     \<**build**\>\
->         \<**plugins**\>\
->             \<**plugin**\>\
->                 \<**groupId**\>org.springframework.boot\</**groupId**\>\
->                 \<**artifactId**\>spring-boot-maven-plugin\</**artifactId**\>\
->             \</**plugin**\>\
->             \<**plugin**\>\
->                 \<**groupId**\>org.apache.maven.plugins\</**groupId**\>\
->                 \<**artifactId**\>maven-resources-plugin\</**artifactId**\>\
->                 \<**version**\>3.1.0\</**version**\>\
->             \</**plugin**\>\
->         \</**plugins**\>\
->     \</**build**\>\
-> \
-> \</**project**\>\
->  
->
->  
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>docker</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+    </dependencies>
+</project>
+```
+
+
 
 -   写YML
 
->  
->
-> **server.port**=**6001**
->
->  
+```yaml
+server:
+  port: 8000
+spring:
+  application:
+    name: Docker_test
+```
+
+
 
 -   主启动
 
-> **package** com.atguigu.docker;\
-> \
-> **import** org.springframework.boot.SpringApplication;\
-> **import**
-> org.springframework.boot.autoconfigure.SpringBootApplication;\
-> \
-> \@SpringBootApplication\
-> **public class** DockerBootApplication\
-> {\
->     **public static void** main(String\[\] args)\
->     {\
->         SpringApplication.*run*(DockerBootApplication.**class**,
-> args);\
->     }\
-> \
-> }\
->  
->
->  
+```java
+@SpringBootApplication
+public class DockerApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(DockerApplication.class,args);
+    }
+}
+```
+
+
 
 -   业务类
 
-> **package** com.atguigu.docker.controller;\
-> \
-> **import** org.springframework.beans.factory.annotation.Value;\
-> **import** org.springframework.web.bind.annotation.RequestMapping;\
-> **import** org.springframework.web.bind.annotation.RequestMethod;\
-> **import** org.springframework.web.bind.annotation.RestController;\
-> \
-> **import** java.util.UUID;\
-> \
-> */\*\*\
->  \* **\@auther** zzyy\
->  \* **\@create** 2021-10-25 17:43\
->  \*/\
-> *\@RestController\
-> **public class** OrderController\
-> {\
->     @Value(**\"\${server.port}\"**)\
->     **private** String **port**;\
-> \
->     @RequestMapping(**\"/order/docker\"**)\
->     **public** String helloDocker()\
->     {\
->         **return \"hello docker\"**+**\"\\t\"**+**port**+**\"\\t\"**+
-> UUID.*randomUUID*().toString();\
->     }\
-> \
->     @RequestMapping(value =**\"/order/index\"**,method =
-> RequestMethod.***GET***)\
->     **public** String index()\
->     {\
->         **return \"服务端口号:
-> \"**+**\"\\t\"**+**port**+**\"\\t\"**+UUID.*randomUUID*().toString();\
->     }\
-> }
+```java
+@RestController
+@RequestMapping("/docker")
+public class DockerController {
+    @Value("${server.port}")
+    private String port;
+    @GetMapping("/hello")
+    public String helloDocker(){
+        return "hello Docker "+ port;
+    }
+    @GetMapping("/{obj}")
+    public String testDocker(@PathVariable(value = "obj") Object o){
+        return "docker "+ o.toString();
+    }
+}
+```
+
+
 
 2.  通过dockerfile发布微服务部署到docker容器
 
@@ -4050,34 +3963,28 @@ redis-cli --cluster check 192.168.152.134:6381
 
     -   Dockerfile内容
 
-> \# 基础镜像使用java
->
-> FROM java:8
->
-> \# 作者
->
-> MAINTAINER zzyy
->
-> \# VOLUME
-> 指定临时文件目录为/tmp，在主机/var/lib/docker目录下创建了一个临时文件并链接到容器的/tmp
->
-> VOLUME /tmp
->
-> \# 将jar包添加到容器中并更名为zzyy_docker.jar
->
-> ADD docker_boot-0.0.1-SNAPSHOT.jar zzyy_docker.jar
->
-> \# 运行jar包
->
-> RUN bash -c \'touch /zzyy_docker.jar\'
->
-> ENTRYPOINT \[\"java\",\"-jar\",\"/zzyy_docker.jar\"\]
->
-> #暴露6001端口作为微服务
->
-> EXPOSE 6001
->
->  
+```dockerfile
+# 基础镜像使用java
+FROM java:8
+# 作者
+MAINTAINER danghf
+
+# VOLUME指定临时文件目录为/tmp，在主机/var/lib/docker目录下创建了一个临时文件并链接到容器的/tmp
+VOLUME /tmp
+# 将jar包添加到容器中并更名为zzyy_docker.jar
+ADD docker_boot-0.0.1-SNAPSHOT.jar zzyy_docker.jar
+# 运行jar包
+
+RUN bash -c 'touch zzyy_docker.jar'
+
+ENTRYPOINT ["java","-jar","zzyy_docker.jar"]
+
+#暴露6001端口作为微服务
+
+EXPOSE 6001
+```
+
+
 
 -   将微服务jar包和Dockerfile文件上传到同一个目录下/mydocker
 
@@ -4088,9 +3995,7 @@ redis-cli --cluster check 192.168.152.134:6381
 >
 >  
 >
->  
->
-> docker build -t zzyy_docker:1.6 .
+>  docker build -t zzyy_docker:1.6 .
 
 -   构建镜像
 
@@ -4164,15 +4069,13 @@ redis-cli --cluster check 192.168.152.134:6381
 >
 > 默认创建3大网络模式
 >
-> ![](image/image254.jpeg){width="4.4527777777777775in"
-> height="1.8627668416447944in"}
+> ![](image/image254.jpeg)
 
 2.  常用基本命令
 
     -   All命令
 
-> ![](image/image255.jpeg){width="4.6194444444444445in"
-> height="2.5588396762904635in"}
+> ![](image/image255.jpeg)
 
 -   查看网络
 
@@ -4214,7 +4117,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 -   container模式：使用\--network container:NAME或者容器ID指定
 
-```{=html}
+```html
 <!-- -->
 ```
 -   容器实例内默认网络IP生产规则
@@ -4240,7 +4143,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
     -   docker容器内部的ip是有可能会发生改变的
 
-```{=html}
+```html
 <!-- -->
 ```
 -   **案例说明**
@@ -4411,7 +4314,7 @@ redis-cli --cluster check 192.168.152.134:6381
 
 -   禁用网络功能，只有lo标识(就是127.0.0.1表示本地回环)
 
-```{=html}
+```html
 <!-- -->
 ```
 -   案例
@@ -4434,7 +4337,7 @@ redis-cli --cluster check 192.168.152.134:6381
 -   docker run -d -p 8084:8080 \--network none \--name tomcat84
     billygoo/tomcat8-jdk8
 
-```{=html}
+```html
 <!-- -->
 ```
 -   container
@@ -4451,10 +4354,8 @@ redis-cli --cluster check 192.168.152.134:6381
 -   案例
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![](image/image32.png){width="0.1527777777777778in"
-            height="0.1527777777777778in"} CustomIcon-663735520; \[\"\",
-            \"4MyPJwAAAAAAAAAAAAAAAA==\"\]
-
+  ![](image/image32.png)
+  
   --------- -----------------------------------------------------------------------------------
 
 -   docker run -d -p 8085:8080 \--name tomcat85 billygoo/tomcat8-jdk8
@@ -4486,10 +4387,8 @@ redis-cli --cluster check 192.168.152.134:6381
 -   案例2
 
   --------- -----------------------------------------------------------------------------------
-  单图标    ![](image/image34.png){width="0.1527777777777778in"
-            height="0.1527777777777778in"} CustomIcon\--1664269521; \[\"\",
-            \"L0PNnAAAAAAAAAAAAAAAAA==\"\]
-
+  ​    ![](image/image34.png)
+  
   --------- -----------------------------------------------------------------------------------
 
 -   Alpine操作系统是一个面向安全的轻型 Linux发行版
