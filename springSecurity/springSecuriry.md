@@ -102,20 +102,20 @@ public interface UserDetailsService {
 ```java
 public interface UserDetails extends Serializable {
 
-   // 表示获取登录用户所有权限
+	// 表示获取登录用户所有权限
 	Collection<? extends GrantedAuthority> getAuthorities();
-// 表示获取密码
-String getPassword();
-// 表示获取用户名
-String getUsername();
-// 表示判断账户是否过期
-boolean isAccountNonExpired();
-// 表示判断账户是否被锁定
-boolean isAccountNonLocked();
-// 表示凭证{密码}是否过期
-boolean isCredentialsNonExpired();
-// 表示当前用户是否可用
-boolean isEnabled();
+    // 表示获取密码
+    String getPassword();
+    // 表示获取用户名
+    String getUsername();
+    // 表示判断账户是否过期
+    boolean isAccountNonExpired();
+    // 表示判断账户是否被锁定
+    boolean isAccountNonLocked();
+    // 表示凭证{密码}是否过期
+    boolean isCredentialsNonExpired();
+    // 表示当前用户是否可用
+    boolean isEnabled();
 
 }
 ```
@@ -221,7 +221,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         //加密
         String encode = passwordEncoder.encode("dhf200827");
         //添加账户，密码
-        auth.inMemoryAuthentication().withUser("dhf2").password(encode).roles("");
+        auth.inMemoryAuthentication().withUser("danghf").password(encode).roles("");
     }
     @Bean//加密必须放入PasswordEncoder对象，默认没有，不然怎么解码
     public PasswordEncoder passwordEncoder(){
@@ -244,17 +244,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 ```java
 @Service("userDetailsService")
 public class UserService implements UserDetailsService {
-    private static final String PASSWORD = "dhf200827";
+    private final String USERNAME = "danghf";
+    private final String PASSWORD = "dhf200827";
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         //通过username获取一个UserDetails
         //...查数据库，获取账号密码
         //User实现了userDetails接口
+        // select password form user where username = username
+        //
         String password = new BCryptPasswordEncoder().encode(PASSWORD);
         //权限集合
         List<GrantedAuthority> authorities =
                 AuthorityUtils.commaSeparatedStringToAuthorityList("role");
-        return new User(username, password, authorities);
+        return new User(USERNAME, password, authorities);
     }
 }
 ```
@@ -303,6 +306,7 @@ spring:
 mybatis-plus:
   configuration:
     aggressive-lazy-loading: true
+  mapper-locations: classpath:mapper/**/*.xml
 ```
 
 
