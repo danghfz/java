@@ -388,18 +388,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        //自定义自己编写的页面
+        //配置没有访问权限
+        http.exceptionHandling().accessDeniedPage("/unlogin.html");
         http.formLogin()
-                .loginPage("/login.html") //自定义页面地址
-                .loginProcessingUrl("/user/login") //登录访问路径,和login.html表单提交路径一致
-                .defaultSuccessUrl("/test/hello").permitAll() //登录成功后，跳转路径
-
-                .and().authorizeRequests() //定义哪些url被保护(不用认证)
-                .antMatchers("/","/test/index").permitAll() //无条件允许访问
-                .anyRequest().authenticated() //允许认证的用户进行访问
-                //anyRequest()除了上面的路径
-
-                .and().csrf().disable(); //关闭csrf防护
+                .loginPage("/login.html") //登录页面
+                .loginProcessingUrl("/user/login") //页面提交地址
+                .defaultSuccessUrl("/hello").permitAll() //成功后跳转
+                .and()
+                .authorizeRequests() //请求批注
+                .antMatchers("/","/index").permitAll()//不需要权限
+                .antMatchers("/hello").hasAuthority("admin")//需要权限
+                // 多个权限
+                .antMatchers("/d","/a").hasAnyAuthority("admin","role")
+                .antMatchers("/hello").hasRole("admin")//需要角色
+                // 多个角色
+                .antMatchers("/a","/b").hasAnyRole("admin","role")
+                .anyRequest().authenticated() //剩余请求，登陆后访问
+                .and()
+                .csrf().disable(); //关闭csrf防护
     }
 
     @Bean
@@ -446,24 +452,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 【配置类】
 
 ```java
-
-    @Override
+@Override
     protected void configure(HttpSecurity http) throws Exception {
-        //自定义自己编写的页面
+        //配置没有访问权限
+        http.exceptionHandling().accessDeniedPage("/unlogin.html");
         http.formLogin()
-                .loginPage("/login.html") //自定义页面地址
-                .loginProcessingUrl("/user/login") //登录访问路径,和login.html表单提交路径一致
-                .defaultSuccessUrl("/test/hello").permitAll() //登录成功后，跳转路径
-
-                .and().authorizeRequests() //定义哪些url被保护(不用认证)
-                .antMatchers("/","/test/index").permitAll() //无条件允许访问
-                .antMatchers("/test/hello").hasAuthority("admin") //当前具有指定权限才能访问
-                .anyRequest().authenticated() //允许认证的用户进行访问
-                //anyRequest()除了上面的路径
-
-                .and().csrf().disable(); //关闭csrf防护
+                .loginPage("/login.html") //登录页面
+                .loginProcessingUrl("/user/login") //页面提交地址
+                .defaultSuccessUrl("/hello").permitAll() //成功后跳转
+                .and()
+                .authorizeRequests() //请求批注
+                .antMatchers("/","/index").permitAll()//不需要权限
+                .antMatchers("/hello").hasAuthority("admin")//需要权限
+                // 多个权限
+                .antMatchers("/d","/a").hasAnyAuthority("admin","role")
+                .antMatchers("/hello").hasRole("admin")//需要角色
+                // 多个角色，用户拥有任何一个角色都可以访问
+                .antMatchers("/a","/b").hasAnyRole("admin","role")
+                .anyRequest().authenticated() //剩余请求，登陆后访问
+                .and()
+                .csrf().disable(); //关闭csrf防护
     }
-
 ```
 
 
@@ -471,16 +480,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 【UserDetailsService】
 
 ```java
-@Override
+@Service
+public class UserService implements UserDetailsService {
+    @Autowired
+    UserMapper mapper;
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = mapper.getUserByUsername(username);
+//        QueryWrapper<User> wrapper = new QueryWrapper<User>().eq("username",username);
+//        User user1 = mapper.selectOne(wrapper);
         if (user!=null){
-            if (!user.getUsername().equals("admin")){
-                throw new UsernameNotFoundException("权限不够");
-            }
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             String encode = passwordEncoder.encode(user.getPassword());
-            List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("admin");
+            List<GrantedAuthority> authorities;
+            if (user.getUsername().equals("admin")){
+                // 赋予 admin 权限和  admin角色 ，角色需要 ROLE_前缀
+                 authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("admin,ROLE_admin");
+            }else {
+                authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("");
+            }
 
             return new org.springframework.security.core.userdetails.User(
                     username,encode,authorities
@@ -489,6 +507,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             throw new UsernameNotFoundException("用户未找到");
         }
     }
+}
 ```
 
 
@@ -499,14 +518,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 **只要满足某个权限就可以访问**
 
-```
+```java
 用于多个权限
 .antMatchers("/test/hello").hasAuthority("admin,manager") //admin和manager都可以访问
 ```
-
-
-
-
 
 
 
@@ -549,23 +564,26 @@ List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthor
 
 ```java
 @Override
-protected void configure(HttpSecurity http) throws Exception {
-    //配置没有访问权限
-    http.exceptionHandling().accessDeniedPage("/unlogin.html");
-    
-    http.formLogin()
-            .loginPage("/login.html") //登录页面
-            .loginProcessingUrl("/user/login") //页面提交地址
-            .defaultSuccessUrl("/test/hello").permitAll() //成功后跳转
-            .and()
-            .authorizeRequests() //请求批注
-            .antMatchers("/","/test/index").permitAll()//不需要权限
-            .antMatchers("/test/hello").hasAuthority("admin")//需要权限
-            .antMatchers("/test/hello").hasRole("admin")//需要角色
-            .anyRequest().authenticated() //剩余请求，登陆后访问
-            .and()
-            .csrf().disable(); //关闭csrf防护
-}
+    protected void configure(HttpSecurity http) throws Exception {
+        //配置没有访问权限
+        http.exceptionHandling().accessDeniedPage("/unlogin.html");
+        http.formLogin()
+                .loginPage("/login.html") //登录页面
+                .loginProcessingUrl("/user/login") //页面提交地址
+                .defaultSuccessUrl("/hello").permitAll() //成功后跳转
+                .and()
+                .authorizeRequests() //请求批注
+                .antMatchers("/","/index").permitAll()//不需要权限
+                .antMatchers("/hello").hasAuthority("admin")//需要权限
+                // 多个权限
+                .antMatchers("/d","/a").hasAnyAuthority("admin","role")
+                .antMatchers("/hello").hasRole("admin")//需要角色
+                // 多个角色，用户拥有任何一个角色都可以访问
+                .antMatchers("/a","/b").hasAnyRole("admin","role")
+                .anyRequest().authenticated() //剩余请求，登陆后访问
+                .and()
+                .csrf().disable(); //关闭csrf防护
+    }
 ```
 
 
@@ -600,7 +618,6 @@ public @interface Secured {
 
 ```java
 	@RequestMapping("/Secured")
-    @ResponseBody
     @Secured({"ROLE_ADMIN","ROLE_ALL"})
     public String test(){
         return "@Secured 角色注解";
@@ -625,6 +642,7 @@ public class UserService implements UserDetailsService {
             //权限
             List<GrantedAuthority> authorities;
             if (username.equals("admin")){
+                // 角色
                 authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_admin");
             }else {
                 authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("");
@@ -676,7 +694,7 @@ public @interface PreAuthorize {
 
 ```java
 authorities = AuthorityUtils.commaSeparatedStringToAuthorityList("LUCY");
-//用户拥有LUCY角色
+//用户拥有LUCY权限
 ```
 
 
@@ -689,10 +707,6 @@ public String test2(){
     return "@PreAuthorize 注解";
 }
 ```
-
-
-
-
 
 
 
@@ -726,7 +740,6 @@ public @interface PostAuthorize {
 
 ```java
 @RequestMapping("/PostAuthorize")
-@ResponseBody
 @PostAuthorize("hasRole('ROLE_ADMIN')")
 public String test3(){
     System.err.println("PostAuthorize.......");
@@ -737,10 +750,6 @@ public String test3(){
 
 
 **没有权限的人照样可以执行方法，可以看见控制台输出，但是在返回时检验权限，没有权限，403**
-
-
-
-
 
 
 
@@ -776,9 +785,7 @@ public String test4(){
 
 ### 3.6.5、@PreFilter
 
-
-
-**进入控制器之前，对数据进行过滤**
+**对传入方法的数据进行过滤**
 
 
 
