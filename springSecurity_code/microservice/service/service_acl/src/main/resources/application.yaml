@@ -1,0 +1,39 @@
+server:
+  port: 9001
+
+spring:
+  application:
+    name: service-acl
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/security
+    username: root
+    password: root
+    type: com.alibaba.druid.pool.DruidDataSource
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  redis:
+    host: centos.com
+    port: 6379
+    database: 0
+    password: dhf200827
+    timeout: 180000
+    lettuce:
+      pool:
+        max-wait: -1
+        max-active: 20
+        max-idle: 8
+        min-idle: 0
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+mybatis-plus:
+  mapper-locations: classpath:mapper/**/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-value: 1
+      logic-not-delete-value: 0

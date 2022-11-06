@@ -1,0 +1,19 @@
+server:
+  port: 8010
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+    gateway:
+      discovery:
+        locator:
+          enabled: true # 发现服务 default false
+      routes: # 路由规则
+        - id: sercer-acl
+          uri: lb://server-acl
+          predicates:
+            - Path: /*/acl/**
+  application:
+    name: GateWay
+
