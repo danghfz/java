@@ -28,6 +28,10 @@ abstract class Drink {
     private String des;
     private float price;
 
+    /**
+     * 总价格
+     * @return float
+     */
     public abstract float total();
 }
 
@@ -53,7 +57,9 @@ class LongBlack extends Coffee {
     }
 }
 
-// 装饰者
+/**
+ * 装饰者
+ */
 class Decorator extends Drink {
     Decorator(Drink drink) {
         this.drink = drink;
@@ -74,7 +80,9 @@ class Decorator extends Drink {
     }
 }
 
-// 巧克力
+/**
+ * 巧克力
+ */
 class Chocolate extends Decorator {
     Chocolate(Drink drink) {
         super(drink);
@@ -83,7 +91,9 @@ class Chocolate extends Decorator {
     }
 }
 
-// 糖
+/**
+ * 糖
+ */
 class Sugar extends Decorator {
     Sugar(Drink drink) {
         super(drink);

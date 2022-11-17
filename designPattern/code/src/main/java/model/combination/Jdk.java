@@ -1,6 +1,7 @@
 package model.combination;
 
 import java.util.HashMap;
+import java.util.Scanner;
 
 /**
  * @author danghf
