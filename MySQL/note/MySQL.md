@@ -2870,11 +2870,690 @@ Memory引擎的表数据时存储在内存中的，由于受到硬件问题、�
 
 
 
+### 索引介绍
+
+索引（index）是帮助MySQL**高效获取数据**的**数据结构**(**有序**)。在数据之外，数据库系统还维护着满足 特定查找算法的数据结构，这些数据结构以某种方式引用（指向）数据， 这样就可以在这些数据结构 上实现高级查找算法，这种数据结构就是索引
+
+![](image/Snipaste_2022-11-25_17-59-34.png)
+
+
+
+优缺点：
+
+优点：
+
+- 提高数据检索效率，降低数据库的IO成本
+- 通过索引列对数据进行排序，降低数据排序的成本，降低CPU的消耗
+
+缺点：
+
+- 索引列也是要占用空间的
+- 索引大大提高了查询效率，但降低了更新的速度，比如 INSERT、UPDATE、DELETE
+
+
+
+### 索引结构
+
+| 索引结构            | 描述                                                         |
+| :------------------ | :----------------------------------------------------------- |
+| B+Tree              | 最常见的索引类型，大部分引擎都支持B+树索引                   |
+| Hash                | 底层数据结构是用哈希表实现，只有精确匹配索引列的查询才有效，不支持范围查询 |
+| R-Tree(空间索引)    | 空间索引是 MyISAM 引擎的一个特殊索引类型，主要用于地理空间数据类型，通常使用较少 |
+| Full-Text(全文索引) | 是一种通过建立倒排索引，快速匹配文档的方式，类似于 Lucene, Solr, ES |
+
+- 上述是MySQL中所支持的所有的索引结构，接下来，我们再来看看不同的存储引擎对于索引结构的支持 情况。
+
+| 索引       | InnoDB          | MyISAM | Memory |
+| :--------- | :-------------- | :----- | :----- |
+| B+Tree索引 | 支持            | 支持   | 支持   |
+| Hash索引   | 不支持          | 不支持 | 支持   |
+| R-Tree索引 | 不支持          | 支持   | 不支持 |
+| Full-text  | 5.6版本之后支持 | 支持   | 不支持 |
+
+> ```sh
+> # 注意： 我们平常所说的索引，如果没有特别指明，都是指B+树结构组织的索引。
+> ```
+
+
+
+#### 二叉树
+
+假如说MySQL的索引结构采用二叉树的数据结构，比较理想的结构如下：
+
+![](image/Snipaste_2022-11-25_18-37-43.png)
+
+如果主键是顺序插入的，则会形成一个单向链表，结构如下：
+
+![](image/Snipaste_2022-11-25_18-38-11.png)
+
+所以，如果选择二叉树作为索引结构，会存在以下缺点：
+
+- 顺序插入时，会形成一个链表，查询性能大大降低。
+- 大数据量情况下，层级较深，检索速度慢。
+
+此时大家可能会想到，我们可以选择红黑树，红黑树是一颗自平衡二叉树，那这样即使是顺序插入数据，最终形成的数据结构也是一颗平衡的二叉树,结构如下:
+
+![](image/Snipaste_2022-11-25_18-38-54.png)
+
+但是，即使如此，由于红黑树也是一颗二叉树，所以也会存在一个缺点：
+
+- 大数据量情况下，层级较深，检索速度慢。
+
+所以，在MySQL的索引结构中，并没有选择二叉树或者红黑树，而选择的是B+Tree，那么什么是B+Tree呢？在详解B+Tree之前，先来介绍一个B-Tree
+
+
+
+#### B-Tree
+
+B-Tree，B树是一种**多路**平衡查找树，相对于二叉树，B树每个节点可以有多个分支，即多叉。以一颗最大度数（max-degree）为5(5阶)的b-tree为例，那这个B树每个节点最多存储4个key，5个指针：
+
+![](image/Snipaste_2022-11-25_18-41-47.png)
+
+> ```sh
+> # 树的度数指的是一个节点的子节点个数
+> ```
+
+我们可以通过一个数据结构可视化的网站来简单演示一下。[B-Tree Visualization (usfca.edu)](https://www.cs.usfca.edu/~galles/visualization/BTree.html)
+
+![](image/Snipaste_2022-11-25_18-44-39.png)
+
+特点：
+
+- 5阶的B树，每一个节点最多存储4个key，对应5个指针。
+- 一旦节点存储的key数量到达5，就会裂变，中间元素向上分裂。
+- 在**B树**中，**非叶子节点和叶子节点都会存放数据**。
+
+
+
+#### B+Tree
+
+B+Tree是B-Tree的变种，我们以一颗最大度数（max-degree）为4（4阶）的b+tree为例，来看一下其结构示意图：
+
+![](image/Snipaste_2022-11-25_18-46-39.png)
+
+
+
+我们可以看到，两部分：
+
+- 绿色框框起来的部分，是索引部分，仅仅起到索引数据的作用，不存储数据。
+- 红色框框起来的部分，是数据存储部分，在其叶子节点中要存储具体的数据。
+
+我们可以通过一个数据结构可视化的网站来简单演示一下。[B+ Tree Visualization (usfca.edu)](https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html)
+
+![](image/Snipaste_2022-11-25_18-48-37.png)
+
+**最终我们看到，B+Tree 与 B-Tree相比，主要有以下三点区别：**
+
+- **所有的数据**都会出现在**叶子节点**。
+- **叶子节点形成**一个**单向链表**。
+- **非叶子节点**仅仅起到**索引数据作用**，**具体的数据**都是在**叶子节点存放**的。
+
+
+
+上述我们所看到的结构是标准的B+Tree的数据结构，接下来，我们再来看看MySQL中优化之后的B+Tree。
+
+MySQL索引数据结构对经典的B+Tree进行了优化。在原B+Tree的基础上，增加一个指向相邻叶子节点的链表指针，就形成了带有顺序指针的B+Tree，提高区间访问的性能，利于排序。
+
+![](image/Snipaste_2022-11-25_18-50-14.png)
+
+
+
+#### Hash
+
+MySQL中除了支持B+Tree索引，还支持一种索引类型---Hash索引。
+
+1. 结构
+
+哈希索引就是采用一定的hash算法，将键值换算成新的hash值，映射到对应的槽位上，然后存储在hash表中。
+
+![](image/Snipaste_2022-11-25_18-51-05.png)
+
+
+
+如果两个(或多个)键值，映射到一个相同的槽位上，他们就产生了hash冲突（也称为hash碰撞），可以通过链表来解决。
+
+![](image/Snipaste_2022-11-25_18-51-55.png)
+
+1. 特点
+
+- Hash索引只能用于对等比较(=，in)，不支持范围查询（between，>，< ，...）
+- 无法利用索引完成排序操作
+- 查询效率高，通常(不存在hash冲突的情况)只需要一次检索就可以了，效率通常要高于B+tree索引
+
+1. 存储引擎支持
+
+在MySQL中，支持hash索引的是Memory存储引擎。 而InnoDB中具有自适应hash功能，hash索引是 InnoDB存储引擎根据B+Tree索引在指定条件下自动构建的。
+
+```sh
+# 思考题： 为什么InnoDB存储引擎选择使用B+tree索引结构?
+
+# 相对于二叉树，层级更少，搜索效率高；
+# 对于B-tree，无论是叶子节点还是非叶子节点，都会保存数据，这样导致一页中存储的键值减少，指针跟着减少，要同样保存大量数据，只能增加树的高度，导致性能降低；
+# 相对Hash索引，B+tree支持范围匹配及排序操作；
+```
+
+
+
+### 索引的分类
+
+在MySQL数据库，将索引的具体类型主要分为以下几类：主键索引、唯一索引、常规索引、全文索引。
+
+| 分类     | 含义                                                 | 特点                     | 关键字   |
+| :------- | :--------------------------------------------------- | :----------------------- | :------- |
+| 主键索引 | 针对于表中主键创建的索引                             | 默认自动创建，只能有一个 | PRIMARY  |
+| 唯一索引 | 避免同一个表中某数据列中的值重复                     | 可以有多个               | UNIQUE   |
+| 常规索引 | 快速定位特定数据                                     | 可以有多个               |          |
+| 全文索引 | 全文索引查找的是文本中的关键词，而不是比较索引中的值 | 可以有多个               | FULLTEXT |
+
+在 InnoDB 存储引擎中，根据索引的存储形式，又可以分为以下两种：
+
+| 分类                      | 含义                                                       | 特点                     |
+| :------------------------ | :--------------------------------------------------------- | :----------------------- |
+| 聚集索引(Clustered Index) | 将数据存储与索引放一块，索引结构的叶子节点保存了行数据     | **必须有，而且只有一个** |
+| 二级索引(Secondary Index) | 将数据与索引分开存储，索引结构的叶子节点关联的是对应的主键 | 可以存在多个             |
+
+聚集索引选取规则:
+
+- 如果存在主键，主键索引就是聚集索引
+- 如果不存在主键，将使用第一个唯一（UNIQUE）索引作为聚集索引。
+- 如果表没有主键，或没有合适的唯一索引，则InnoDB会自动生成一个rowid作为隐藏的聚集索引。
+
+
+
+聚集索引和二级索引的具体结构如下：
+
+![](image/Snipaste_2022-11-25_19-59-59.png)
+
+
+
+- 聚集索引的叶子节点下挂的是这一行的数据 。
+- 二级索引的叶子节点下挂的是该字段值对应的主键值。
+
+接下来，我们来分析一下，当我们执行如下的SQL语句时，具体的查找过程是什么样子的。
+
+![](image/Snipaste_2022-11-25_20-00-51.png)
+
+具体过程如下:
+
+1. 由于是根据name字段进行查询，所以先根据name='Arm'到name字段的二级索引中进行匹配查 找。但是在二级索引中只能查找到 Arm 对应的主键值 10。
+2. 由于查询返回的数据是*，所以此时，还需要根据主键值10，到聚集索引中查找10对应的记录，最 终找到10对应的行row。
+3. 最终拿到这一行的数据，直接返回即可。
+
+
+
+```sh
+# 回表查询： 这种先到二级索引中查找数据，找到主键值，然后再到聚集索引中根据主键值，获取 数据的方式，就称之为回表查询。
+```
+
+```sh
+# 思考题：
+
+# 以下两条SQL语句，那个执行效率高? 为什么?
+
+# A. select * from user where id = 10 ;
+
+# B. select * from user where name = 'Arm' ;
+
+# 备注: id为主键，name字段创建的有索引；
+
+# 解答：
+
+# A 语句的执行性能要高于B 语句。
+
+# 因为A语句直接走聚集索引，直接返回数据。 而B语句需要先查询name字段的二级索引，然后再查询聚集索引，也就是需要进行回表查询。
+```
+
+
+
+思考题：
+
+- InnoDB主键索引的B+tree高度为多高呢?
+
+![](image/Snipaste_2022-11-25_20-02-44.png)
+
+答：假设一行数据大小为1k，一页中可以存储16行这样的数据。InnoDB 的指针占用6个字节的空间，主键假设为bigint，占用字节数为8. 可得公式：`n * 8 + (n + 1) * 6 = 16 * 1024`，其中 8 表示 bigint 占用的字节数，n 表示当前节点存储的key的数量，(n + 1) 表示指针数量（比key多一个）。算出n约为1170。
+
+如果树的高度为2，那么他能存储的数据量大概为：`1171 * 16 = 18736`； 如果树的高度为3，那么他能存储的数据量大概为：`1171 * 1171 * 16 = 21939856`。
+
+另外，如果有成千上万的数据，那么就要考虑分表，涉及运维篇知识
+
+
+
+### 索引语法
+
+```sql
+-- 创建索引
+CREATE [ UNIQUE | FULLTEXT ] INDEX index_name ON table_name (index_col_name,... ) ;
+-- 1.添加PRIMARY KEY（主键索引） 
+ALTER TABLE `table_name` ADD PRIMARY KEY ( `column` ) 
+-- 2.添加UNIQUE(唯一索引) 
+ALTER TABLE `table_name` ADD UNIQUE ( 
+`column` 
+) 
+-- 3.添加INDEX(普通索引) 
+ALTER TABLE `table_name` ADD INDEX index_name ( `column` ) 
+-- 4.添加FULLTEXT(全文索引) 
+ALTER TABLE `table_name` ADD FULLTEXT ( `column`) 
+-- 5.添加多列索引 
+ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+
+
+-- 查看索引
+SHOW INDEX FROM table_name ;
+
+
+-- 删除索引
+DROP INDEX index_name ON `table_name`
+ALTER TABLE `table_name` DROP INDEX index_name;
+
+-- 删除主键索引
+ALTER table `table_name` DROP PRIMARY KEY;
+```
+
+
+
+- **Demo**
+
+```sql
+create table tb_user(
+	id int primary key auto_increment comment '主键',
+	name varchar(50) not null comment '用户名',
+	phone varchar(11) not null comment '手机号',
+	email varchar(100) comment '邮箱',
+	profession varchar(11) comment '专业',
+	age tinyint unsigned comment '年龄',
+	gender char(1) comment '性别 , 1: 男, 2: 女',
+	status char(1) comment '状态',
+	createtime datetime comment '创建时间'
+) comment '系统用户表';
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('吕布', '17799990000', 'lvbu666@163.com', '软件工程', 23, '1','6', '2001-02-02 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('曹操', '17799990001', 'caocao666@qq.com', '通讯工程', 33,'1', '0', '2001-03-05 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('赵云', '17799990002', '17799990@139.com', '英语', 34, '1','2', '2002-03-02 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('孙悟空', '17799990003', '17799990@sina.com', '工程造价', 54,'1', '0', '2001-07-02 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('花木兰', '17799990004', '19980729@sina.com', '软件工程', 23,'2', '1', '2001-04-22 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('大乔', '17799990005', 'daqiao666@sina.com', '舞蹈', 22, '2','0', '2001-02-07 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status, createtime) VALUES ('露娜', '17799990006', 'luna_love@sina.com', '应用数学', 24,'2', '0', '2001-02-08 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('程咬金', '17799990007', 'chengyaojin@163.com', '化工', 38,'1', '5', '2001-05-23 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('项羽', '17799990008', 'xiaoyu666@qq.com', '金属材料', 43,'1', '0', '2001-09-18 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('白起', '17799990009', 'baiqi666@sina.com', '机械工程及其自动化', 27, '1', '2', '2001-08-16 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('韩信', '17799990010', 'hanxin520@163.com', '无机非金属材料工程', 27, '1', '0', '2001-06-12 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('荆轲', '17799990011', 'jingke123@163.com', '会计', 29, '1','0', '2001-05-11 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('兰陵王', '17799990012', 'lanlinwang666@126.com', '工程造价',44, '1', '1', '2001-04-09 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('狂铁', '17799990013', 'kuangtie@sina.com', '应用数学', 43,'1', '2', '2001-04-10 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('貂蝉', '17799990014', '84958948374@qq.com', '软件工程', 40,'2', '3', '2001-02-12 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('妲己', '17799990015', '2783238293@qq.com', '软件工程', 31,'2', '0', '2001-01-30 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('芈月', '17799990016', 'xiaomin2001@sina.com', '工业经济', 35,'2', '0', '2000-05-03 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('嬴政', '17799990017', '8839434342@qq.com', '化工', 38, '1','1', '2001-08-08 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('狄仁杰', '17799990018', 'jujiamlm8166@163.com', '国际贸易',30, '1', '0', '2007-03-12 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('安琪拉', '17799990019', 'jdodm1h@126.com', '城市规划', 51,'2', '0', '2001-08-15 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('典韦', '17799990020', 'ycaunanjian@163.com', '城市规划', 52,'1', '2', '2000-04-12 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('廉颇', '17799990021', 'lianpo321@126.com', '土木工程', 19,'1', '3', '2002-07-18 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('后羿', '17799990022', 'altycj2000@139.com', '城市园林', 20,'1', '0', '2002-03-10 00:00:00');
+INSERT INTO tb_user (name, phone, email, profession, age, gender, status,createtime) VALUES ('姜子牙', '17799990023', '37483844@qq.com', '工程造价', 29,'1', '4', '2003-05-26 00:00:00');
+
+```
+
+
+
+![](image/Snipaste_2022-11-25_20-15-00.png)
+
+
+
+```sql
+-- 为name新建索引
+alter table tb_user ADD index index_name (name);
+
+-- phone新建唯一索引
+mysql> ALTER TABLE tb_user ADD UNIQUE INDEX UNIQUE_PHONE (phone);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+-- 为profession、age、status创建联合索引。
+mysql> ALTER TABLE tb_user ADD INDEX index_p_a_s (profession, age, status);
+Query OK, 0 rows affected (0.03 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+```
+
+```sql
+-- 查看索引
+SHOW INDEX FROM tb_user;
+SHOW KEYS FROM tb_user;
+
+```
+
+![](image/Snipaste_2022-11-25_20-21-22.png)
+
+
+
+### SQL 性能分析
+
+#### SQL 执行频率
+
+MySQL 客户端连接成功后，通过 show [session|global] status 命令可以提供服务器状态信息。通过如下指令，可以查看当前数据库的INSERT、UPDATE、DELETE、SELECT的访问频次：
+
+```sql
+-- session 是查看当前会话 ;
+-- global 是查询全局数据 ;
+SHOW GLOBAL STATUS LIKE 'Com_______';
+
+```
+
+![](image/Snipaste_2022-11-25_20-24-47.png)
+
+Com_delete: 删除次数
+
+Com_insert: 插入次数
+
+Com_select: 查询次数
+
+Com_update: 更新次数
+
+我们可以在当前数据库再执行几次查询操作，然后再次查看执行频次，看看 Com_select 参数会不会变化
+
+```sh
+# 通过上述指令，我们可以查看到当前数据库到底是以查询为主，还是以增删改为主，从而为数据库优化提供参考依据。 如果是以增删改为主，我们可以考虑不对其进行索引的优化。 如果是以查询为主，那么就要考虑对数据库的索引进行优化了。
+```
+
+那么通过查询SQL的执行频次，我们就能够知道当前数据库到底是增删改为主，还是查询为主。 那假如说是以查询为主，我们又该如何定位针对于那些查询语句进行优化呢？ 次数我们可以借助于慢查询日志。
+
+接下来，我们就来介绍一下MySQL中的慢查询日志。
+
+
+
+#### 慢查询日志
+
+慢查询日志记录了所有执行时间超过指定参数（long_query_time，单位：秒，默认10秒）的所有 SQL语句的日志。
+
+MySQL的慢查询日志默认没有开启，我们可以查看一下系统变量 slow_query_log。
+
+```sql
+show variables like 'slow_query_log';
+
+mysql> show variables like 'slow_query_log';
++----------------+-------+
+| Variable_name  | Value |
++----------------+-------+
+| slow_query_log | OFF   |
++----------------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+如果要开启慢查询日志，需要在MySQL的配置文件（/etc/my.cnf）中配置如下信息：
+
+```ini
+# 开启MySQL慢日志查询开关
+slow_query_log=1
+
+# 设置慢日志的时间为2秒，SQL语句执行时间超过2秒，就会视为慢查询，记录慢查询日志
+long_query_time=2
+
+```
+
+重启MySQL，查看
+
+```sql
+mysql> show variables like 'slow_query_log';
++----------------+-------+
+| Variable_name  | Value |
++----------------+-------+
+| slow_query_log | ON    |
++----------------+-------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+1、测试：
+
+```sql
+select * from tb_user; -- 这条SQL执行效率比较高, 执行耗时 0.00sec
+select count(*) from tb_sku; -- 由于tb_sku表中, 预先存入了1000w的记录, count一次,耗时13.35sec
+
+```
+
+2、检查慢查询日志 ：
+
+最终我们发现，在慢查询日志中，只会记录执行时间超多我们预设时间（2s）的SQL，执行较快的SQL是不会记录的。
+
+那这样，通过慢查询日志，就可以定位出执行效率比较低的SQL，从而有针对性的进行优化。
+
+
+
+#### profile详情
+
+
+
+show profiles 能够在做SQL优化时帮助我们了解时间都耗费到哪里去了。通过have_profiling参数，能够看到当前MySQL是否支持profile操作：
+
+```sql
+SELECT @@have_profiling;
+
+mysql> SELECT @@have_profiling;
++------------------+
+| @@have_profiling |
++------------------+
+| YES              |
++------------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql> select @@profiling;
++-------------+
+| @@profiling |
++-------------+
+|           0 |
++-------------+
+1 row in set, 1 warning (0.00 sec)
+
+mysql>
+```
+
+
+
+可以看到，当前MySQL是支持 profile操作的，但是开关是关闭的。可以通过set语句在session/global级别开启profiling：
+
+```sql
+SET profiling = 1;
+
+mysql> select @@profiling;
++-------------+
+| @@profiling |
++-------------+
+|           1 |
++-------------+
+1 row in set, 1 warning (0.00 sec)
+```
+
+
+
+开关已经打开了，接下来，我们所执行的SQL语句，都会被MySQL记录，并记录执行时间消耗到哪儿去了。 我们直接执行如下的SQL语句
+
+```sql
+select * from tb_user;
+
+select * from tb_user where id = 1;
+
+select * from tb_user where name = '白起';
+
+select count(*) from tb_sku;
+
+```
+
+
+
+执行一系列的业务SQL的操作，然后通过如下指令查看指令的执行耗时：
+
+```sql
+-- 查看每一条SQL的耗时基本情况
+show profiles;
+
+-- 查看指定query_id的SQL语句各个阶段的耗时情况
+show profile for query query_id;
+
+-- 查看指定query_id的SQL语句CPU的使用情况
+show profile cpu for query query_id;
+
+```
+
+
+
+查看每一条SQL的耗时情况:
+
+```sql
+mysql> show profiles;
++----------+------------+---------------------------------------------+
+| Query_ID | Duration   | Query                                       |
++----------+------------+---------------------------------------------+
+|        1 | 0.00035925 | select @@profiling                          |
+|        2 | 0.00047950 | select * from tb_user                       |
+|        3 | 0.00028925 | select * from tb_user where id = 1          |
+|        4 | 0.00047600 | select * from tb_user where name = '白起'   |
+|        5 | 0.00074075 | select count(*) from tb_sku                 |
++----------+------------+---------------------------------------------+
+5 rows in set, 1 warning (0.00 sec)
+
+```
+
+
+
+查看指定SQL各个阶段的耗时情况 :
+
+```sql
+mysql> show profile for query 4;
++--------------------------------+----------+
+| Status                         | Duration |
++--------------------------------+----------+
+| starting                       | 0.000089 |
+| Executing hook on transaction  | 0.000006 |
+| starting                       | 0.000007 |
+| checking permissions           | 0.000005 |
+| Opening tables                 | 0.000032 |
+| init                           | 0.000004 |
+| System lock                    | 0.000007 |
+| optimizing                     | 0.000061 |
+| statistics                     | 0.000182 |
+| preparing                      | 0.000015 |
+| executing                      | 0.000030 |
+| end                            | 0.000003 |
+| query end                      | 0.000003 |
+| waiting for handler commit     | 0.000006 |
+| closing tables                 | 0.000005 |
+| freeing items                  | 0.000010 |
+| cleaning up                    | 0.000011 |
++--------------------------------+----------+
+17 rows in set, 1 warning (0.00 sec)
+
+```
+
+
+
+查看指定query_id的SQL语句CPU的使用情况:
+
+```sql
+mysql> show profile cpu for query 4;
++--------------------------------+----------+----------+------------+
+| Status                         | Duration | CPU_user | CPU_system |
++--------------------------------+----------+----------+------------+
+| starting                       | 0.000089 | 0.000026 |   0.000061 |
+| Executing hook on transaction  | 0.000006 | 0.000001 |   0.000002 |
+| starting                       | 0.000007 | 0.000002 |   0.000005 |
+| checking permissions           | 0.000005 | 0.000001 |   0.000004 |
+| Opening tables                 | 0.000032 | 0.000010 |   0.000022 |
+| init                           | 0.000004 | 0.000001 |   0.000003 |
+| System lock                    | 0.000007 | 0.000002 |   0.000005 |
+| optimizing                     | 0.000061 | 0.000000 |   0.000062 |
+| statistics                     | 0.000182 | 0.000000 |   0.000202 |
+| preparing                      | 0.000015 | 0.000000 |   0.000014 |
+| executing                      | 0.000030 | 0.000000 |   0.000030 |
+| end                            | 0.000003 | 0.000000 |   0.000003 |
+| query end                      | 0.000003 | 0.000000 |   0.000003 |
+| waiting for handler commit     | 0.000006 | 0.000000 |   0.000006 |
+| closing tables                 | 0.000005 | 0.000000 |   0.000005 |
+| freeing items                  | 0.000010 | 0.000000 |   0.000011 |
+| cleaning up                    | 0.000011 | 0.000000 |   0.000010 |
++--------------------------------+----------+----------+------------+
+17 rows in set, 1 warning (0.00 sec)
+
+```
+
+
+
+#### explain
+
+EXPLAIN 或者 DESC命令获取 MySQL 如何执行 SELECT 语句的信息，包括在 SELECT 语句执行过程中表如何连接和连接的顺序。
+
+
+
+- **语法**
+
+```sql
+-- 直接在select语句之前加上关键字 explain / desc
+EXPLAIN SELECT 字段列表 FROM 表名 WHERE 条件 ;
+
+```
+
+> ```sql
+> mysql> EXPLAIN select * from test.tb_user where id = 1;
+> +----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type  | possible_keys | key     | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | const | PRIMARY       | PRIMARY | 4       | const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+-------+---------------+---------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+Explain 执行计划中各个字段的含义:
+
+| 字段         | 含义                                                         |
+| ------------ | ------------------------------------------------------------ |
+| id           | select查询的序列号，表示查询中执行select子句或者是操作表的顺序 (id相同，执行顺序从上到下；id不同，值越大，越先执行)。 |
+| select_type  | 表示 SELECT 的类型，常见的取值有 SIMPLE（简单表，即不使用表连接或者子查询）、PRIMARY（主查询，即外层的查询）、UNION（UNION 中的第二个或者后面的查询语句）、SUBQUERY（SELECT/WHERE之后包含了子查询）等 |
+| type         | 表示连接类型，性能由好到差的连接类型为NULL、system、const、eq_ref、ref、range、 index、all 。 |
+| possible_key | 显示可能应用在这张表上的索引，一个或多个。                   |
+| key          | 实际使用的索引，如果为NULL，则没有使用索引。                 |
+| key_len      | 表示索引中使用的字节数， 该值为索引字段最大可能长度，并非实际使用长度，在不损失精确性的前提下， 长度越短越好 。 |
+| rows         | MySQL认为必须要执行查询的行数，在innodb引擎的表中，是一个估计值，可能并不总是准确的。 |
+| filtered     | 表示返回结果的行数占需读取行数的百分比， filtered 的值越大越好。 |
+
+
+
+### 索引使用
+
+#### 验证索引效率
+
+在讲解索引的使用原则之前，先通过一个简单的案例，来验证一下索引，看看是否能够通过索引来提升数据查询性能。在演示的时候，我们还是使用之前准备的一张表 tb_sku , 在这张表中准备了1000w的记录。
+
+```sql
+mysql> SELECT COUNT(*) FROM tb_sku;
++----------------+
+|    count(*)    |
++----------------+
+|    10000000    |
++----------------+
+1 row in set (11.03 sec)
+```
 
 
 
 
 
+
+
+### 索引设计原则
+
+1. 针对于数据量较大，且查询比较频繁的表建立索引。
+2. 针对于常作为查询条件（where）、排序（order by）、分组（group by）操作的字段建立索引。
+3. 尽量选择区分度高的列作为索引，尽量建立唯一索引，区分度越高，使用索引的效率越高。
+4. 如果是字符串类型的字段，字段的长度较长，可以针对于字段的特点，建立前缀索引。
+5. 尽量使用联合索引，减少单列索引，查询时，联合索引很多时候可以覆盖索引，节省存储空间，避免回表，提高查询效率。
+6. 要控制索引的数量，索引并不是多多益善，索引越多，维护索引结构的代价也就越大，会影响增删改的效率。
+7. 如果索引列不能存储NULL值，请在创建表时使用NOT NULL约束它。当优化器知道每列是否包含NULL值时，它可以更好地确定哪个索引最有效地用于查询。
 
 
 
