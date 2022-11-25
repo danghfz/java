@@ -144,7 +144,7 @@ CREATE TABLE `USER`(
 
 ### INSERT 语句
 
-**基本语法**
+- **基本语法**
 
 ```sh
 # INSEET INTO table_name [(column [, column... ])]
@@ -174,7 +174,7 @@ SELECT * FROM goods
 
 
 
-**细节说明**
+- **细节说明**
 
 ```sql
 # 说明insert 语句的细节
@@ -222,7 +222,7 @@ SELECT * FROM goods2;
 
 ### UPDATE 语句
 
-**基本语法**
+- **基本语法**
 
 ```sh
 # UPDATE tab1_name 
@@ -261,7 +261,7 @@ SELECT * FROM employee;
 
 
 
-**使用细节**
+- **使用细节**
 
 1. UPDATE语法可以用新值更新原有表行中的各列。
 2. SET子句指示要修改哪些列和要给予哪些值。
@@ -272,7 +272,7 @@ SELECT * FROM employee;
 
 ### DELETE 语句
 
-**基本语法**
+- **基本语法**
 
 ```sh
 # DELETE FROM tab1_name 
@@ -301,7 +301,7 @@ SELECT * FROM employee;
 
 
 
-**使用细节**
+- **使用细节**
 
 1. 如果不使用where子句，将删除表中所有数据。
 2. Delete语句不能删除某一列的值(可使用update设为null或者“ ”)
@@ -311,7 +311,7 @@ SELECT * FROM employee;
 
 ### SELECT 语句
 
-**基本语法**
+- **基本语法**
 
 ```sh
 # SELECT [DISTINCT] * | {column1, column2, column3, ...}
@@ -320,7 +320,7 @@ SELECT * FROM employee;
 
 
 
-**注意事项**
+- **注意事项**
 
 1. Select 指定查询哪些列的数据。
 2. column指定列名。
@@ -364,7 +364,7 @@ SELECT DISTINCT `name`,english FROM student;
 
 
 
-**使用表达式对查询的列进行运算**
+- **使用表达式对查询的列进行运算**
 
 ```sh
 # SELECT [DISTINCT] * | {column1 | expression,column2,|expression...}
@@ -373,7 +373,7 @@ SELECT DISTINCT `name`,english FROM student;
 
 
 
-**在SELECT语句中可以使用 AS 语句**
+- **在SELECT语句中可以使用 AS 语句**
 
 ```sh
 # SELECT column_name AS 别名 FROM table_name
@@ -405,7 +405,7 @@ SELECT `math` AS`Math` FROM student
 
 
 
-**在where字句中经常使用的运算符**
+- **在where字句中经常使用的运算符**
 
 ```sql
 -- select语句
@@ -452,7 +452,7 @@ SELECT * FROM student
 
 
 
-**使用 ORDER BY 子句排序查询结果**
+- **使用 ORDER BY 子句排序查询结果**
 
 ```sh
 # SELECT column1, column2, ...
@@ -1018,7 +1018,7 @@ SELECT ename,sal,grade
 
 
 
-**自连接**
+- **自连接**
 
 > ```sh
 > # 自连接是指在同一张表的连接查询[将同一张表看做两张表].
@@ -1145,7 +1145,7 @@ SELECT ename,sal,deptno
 
 
 
-**多列子查询**
+- **多列子查询**
 
 > ```sh
 > # 多列子查询是指查询返回多个列数据的子查询语句。
@@ -1186,9 +1186,224 @@ SELECT *
 
 
 
+- **在 from 子句中使用子查询**
+
+```sql
+-- 子查询 练习
+
+-- 请思考：查找每个部门工资高于本部门平均工资的人的资料
+-- 这里要用到数据查询的小技巧，把一个子查询当做一个临时表使用
+
+-- 1.先得到每个部门的 部门号和对应的平均工资
+SELECT deptno,AVG(sal)
+	FROM emp
+	GROUP BY deptno
+	
+	
+-- 2.把上面的结果当做子查询，和emp进行多表查询
+SELECT  ename,sal,temp.avg_sal,emp.deptno
+	FROM emp,(
+		SELECT deptno,AVG(sal) AS avg_sal
+		FROM emp
+		GROUP BY deptno
+		)temp
+		WHERE emp.deptno=temp.deptno AND emp.sal>temp.avg_sal
+		
+-- 查找每个部门工资最高的人详细资料
+SELECT  ename,sal,temp.max_sal,emp.deptno
+	FROM emp,(
+		SELECT deptno,MAX(sal) AS max_sal
+		FROM emp
+		GROUP BY deptno
+		)temp
+		WHERE emp.deptno=temp.deptno AND emp.sal=temp.max_sal
+		
+-- 查询每个部门的信息(包括：部门名，编号，地址)和人员数量
+-- 1.部门名，编号，地址
+-- 2.各个部门的数量
+SELECT COUNT(*),deptno 
+	FROM emp
+	GROUP BY deptno
+	
+	
+	
+SELECT dname,dept.deptno ,loc,tmp.per_num AS '人数'
+	FROM dept,(
+		SELECT COUNT(*) AS per_num,deptno 
+		FROM emp
+		GROUP BY deptno
+		) tmp
+		WHERE tmp.deptno=dept.deptno
+		
+-- 还有一种写法 表.* 表示将该所有列都显示出来
+-- 在多表查询中，当多个表的列不重复时，才可以直接写列名
+
+SELECT tmp.* ,dname,loc
+	FROM dept,(
+		SELECT COUNT(*) AS per_num,deptno
+		FROM emp
+		GROUP BY deptno
+		) tmp
+		WHERE tmp.deptno=dept.deptno	
+
+
+```
 
 
 
+### 表复制
+
+- **自我复制数据(蠕虫复制)**
+
+```sql
+-- 表的复制
+-- 为了对某个sql语句进行效率测试，我们需要海量数据时，可以使用此法为表创建海量数据
+
+CREATE TABLE my_tab01(
+	id INT,
+	`name` VARCHAR(32),
+	sal DOUBLE,
+	job VARCHAR(32),
+	deptno INT);
+DESC my_tab01
+SELECT * FROM my_tab01
+
+-- 演示如何自我复制
+-- 1.先把emp表的记录复制到my_tab01
+INSERT INTO my_tab01
+	(id,`name`,sal,job,deptno)
+	SELECT empno,ename,sal,job,deptno FROM emp;
+	
+-- 2.自我复制
+INSERT INTO my_tab01
+	SELECT * FROM my_tab01;
+	
+-- 如何删除一张表重复记录
+-- 1.先创建一张表 my_tab02,
+-- 2.让 my_tab02 有重复的记录
+
+CREATE TABLE my_tab02 LIKE emp;-- 这个语句把emp表的结构(列)，复制到my_tab02
+
+DESC my_tab02; 
+
+INSERT INTO my_tab02
+	SELECT * FROM emp;
+	
+SELECT * FROM my_tab02;
+-- 3.考虑去重
+/*
+	(1)先创建一张临时表，my_tmp,该表的结构和 my_tab02一样
+	(2)把my_tmp的记录通过 distinct关键字 处理后，把记录复制到my_tmp
+	(3)清除掉my_tab02 记录
+	(4)把 my_tmp 表的记录复制到my_tab02
+	(5)drop 掉 临时表my_tmp
+*/
+DROP TABLE my_tmp
+-- (1)先创建一张临时表，my_tmp,该表的结构和 my_tab02一样
+CREATE TABLE my_tmp LIKE my_tab02
+-- (2)把my_tmp的记录通过 distinct关键字 处理后，把记录复制到my_tmp
+INSERT INTO my_tmp
+	SELECT DISTINCT * FROM my_tab02
+-- (3)清除掉my_tab02 记录
+DELETE FROM my_tab02
+-- (4)把 my_tmp 表的记录复制到my_tab02
+INSERT INTO my_tab02
+	SELECT * FROM my_tmp
+-- (5)drop 掉 临时表my_tmp
+DROP TABLE my_tmp
+
+SELECT * FROM my_tab02
+
+
+```
+
+
+
+### 合并查询
+
+- **介绍**
+
+```sh
+# 有时在实际应用中，为了合并多个select语句的结果，可以使用集合操作符号union , union all
+
+# nuion all
+# 该操作符用于取得两个结果集的并集。当使用该操作符时，不会取消重复行。
+# union
+# 该操作赋与union all相似,但是会自动去掉结果集中重复行。
+```
+
+```sql
+-- 合并查询
+
+SELECT ename,sal,job FROM emp WHERE sal>2500; -- 5
+
+SELECT ename,sal,job FROM emp WHERE job='MANAGER'; -- 3
+
+-- union all 就是将两个查询结果合并，不会去重
+SELECT ename,sal,job FROM emp WHERE sal>2500
+UNION ALL
+SELECT ename,sal,job FROM emp WHERE job='MANAGER';-- 8
+
+-- union  就是两个查询结果合并，会去重，不会出现同步记录
+SELECT ename,sal,job FROM emp WHERE sal>2500
+UNION 
+SELECT ename,sal,job FROM emp WHERE job='MANAGER';-- 6
+
+```
+
+
+
+- **外连接**
+
+1. 左外连接(如果左侧的表完全显示我们就说是左外连接) select...from 表1 left join 表2 on条件 [表1：左表 表2：右表]
+2. 右外连接(如果右侧的表完全显示我们就说是右外连接) select...from 表1 rigth join 表2 on条件 [表1：左表 表2：右表]
+
+
+
+```sql
+-- 外连接
+-- 比如:列出部门名称和这些部门的员工名称和工作，同时要求 显示出那些没有员工的部门
+
+-- 使用我们学习过的多表查询的sql,看看效果
+
+SELECT dname,ename,job 
+	FROM emp,dept
+	WHERE emp.deptno=dept.deptno
+	ORDER BY dname
+	
+-- 先创建 stu
+CREATE TABLE stu(
+	id INT,
+	`name` VARCHAR(32));
+INSERT INTO stu VALUES(1,'Jack'),(2,'tom'),(3,'kity'),(4,'nono');
+SELECT * FROM stu;
+
+-- 创建exam
+CREATE TABLE exam(
+	id INT,
+	grade INT);
+INSERT INTO exam VALUES(1,56),(2,76),(11,8);
+SELECT * FROM exam;
+
+
+-- 使用左连接
+-- (显示所有人的成绩，如果没有成绩，也要显示该人的姓名和id号，成绩显示为空)
+SELECT `name`,stu.id,grade
+	FROM stu,exam
+	WHERE stu.id=exam.id;
+	
+-- 改成左外连接
+SELECT `name`,stu.id,grade
+	FROM stu LEFT JOIN exam
+	ON stu.id=exam.id;
+	
+-- 使用右外连接(显示所有人的成绩，如果没有名字匹配，显示为空)
+-- 即：右边的表(exam)和左表没有匹配的记录，也会把右表的记录显示出来
+SELECT `name`,stu.id,grade
+	FROM stu RIGHT JOIN exam
+	ON stu.id=exam.id;
+
+```
 
 
 
@@ -1196,11 +1411,738 @@ SELECT *
 
 ## MySQL-约束与自增长
 
+### MySQL约束
+
+- **基本介绍**
+
+```sh
+# 约束用于确保数据库的数据满足特定的商业规则。在mysql中，约束包括: 
+# not null、unique,primary key,foreign key,和check五种。
+```
+
+
+
+### PRIMART KEY(主键)-基本使用
+
+- **细节说明**
+
+1. primary key不能重复而且不能为null。
+2. 一张表最多只能有一个主键,但可以是复合主键主键的指定方式有两种
+3. 直接在字段名后指定:字段名primakry key在表定义最后写primary key(列名);
+4. 使用desc表名，可以看到primary key的情况.
+5. 在实际开发中，每个表往往都会设计一个主键.
+
+
+
+```sql
+-- 主键使用
+
+
+-- id name email
+CREATE TABLE t17(
+	id INT PRIMARY KEY,-- 表示id列是主键
+	`name` VARCHAR(32),
+	email VARCHAR(32));
+	
+-- 主键列的值是不可以为 空
+INSERT INTO t17
+	VALUES(1,'jack','jack@sohu.com')
+INSERT INTO t17
+	VALUES(2,'tom','tom@sohu.com')
+INSERT INTO t17(
+	VALUES(1,'frx','frx@sohu.com')
+		
+SELECT * FROM t17
+
+-- 主键使用的细节讨论
+-- primary key 不能重复且不能为null
+INSERT INTO t17(
+	VALUES(NULL,'frx','frx@sohu.com')
+	
+-- 一张表最多只能有一个主键，但可以是复合主键(比如 id+name)
+-- 演示复合主键
+CREATE TABLE t18(
+	id INT ,
+	`name` VARCHAR(32) ,
+	email VARCHAR(32),
+	PRIMARY KEY(id,`name`));-- 这里就是复合主键
+
+INSERT INTO t18
+	VALUES(1,'tom','tom@sohu.com');
+INSERT INTO t18
+	VALUES(1,'jack','jack@sohu.com');
+SELECT * FROM t18
+
+-- 主键的指定方式 有两种
+-- 直接在字段名后指定：字段名 primary key
+CREATE TABLE t19(
+	id INT,
+	`name` VARCHAR(32) PRIMARY KEY,
+	email VARCHAR(32));
+	
+-- 在表定义最后写 primary key(列名);
+CREATE TABLE t20(
+	id INT,
+	`name` VARCHAR(32) ,
+	email VARCHAR(32),
+	PRIMARY KEY(`name`));
+	
+-- 使用desc 表名，可以看到primary key的情况下
+DESC t20 -- 查看t20 表的结果，显示约束情况
+DESC t18
+
+```
+
+
+
+### NOT NULL和UNIQUE(唯一)
+
+```sh
+# NOT NULL 非空，当插入数据时，必须提供数据
+# UNIQUE 唯一，该列不可重复，若没有指定 NOT NULL，则可以有多个 NULL
+```
+
+
+
+```sql
+-- unique的使用
+
+CREATE TABLE t21(
+	id INT UNIQUE,-- 表示id列是不可以重复的
+	`name` VARCHAR(32),
+	email VARCHAR(32)
+	);
+	
+INSERT INTO t21
+	VALUES(1,'jack','jack@sohu.com');
+INSERT INTO t21
+	VALUES(1,'tom','tom@sohu.com');	
+	
+-- unique的使用细节
+-- 1.如果没有指定 not null,则unique字段可以有多个null
+-- 如果一个列(字段)，是unique not null 使用效果类似 primary key
+INSERT INTO t21
+	VALUES(NULL,'tom','tom@sohu.com');
+-- 2.一张表可以有多个unique字段
+CREATE TABLE t22(
+	id INT UNIQUE,-- 表示id列是不可以重复的
+	`name` VARCHAR(32) UNIQUE, -- 表示name不可以重复
+	email VARCHAR(32)
+	);
+DESC t22
+
+```
+
+
+
+### FOREIGN KEY （外键）
+
+![](image/Snipaste_2022-11-24_19-11-26.png)
+
+
+
+![](image/Snipaste_2022-11-24_19-11-52.png)
+
+![](image/Snipaste_2022-11-24_19-12-12.png)
+
+
+
+```sql
+-- 外键演示
+
+-- 创建 主表 my_class
+CREATE TABLE my_class(
+	id INT PRIMARY KEY, -- 班级编号
+	`name` VARCHAR(32) NOT NULL DEFAULT '');
+	
+-- 创建 从表 my_stu
+CREATE TABLE my_stu(
+	id INT PRIMARY KEY,-- 学生编号
+	`name` VARCHAR(32) NOT NULL DEFAULT '',
+	class_id INT, -- 学生所在班级编号 
+	-- 下面指定外键关系
+	FOREIGN KEY (class_id) REFERENCES my_class(id))
+	
+-- 测试数据
+INSERT INTO my_class
+	VALUES(100,'java'),(200,'web');
+SELECT * FROM my_class	
+
+INSERT INTO my_stu
+	VALUES(1,'tom',100);
+INSERT INTO my_stu
+	VALUES(2,'jack',200);
+INSERT INTO my_stu
+	VALUES(4,'marry',NULL);	-- 可以。外键没有写 not null
+INSERT INTO my_stu
+	VALUES(3,'frx',300);-- 添加失败 300号班机不存在
+SELECT * FROM my_stu
+SELECT * FROM my_class
+
+-- 一旦建立主外键关系，数据不能随意删除了
+DELETE FROM my_class
+	WHERE id=100 -- 没有任何一条记录指向 主表100,就可以删去
+
+```
+
+
+
+### check
+
+```sql
+-- 演示check的使用
+
+-- mysql5.7目前还不支持check,只做语法校验，但不会生效
+
+-- 测试
+CREATE TABLE t23(
+	id INT PRIMARY KEY,
+	`name` VARCHAR(32),
+	sex VARCHAR(6) CHECK (sex IN('man','woman')),
+	sal DOUBLE CHECK(sal>1000 AND sal<2000));
+	
+-- 添加数据
+INSERT INTO t23
+	VALUES(1,'jack','mid',1);
+SELECT * FROM t23
+
+```
+
+
+
+### 自增长
+
+
+
+- **使用细节**
+
+1. 一般来说自增长是和primary key配合使用的
+2. 自增长也可以单独使用[但是需要配合一个unique]
+3. 自增长修饰的字段为整数型的(虽然小数也可以但是非常非常少这样使用)
+4. 自增长默认从1开始,你也可以通过如下命令修改 [altertable表名auto increment=新的开始值] ;
+5. 如果你添加数据时，给自增长字段(列)指定的有值，则以指定的值为准,如果指定了自增长，一般来说，就按照自增长的规则来添加数据
+
+
+
+```sql
+-- 演示自增长的使用
+-- 创建表
+CREATE TABLE t24(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	email VARCHAR(32) NOT NULL DEFAULT '',
+	`name` VARCHAR(32) NOT NULL DEFAULT '');
+DESC t24
+
+-- 测试自增长的使用
+INSERT INTO t24
+	VALUES(NULL,'jack@qq.com','jack')
+	
+INSERT INTO t24
+	(email,`name`)VALUES('jack@qq.com','jack');
+
+SELECT * FROM t24
+
+-- 修改默认的自增长开始值
+ALTER TABLE t25 AUTO_INCREMENT =100
+CREATE TABLE t25(
+	id INT PRIMARY KEY AUTO_INCREMENT,
+	email VARCHAR(32) NOT NULL DEFAULT '',
+	`name` VARCHAR(32) NOT NULL DEFAULT '');
+INSERT INTO t25
+	VALUES(NULL,'jack@qq.com','jack');
+INSERT INTO t25
+	VALUES(666,'jack@qq.com','jack');
+INSERT INTO t25
+	VALUES(NULL,'mary@qq.com','mary');
+SELECT * FROM t25;
+
+-- 如果指定了自增长，一般来说，就按照自增长的规则来添加数据
+
+```
+
 
 
 
 
 ## MySQL-索引与事务
+
+### MySQL索引（index）
+
+#### 索引快速入门
+
+1. 说起提高数据库性能,索引是最物美价廉的东西了。不用加内存，不用改程序,不用调sql，查询速度就可能提高百倍干倍。
+2. 没有建立索引的字段，查询起来依旧很慢
+
+
+
+#### 索引的原理
+
+![](image/Snipaste_2022-11-24_19-18-40.png)
+
+![](image/Snipaste_2022-11-24_19-19-26.png)
+
+1. 没有索引为什么会慢?因为全表扫描.
+2. 使用索引为什么会快?形成一个索引的数据结构，比如二叉树
+
+
+
+- **索引的代价**
+
+1. 磁盘占用
+2. 对dml(update delete insert)语句的效率影响
+
+
+
+#### 索引的类型
+
+![](image/Snipaste_2022-11-24_19-23-18.png)
+
+
+
+
+
+#### 索引的使用
+
+- **添加索引**
+
+```sql
+-- 1.添加PRIMARY KEY（主键索引） 
+ALTER TABLE `table_name` ADD PRIMARY KEY ( `column` ) 
+-- 2.添加UNIQUE(唯一索引) 
+ALTER TABLE `table_name` ADD UNIQUE ( 
+`column` 
+) 
+-- 3.添加INDEX(普通索引) 
+ALTER TABLE `table_name` ADD INDEX index_name ( `column` ) 
+-- 4.添加FULLTEXT(全文索引) 
+ALTER TABLE `table_name` ADD FULLTEXT ( `column`) 
+-- 5.添加多列索引 
+ALTER TABLE `table_name` ADD INDEX index_name ( `column1`, `column2`, `column3` )
+```
+
+
+
+- **删除索引**
+
+```sql
+-- 删除索引
+DROP INDEX index_name ON `table_name`
+ALTER TABLE `table_name` DROP INDEX index_name;
+
+-- 删除主键索引
+ALTER table `table_name` DROP PRIMARY KEY;
+```
+
+
+
+- **查询索引**
+
+```sql
+SHOW INDEX DROM table_name;
+
+SHOW INDEXES DROM table_name;
+
+SHOW KEYS FROM table_name;
+
+DESC table_name
+```
+
+
+
+```sql
+-- 演示mysql的索引的使用
+-- 创建索引
+CREATE TABLE t25(	
+	id INT,
+	`name` VARCHAR(32));
+	
+	
+-- 查询表是否有索引
+SHOW INDEXES FROM t25;
+
+-- 添加索引
+-- 添加唯一索引
+CREATE UNIQUE INDEX id_index ON t25(id);
+
+-- 添加普通索引方式1
+CREATE INDEX id_index ON t25(id);
+
+-- 如何选择
+-- 1.如果某列的值，是不会重复的，则优先考虑使用unique索引,否则使用普通索引
+
+-- 添加普通索引方式2
+ALTER TABLE t25 ADD INDEX id_index(id)
+
+-- 添加主键索引
+CREATE TABLE t26(	
+	id INT ,-- 1. primary key
+	`name` VARCHAR(32));
+-- 2.
+ALTER TABLE t26 ADD PRIMARY KEY(id)
+
+SELECT * FROM t26
+
+-- 删除索引
+SELECT * FROM t25
+DROP INDEX id_index ON t25
+
+
+-- 删除主键索引
+ALTER TABLE t26 DROP PRIMARY KEY
+
+
+-- 修改索引，先删除，在添加新的索引
+-- 查询索引
+-- 1.方式
+SHOW INDEX FROM t25
+-- 2.方式
+SHOW INDEXES FROM t25
+-- 3.方式
+SHOW KEYS FROM t25
+-- 4.方式
+DESC t25
+
+-- 创建一张订单表order (id号，商品名,订购人，数量).
+-- 要求id号为主键，请使用2种方式来创建主键.
+-- (提示:为练习方便，可以是order1 , order2 )
+CREATE TABLE ORDER
+	( id INT PRIMARY KEY,
+	`goods_name` VARCHAR(32),
+	person VARCHAR(32),
+	num INT);-- 方式一
+	
+ALTER TABLE ORDER ADD PRIMARY KEY(id) -- 方式二
+
+-- 创建一张特价菜谱表menu(id号，菜谱名,厨师，点餐人身份证，价格).
+-- 要求id号为主键，点餐人身份证是unique请使用两种方式
+-- 来创建unique.(提示:为练习方便，可以是menu1 , menu2
+
+CREATE TABLE menu(
+	id INT,
+	`name` VARCHAR(32),
+	 厨师 VARCHAR(32),
+	身份证 CHAR(18) UNIQUE ,
+	price DOUBLE); -- 方式一
+CREATE UNIQUE INDEX 身份证 ON menu (身份证)
+SHOW INDEX FROM menu
+
+
+-- 创建一张运动员表sportman (id号，名字，特长).
+-- 要求id号为主键，名字为普通索引，
+-- 请使用2种方式来创建索引
+-- (提示:为练习方便，可以是不同表名sportman1 , sportman2
+
+CREATE TABLE sportman(
+	id INT PRIMARY KEY,
+	`name` VARCHAR(32),
+	hobby VARCHAR(32));
+	
+CREATE INDEX name_index ON sportman(NAME) -- 方式一
+ALTER TABLE sportman ADD INDEX name_index(NAME)-- 方式二
+
+```
+
+
+
+#### 哪些列适合使用索引
+
+1. 较频繁的作为查询条件字段应该创建索引
+2. 唯一性太差的字段不适合单独创建索引
+3. 更新非常频繁的字段不适合创建索引
+4. 不会出现在WHERE子句中字段不应该创建索引
+
+
+
+
+
+### MySQL事务
+
+![](image/Snipaste_2022-11-24_19-36-14.png)
+
+
+
+#### 什么是事务
+
+```sh
+# 事务用于保证数据的一致性,它由一组相关的dml语句组成,该组的dml语句要么全部成功，要么全部失败。如:转账就要用事务来处理,用以保证数据的一致性
+```
+
+
+
+#### 事务和锁
+
+```sh
+# 当执行事务操作时（DML语句），MySQL会在表上加锁，防止其他用户更改表的数据
+```
+
+
+
+- **基本操作**
+
+```sql
+-- 开始一个事务
+START TRANSACTION;
+
+-- 设置一个保存点
+SAVEPOINT save_point_name;
+
+-- 回退事务
+ROLLBACK TO save_ponit_name;
+
+-- 回退全部事务
+ROLLBACK;
+
+-- 提交事务，所有操作生效，不能回退
+COMMIT;
+```
+
+
+
+```sql
+-- 事务的一个重要的概念和具体操作
+-- 演示
+-- 1.创建一张测试表
+CREATE TABLE t27(
+	id INT,
+	`name` VARCHAR(32));
+
+-- 2.开始事务
+START TRANSACTION
+-- 3.设置保存点
+SAVEPOINT a
+-- 执行dml操作
+INSERT INTO t27 VALUES(100,'tom');
+SELECT * FROM t27;
+
+SAVEPOINT b
+-- 执行dml操作
+INSERT INTO t27 VALUES(200,'jack');
+
+-- 回退到b
+ROLLBACK TO b
+-- 继续回退 a
+ROLLBACK TO a
+-- 如果这样，表示直接回退到事务开始的状态
+ROLLBACK
+COMMIT 
+```
+
+
+
+#### 回退事务
+
+在介绍回退事务前，先介绍一下保存点(savepoint).保存点是事务中的点.用于取消部分事务，当结束事务时(commit),会自动的删除该事务所定义的所有保存点.当执行回退事务时，通过指定保存点可以回退到指定的点。
+
+
+
+#### 提交事务
+
+使用commit语句可以提交事务.当执行了commit语句子后,会确认事务的变化、结金事除徨专野放锁数据生效。当使用commit语句结束事务子后，其它会话[其他连接]将可以查着到事务变化后的新数据[所有数据就正式生效.]
+
+
+
+```sql
+-- 讨论事务细节
+-- 1.如果不开始事务，默认情况下，dml操作是自动提交的，不能回滚
+INSERT	INTO t27 VALUES(300,'milan'); -- 自动提交commit
+
+SELECT * FROM t27
+
+
+-- 2.如果开始一个事务，你没有创建保存点.你可以执行rollback,
+-- 默认就是回退到你事务开始的状态.
+START	TRANSACTION
+INSERT INTO t27 VALUES(400,'king');
+INSERT INTO t27 VALUES(500,'scott')
+ROLLBACK -- 表示直接回退到事务开始的状态
+
+-- 3.你也可以在这个事务中(还没有提交时),创建多个保存点.
+-- 比如: savepoint aaa;执行dml , savepoint bbb;
+
+
+-- 4.你可以在事务没有提交前，选择回退到哪个保存点.
+
+-- 5.mysql的事务机制需要innodb的存储引擎才可以使用,myisam不支持.
+-- 6.开始一个事务start transaction, set autocommit=off;
+
+
+```
+
+
+
+### MySQL事务隔离级别
+
+#### 事务隔离级别介绍
+
+1. 多个连接开启各自事务操作数据库中数据时，数据库系统要负责隔离操作，以保证各个连接在获取数据时的准确性。（通俗解释)
+2. 如果不考虑隔离性,可能会引发如下问题:
+   - 脏读
+   - 不可重复读
+   - 幻读
+
+- **介绍**
+
+1. 脏读（dirty read）：当一个事务读取另一个事务尚未提交的改变（update，insert，delete），产生脏读
+2. 不可重复读（nonrepeatable read）：同一查询在同一事务中多次进行，由于其他提事务所做的**修改**，每次返回不同的结果集
+3. 幻读（phantom read）：同一查询结果在同一事务中多次进行，由于其他提交事务所作的**插入或删除**操作，每次返回不同的结果集
+
+
+
+#### 事务隔离级别
+
+| Mysql隔离级别(4种)        | 脏读 | 不可重复读 | 幻读 | 加锁读 |
+| ------------------------- | ---- | ---------- | ---- | ------ |
+| 读未提交(Read uncommited) | √    | √          | √    | 不加锁 |
+| 读已提交(Read commited)   | ×    | √          | √    | 不加锁 |
+| 可重复读(Repeatable)      | ×    | ×          | √    | 不加锁 |
+| 可串行化(Serializable)    | ×    | ×          | ×    | 加锁   |
+
+
+
+### 设置事务隔离级别
+
+```sql
+-- 查看当前会话隔离级别
+select @@tx_isolation
+-- mysql> select @@tx_isolation;
+-- +-----------------+
+-- | @@tx_isolation  |
+-- +-----------------+
+-- | REPEATABLE-READ |
+-- +-----------------+
+-- 1 row in set (0.00 sec)
+
+-- 查看系统当前隔离级别
+select @@global.tx_isolation;
+-- mysql> select @@global.tx_isolation;
+-- +-----------------------+
+-- | @@global.tx_isolation |
+-- +-----------------------+
+-- | REPEATABLE-READ       |
+-- +-----------------------+
+-- 1 row in set (0.00 sec)
+
+-- 设置当前会话隔离级别
+set session transaction isolation level READ COMMITTED;
+SET [SESSION | GLOBAL] TRANSACTION ISOLATION LEVEL {READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE}
+
+# SESSION：表示修改的事务隔离级别将应用于当前 session（当前 cmd 窗口）内的所有事务；
+# GLOBAL：表示修改的事务隔离级别将应用于所有 session（全局）中的所有事务，且当前已经存在的 session 不受影响；
+```
+
+```sql
+-- 演示mysql的事务隔离级别
+
+-- 1.开启两个mysql的控制台
+-- 2.查看当前mysql的隔离级别
+SELECT @@tx_isolation;
+
+-- mysql> SELECT @@tx_isolation;
+-- +-----------------+
+-- | @@tx_isolation  |
+-- +-----------------+
+-- | REPEATABLE-READ |
+-- +-----------------+
+
+-- 3.把其中一个控制台的隔离级别设置 Read uncommitted
+SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+-- mysql> SELECT @@tx_isolation;
+-- +------------------+
+-- | @@tx_isolation   |
+-- +------------------+
+-- | READ-UNCOMMITTED |
+-- +------------------+
+-- 1 row in set (0.00 sec)
+
+-- 4.创建表
+CREATE TABLE `account`(
+	id INT,
+	`name` VARCHAR(32),
+	money INT);
+	
+	
+-- 查看当前会话隔离级别
+SELECT @@tx_isolation;
+-- 查看系统当前隔离级别
+SELECT @@ global.tx_isplation
+-- 设置当前会话隔离级别
+SET SESSION TRANSACTION ISOLATION LEVEL READ UNCOMMITTED
+-- 设置系统当前隔离级别
+SET GLOBAL TRANSACTION ISOLATION LEVEL [设置你想设置的级别]
+
+```
+
+
+
+- **演示脏读、不可重复读、幻读**
+
+> ```
+> 两个窗口，一个窗口进行查询，一个进行 增删改
+> ```
+
+**脏读**
+
+```
+设置窗口均为 读未提交
+set session transaction isolation level READ UNCOMMITTED;
+```
+
+![](image/Snipaste_2022-11-24_21-21-28.png)
+
+![](image/Snipaste_2022-11-24_21-22-45.png)
+
+
+
+> ```
+> 提升隔离级别后，不会出现
+> ```
+
+
+
+**不可重复读**
+
+![](image/Snipaste_2022-11-24_21-30-47.png)
+
+
+
+![](image/Snipaste_2022-11-24_21-31-58.png)
+
+
+
+**解决不可重复读  -- 隔离级别设置可重复读**
+
+![](image/Snipaste_2022-11-24_21-35-33.png)
+
+
+
+![](image/Snipaste_2022-11-24_21-37-20.png)
+
+
+
+**幻读**
+
+> ```
+> MySQL的读已提交没有完全解决 幻读问题
+> ```
+
+![](image/Snipaste_2022-11-24_21-53-31.png)
+
+
+
+![](image/Snipaste_2022-11-24_21-58-48.png)
+
+
+
+
+
+### MySQL事务 ACID
+
+#### 事务的 ACID 特性
+
+1. 原子性(Atomicity) 原子性是指事务是一个不可分割的工作单位，事务中的操作要么都发生，要么都不发生。
+2. 一致性(Consistency) 事务必须使数据库从一个一致性状态变换到另外一个一致性状态
+3. 隔离性(lsolation) 事务的隔离性是多个用户并发访问数据库时，数据库为每一个用户开启的事务，不能被其他事务的操作数据所干扰，多个并发事务之间要相互隔离。
+4. 持久性(Durability) 持久性是指一个事务一旦被提交，它对数据库中数据的改变就是永久性的，接下来即使数据库发生故障也不应该对其有任何影响
 
 
 
