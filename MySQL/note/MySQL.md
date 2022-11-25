@@ -2150,13 +2150,467 @@ set session transaction isolation level READ UNCOMMITTED;
 
 ## MySQL-表类型和存储引擎
 
+- **基本介绍**
 
+```
+1、MySQL的表类型由存储引擎（Storage Engines）决定，主要包括MyISAM、InnoDB、Memory等
+2、MySQL数据表主要主持六种类型，分别时：CSV、Memory、ARCHIVE、MYISAM、MRG_MYISAM、InnoDB
+3、这六种又分为两类，一类是“事务安全型”，比如InnoDB。其余都属于第二类，称为“非事务安全型”
+```
+
+```sql
+-- 显示当前数据库的支持的存储引擎
+show engines;
+```
+
+![](image/Snipaste_2022-11-25_09-42-17.png)
+
+
+
+### 主要的存储引擎/表类型特点
+
+| 特点           | Myism | InnoDB | Memory | Archive |
+| -------------- | :---: | :----: | :----: | :-----: |
+| 批量插入的速度 |  高   |   低   |   高   | 非常高  |
+| 事务安全       |       |  支持  |        |         |
+| 全文索引       | 支持  |        |        |         |
+| 锁机制         | 表锁  |  行锁  |  表锁  |  行锁   |
+| 存储限制       | 没有  |  64TB  |   有   |  没有   |
+| B树索引        | 支持  |  支持  |  支持  |         |
+| 哈希索引       |       |  支持  |  支持  |         |
+| 集群索引       |       |  支持  |        |         |
+| 数据缓存       |       |  支持  |  支持  |         |
+| 索引缓存       | 支持  |  支持  |  支持  |         |
+| 数据可压缩     | 支持  |        |        |  支持   |
+| 空间使用       |  低   |   高   |  N/A   |   低    |
+| 内存使用       |  低   |   高   |  中等  |   低    |
+| 支持外键       |       |  支持  |        |         |
+
+
+
+-  **细节说明**
+
+1. MylSAM不支持事务、也不支持外键，但其访问速度快，对事务完整性没有要求。
+2. InnoDB存储引擎提供了具有提交、回滚和崩溃恢复能力的事务安全。但是比起MylSAM存储引擎，InnoDB写的处理效率差一些并且会占用更多的磁盘空间以保留数据和索引。
+3. MEMORY存储引擎使用存在内存中的内容来创建表。每个MEMORY表只实际对应-个磁盘文件。MEMORY类型的表访问非常得快，因为它的数据是放在内存中的，并且默认使用HASH索引。但是一旦MySQL服务关闭，表中的数据就会丢失掉,表的结构还在
+
+
+
+```sql
+-- 查看所有的存储引擎
+SHOW ENGINES
+-- innodb 存储引擎，是前面使用过
+-- 1.支持事务 2.支持外键 3.支持行级锁
+
+-- myisam 存储引擎
+CREATE TABLE t28(
+	id INT,
+	`name` VARCHAR(32)) ENGINE MYISAM
+	
+-- 1.添加速度快 2.不支持外键和事务 3.支持表级锁
+
+START TRANSACTION
+SAVEPOINT t1
+INSERT INTO t28 VALUES(1,'jack');
+SELECT *FROM t28
+ROLLBACK TO t1 -- 没有回滚成功
+
+
+-- memory 存储引擎
+-- 1.数据存储在内存中[关闭mysql服务，数据丢失，但是表结构还在] 
+-- 2.执行速度很快(没有IO读写) 3.默认支持索引(hash表)
+CREATE TABLE t29(
+	id INT,
+	`name` VARCHAR(32)) ENGINE MEMORY
+	
+INSERT INTO t29
+	VALUES(1,'tom'),(2,'jack'),(3,'frx')
+	
+SELECT *FROM t29
+
+-- 修改存储引擎
+ALTER TABLE t29 ENGINE =INNODB
+
+```
+
+
+
+### 存储引擎的选择
+
+1. 如果你的应用不需要事务，处理的只是基本的CRUD操作，那么MylSAN是不二选择,速度快
+2. 如果需要支持事务，选择lnnoDB.
+3. Memory存储引擎就是将数据存储在内存中，由于没有磁盘I./O的等待速度极快。但由于是内存存储引擎，所做的任何修改在服务器重启后都将消失。(经典用法 用户的在线状态().)
 
 
 
 ## MySQL-视图与管理
 
+### 视图
 
+![](image/Snipaste_2022-11-25_09-46-36.png)
+
+
+
+#### 基本概念
+
+1. 视图是一个虚拟表，其内容由查询定义。同真实的表一样，视图包含列,其数据来自对应的真实表(基表)
+2. 视图和基表关系的示意图
+
+![](image/Snipaste_2022-11-25_09-47-21.png)
+
+
+
+#### 视图的基本使用
+
+1. create view 视图名 as select 语句
+2. alter view 视图名 as select语句  --更新成新的视图
+3. SHOW CREATE VIEW 视图名
+4. drop view视图名1,视图名2
+
+```sql
+-- 视图的使用
+-- 创建一个视图 emp_view01,只能查询emp表的(emp、ename、job和deptno)信息
+
+-- 创建视图
+CREATE VIEW emp_view01
+	AS
+	SELECT empno,ename,job,deptno FROM emp;
+	
+-- 查看视图
+DESC emp_view01
+
+SELECT  * FROM emp_view01
+SELECT empno,job FROM emp_view01;
+
+-- 查看创建视图的指令
+SHOW CREATE VIEW emp_view01
+-- 删除视图
+DROP VIEW emp_view01
+
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| stu            |
++----------------+
+1 row in set (0.00 sec)
+
+mysql> select * from stu;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | danghf |
+|  2 | zd     |
+|  3 | xx     |
++----+--------+
+3 rows in set (0.00 sec)
+
+mysql> create view stu_view AS SELECT * from stu where id <= 2;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| stu            |
+| stu_view       |
++----------------+
+2 rows in set (0.00 sec)
+
+mysql> select * from stu_view;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | danghf |
+|  2 | zd     |
++----+--------+
+2 rows in set (0.00 sec)
+
+mysql> DESC stu_view;
++-------+-------------+------+-----+---------+-------+
+| Field | Type        | Null | Key | Default | Extra |
++-------+-------------+------+-----+---------+-------+
+| id    | int(11)     | NO   |     | NULL    |       |
+| name  | varchar(32) | YES  |     | NULL    |       |
++-------+-------------+------+-----+---------+-------+
+2 rows in set (0.00 sec)
+
+mysql> update stu_view set name = 'zhaodi' where id = 2;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from stu;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | danghf |
+|  2 | zhaodi |
+|  3 | xx     |
++----+--------+
+3 rows in set (0.00 sec)
+
+mysql> update stu set name = 'zd' where id = 2;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select * from stu_view;
++----+--------+
+| id | name   |
++----+--------+
+|  1 | danghf |
+|  2 | zd     |
++----+--------+
+2 rows in set (0.00 sec)
+```
+
+> ```
+> 视图操作与表操作基本一样，两个无论谁的修改都会影响到另一个
+> ```
+
+
+
+#### 视图细节讨论
+
+```sql
+-- 视图的细节
+-- 1.创建视图后，到数据库去看，对应视图只有一个视图结构文件(形式:视图名.frm)
+-- 2.视图的数据变化会影响到基表，基表的数据变化也会影响到视图[insert update delete ]
+
+-- 修改视图
+UPDATE emp_view01 
+	SET job='manager' 
+	WHERE empno=7369
+	
+SELECT * FROM emp
+SELECT * FROM emp_view01
+
+-- 修改基本表，会影响到视图
+UPDATE  emp
+	SET job='SALESMAN'
+	WHERE empno=7369
+	
+	
+-- 3.视图中可以使用视图，比如emp_view 01视图中，选出empno,和ename 作出新视图
+ DESC	emp_view01
+ 
+ CREATE VIEW emp_view02
+	AS
+	SELECT empno,ename FROM emp_view01
+
+SELECT * FROM emp_view02
+
+```
+
+
+
+
+
+### MySQL管理
+
+#### MySQL用户操作
+
+> ```sh
+> # MySQL中的用户都存储在系统数据库mysql中user表
+> ```
+
+```sql
+mysql> select host,user,authentication_string from mysql.user;
++------------+---------------+-------------------------------------------+
+| host       | user          | authentication_string                     |
++------------+---------------+-------------------------------------------+
+| localhost% | root          | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| localhost  | mysql.session | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| localhost  | mysql.sys     | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| %          | dhf           | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| %          | xcou          | *EC637E63C012B60DBD2EB7BE50E213CBFBAE13E1 |
+| %          | xcapp         | *CF250238EDEB9DD90D404FC0046287EA3A911A93 |
+| %          | xcdef         | *8DB07DA85B1FE3865F419A4D33C2291561646F6F |
+| %          | xcsim         | *4686E6C8150CEC2CC54C3EA1323661A52C79726A |
++------------+---------------+-------------------------------------------+
+8 rows in set (0.00 sec)
+```
+
+- **字段说明**
+  1. host：允许用户登录位置，localhost表示只允许本机登录，也可以指定ip，%表示任意用户
+  2. user：用户名
+  3. authentication_string：密码，password()加密
+
+
+
+#### 创建用户
+
+```sql
+create user  '用户名 '@'允许登录位置' identified by ‘密码'
+
+mysql> CREATE USER 'test'@'localhost' identified by 'test';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select host,user,authentication_string from mysql.user;
++-----------+---------------+-------------------------------------------+
+| host      | user          | authentication_string                     |
++-----------+---------------+-------------------------------------------+
+| localhost | root          | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| localhost | mysql.session | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| localhost | mysql.sys     | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| %         | dhf           | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| localhost | test          | *94BDCEBE19083CE2A1F959FD02F964C7AF4CFC29 |
+| %         | xcou          | *EC637E63C012B60DBD2EB7BE50E213CBFBAE13E1 |
+| %         | xcapp         | *CF250238EDEB9DD90D404FC0046287EA3A911A93 |
+| %         | xcdef         | *8DB07DA85B1FE3865F419A4D33C2291561646F6F |
+| %         | xcsim         | *4686E6C8150CEC2CC54C3EA1323661A52C79726A |
++-----------+---------------+-------------------------------------------+
+```
+
+1. 在创建用户的时候，如果不指定Host,则为%，%表示表示所有IP都有连接权限create user XXX;
+2. 你也可以这样指定 create user 'xxx' @'192.168.1.%’表示xxx用户在192.168.1.*的ip可以登录mysql
+3. 在删除用户的时候，如果host 不是%,需要明确指定‘用户'@'host值'
+
+#### 删除用户
+
+```sql
+drop user ‘用户名’@’允许登录位置’
+
+mysql> DROP USER 'xcapp'@'%';
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select host,user,authentication_string from mysql.user;
++-----------+---------------+-------------------------------------------+
+| host      | user          | authentication_string                     |
++-----------+---------------+-------------------------------------------+
+| localhost | root          | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| localhost | mysql.session | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| localhost | mysql.sys     | *THISISNOTAVALIDPASSWORDTHATCANBEUSEDHERE |
+| %         | dhf           | *81F5E21E35407D884A6CD4A731AEBFB6AF209E1B |
+| localhost | test          | *94BDCEBE19083CE2A1F959FD02F964C7AF4CFC29 |
+| %         | xcou          | *EC637E63C012B60DBD2EB7BE50E213CBFBAE13E1 |
+| %         | xcdef         | *8DB07DA85B1FE3865F419A4D33C2291561646F6F |
+| %         | xcsim         | *4686E6C8150CEC2CC54C3EA1323661A52C79726A |
++-----------+---------------+-------------------------------------------+
+8 rows in set (0.00 sec)
+```
+
+
+
+#### 用户修改密码
+
+```
+修改自己的密码: set password = password('密码'); 
+修改他人的密码（需要有修改用户密码权限): set password for '用户名'@'登录位置'= password(密码');
+```
+
+
+
+#### MySQL权限列表
+
+| **权限**                | **权限级别**           | **权限说明**                                                 |
+| ----------------------- | ---------------------- | ------------------------------------------------------------ |
+| CREATE                  | 数据库、表或索引       | 创建数据库、表或索引权限                                     |
+| DROP                    | 数据库或表             | 删除数据库或表权限                                           |
+| GRANT OPTION            | 数据库、表或保存的程序 | 赋予权限选项                                                 |
+| REFERENCES              | 数据库或表             |                                                              |
+| ALTER                   | 表                     | 更改表，比如添加字段、索引等                                 |
+| DELETE                  | 表                     | 删除数据权限                                                 |
+| INDEX                   | 表                     | 索引权限                                                     |
+| INSERT                  | 表                     | 插入权限                                                     |
+| SELECT                  | 表                     | 查询权限                                                     |
+| UPDATE                  | 表                     | 更新权限                                                     |
+| CREATE VIEW             | 视图                   | 创建视图权限                                                 |
+| SHOW VIEW               | 视图                   | 查看视图权限                                                 |
+| ALTER ROUTINE           | 存储过程               | 更改存储过程权限                                             |
+| CREATE ROUTINE          | 存储过程               | 创建存储过程权限                                             |
+| EXECUTE                 | 存储过程               | 执行存储过程权限                                             |
+| FILE                    | 服务器主机上的文件访问 | 文件访问权限                                                 |
+| CREATE TEMPORARY TABLES | 服务器管理             | 创建临时表权限                                               |
+| LOCK TABLES             | 服务器管理             | 锁表权限                                                     |
+| CREATE USER             | 服务器管理             | 创建用户权限                                                 |
+| PROCESS                 | 服务器管理             | 查看进程权限                                                 |
+| RELOAD                  | 服务器管理             | 执行flush-hosts, flush-logs, flush-privileges, flush-status, flush-tables, flush-threads, refresh, reload等命令的权限 |
+| REPLICATION CLIENT      | 服务器管理             | 复制权限                                                     |
+| REPLICATION SLAVE       | 服务器管理             | 复制权限                                                     |
+| SHOW DATABASES          | 服务器管理             | 查看数据库权限                                               |
+| SHUTDOWN                | 服务器管理             | 关闭数据库权限                                               |
+| SUPER                   | 服务器管理             | 执行kill线程权限                                             |
+
+
+
+#### 给用户授权
+
+- **基本语法**
+
+> ```sh
+> # GRANT 权限列表 ON 库.对象 TO ‘用户名'@'host' [identified by '密码']
+> # 多个权限使用 , 分割
+> # GRANT all ON  // 所有权限
+> # *.* 代表所有库的所有对象
+> # 库.* 该库所有对象
+> # identified 可以省略，用户存在，修改密码，不存在创建用户
+> ```
+
+```sql
+mysql> grant select ON test.stu To 'test'@'localhost';
+Query OK, 0 rows affected (0.00 sec)
+```
+
+
+
+- **回收权限**
+
+```sql
+revoke 权限列表 ON 库.对象 FROM 'user'@'host';
+```
+
+```sql
+mysql> revoke all ON test.stu FROM 'test'@'localhost';
+Query OK, 0 rows affected (0.00 sec)
+```
+
+
+
+- **如果权限没有生效**
+
+```sql
+-- 刷新
+FLUSH PRIVILEGES;
+```
+
+
+
+```sql
+-- 演示用户权限的管理
+-- 创建用户 rongxu 密码 123，从本地登录
+CREATE USER 'rongxu'@'localhost ' IDENTIFIED BY '123'
+
+-- 使用root 用户创建 testdb，表news
+CREATE DATABASE testdb
+CREATE TABLE news(	
+	id INT,
+	content VARCHAR(32))
+	
+-- 添加一条测试数据
+INSERT INTO news VALUES(100,'北京新闻');
+SELECT * FROM news
+
+-- 给 rongxu 分配查看 news 表和添加news的权限
+GRANT SELECT,INSERT
+	ON testdb.news
+	TO 'rongxu'@'localhost'
+	
+-- 可以增加权限
+GRANT UPDATE
+	ON testdb.news
+	TO 'rongxu'@'localhost'
+	
+-- 修改rongxu密码为abc
+SET PASSWORD FOR 'rongxu'@'localhost' =PASSWORD('abc')
+
+-- 回收rongxu用户在testdb.news表的所有权限
+REVOKE SELECT,UPDATE,INSERT ON testdb.news FROM 'rongxu'@'localhost'
+REVOKE ALL testdb.news FROM 'rongxu'@'localhost'
+
+-- 删除 rongxu用户
+DROP USER 'rongxu'@'localhost'
+
+```
 
 
 
@@ -2174,11 +2628,261 @@ set session transaction isolation level READ UNCOMMITTED;
 
 ## MySQL-存储引擎
 
+### MySQL体系结构
 
+![](image/Snipaste_2022-11-25_10-31-21.png)
+
+1、连接层
+
+最上层是一些客户端和链接服务，包含本地sock 通信和大多数基于客户端/服务端工具实现的类似于 TCP/IP的通信。主要完成一些类似于连接处理、授权认证、及相关的安全方案。在该层上引入了线程 池的概念，为通过认证安全接入的客户端提供线程。同样在该层上可以实现基于SSL的安全链接。服务 器也会为安全接入的每个客户端验证它所具有的操作权限。
+
+
+
+2、服务层
+
+第二层架构主要完成大多数的核心服务功能，如SQL接口，并完成缓存的查询，SQL的分析和优化，部 分内置函数的执行。所有跨存储引擎的功能也在这一层实现，如 过程、函数等。在该层，服务器会解 析查询并创建相应的内部解析树，并对其完成相应的优化如确定表的查询的顺序，是否利用索引等， 最后生成相应的执行操作。如果是select语句，服务器还会查询内部的缓存，如果缓存空间足够大， 这样在解决大量读操作的环境中能够很好的提升系统的性能。
+
+
+
+3、引擎层
+
+存储引擎层， 存储引擎真正的负责了MySQL中数据的存储和提取，服务器通过API和存储引擎进行通 信。不同的存储引擎具有不同的功能，这样我们可以根据自己的需要，来选取合适的存储引擎。数据库 中的索引是在存储引擎层实现的。
+
+
+
+4、存储层
+
+数据存储层， 主要是将数据(如: redolog、undolog、数据、索引、二进制日志、错误日志、查询 日志、慢查询日志等)存储在文件系统之上，并完成与存储引擎的交互。
+
+
+
+和其他数据库相比，MySQL有点与众不同，它的架构可以在多种不同场景中应用并发挥良好作用。主要 体现在存储引擎上，插件式的存储引擎架构，将查询处理和其他的系统任务以及数据的存储提取分离。 这种架构可以根据业务的需求和实际需要选择合适的存储引擎
+
+
+
+### 存储引擎介绍
+
+![](image/Snipaste_2022-11-25_10-33-49.png)
+
+大家可能没有听说过存储引擎，但是一定听过引擎这个词，引擎就是发动机，是一个机器的核心组件。 比如，对于舰载机、直升机、火箭来说，他们都有各自的引擎，是他们最为核心的组件。而我们在选择 引擎的时候，需要在合适的场景，选择合适的存储引擎，就像在直升机上，我们不能选择舰载机的引擎 一样。 而对于存储引擎，也是一样，他是mysql数据库的核心，我们也需要在合适的场景选择合适的存储引 擎。接下来就来介绍一下存储引擎。 存储引擎就是存储数据、建立索引、更新/查询数据等技术的实现方式 。存储引擎是基于表的，而不是 基于库的，所以存储引擎也可被称为表类型。我们可以在创建表的时候，来指定选择的存储引擎，如果 没有指定将自动选择默认的存储引擎。
+
+- **建表时指定存储引擎**
+
+```sql
+CREATE TABLE 表名(
+    字段1 字段1类型 [ COMMENT 字段1注释 ] ,
+    ......
+    字段n 字段n类型 [COMMENT 字段n注释 ]
+) ENGINE = INNODB [ COMMENT 表注释 ] ;
+
+
+-- 查询当前数据库支持的存储引擎
+SHOW ENGINES;
+
+```
+
+
+
+- **创建表 stu_MYISAM, 并指定MyISAM存储引擎**
+
+```sql
+mysql> CREATE TABLE stu_MYISAM (
+    id int,
+    `name` varchar(32),
+    PRIMARY KEY (id)
+	) ENGINE = MYISAM;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> show tables;
++----------------+
+| Tables_in_test |
++----------------+
+| stu            |
+| stu_myisam     |
++----------------+
+2 rows in set (0.00 sec)
+```
+
+
+
+
+
+### 存储引擎特点
+
+上面我们介绍了什么是存储引擎，以及如何在建表时如何指定存储引擎，接下来我们就来介绍下来上面 重点提到的三种存储引擎 InnoDB、MyISAM、Memory的特点。
+
+
+
+#### InnoDB
+
+- **介绍**
+
+InnoDB是一种兼顾高可靠性和高性能的通用存储引擎，在 MySQL 5.5 之后，InnoDB是默认的 MySQL 存储引擎。
+
+
+
+- **特点**
+
+  - DML操作**遵循ACID**模型，支持**事务**；
+
+  - **行级锁**，提高并发访问性能；
+
+  - 支持**外键FOREIGN KEY约束**，保证数据的完整性和正确性；
+
+
+
+- **文件**
+
+xxx.ibd：xxx代表的是表名，innoDB引擎的每张表都会对应这样一个表空间文件，存储该表的表结构（frm-早期的 、sdi-新版的）、数据和索引
+
+
+
+```sql
+mysql> show variables like 'innodb_file_per_table';
++-----------------------+-------+
+| Variable_name         | Value |
++-----------------------+-------+
+| innodb_file_per_table | ON    |
++-----------------------+-------+
+1 row in set, 1 warning (0.00 sec)
+```
+
+```
+如果该参数开启，代表对于InnoDB引擎的表，每一张表都对应一个ibd文件。 我们直接打开MySQL的 数据存放目录，这个目录下有很多文件夹，不同的文件夹代表不同的数据库。可以看到里面有很多的ibd文件，每一个ibd文件就对应一张表，比如：我们有一张表 account，就有这样的一个account.ibd文件，而在这个ibd文件中不仅存放表结构、数据，还会存放该表对应的索引信息。 而该文件是基于二进制存储的，不能直接基于记事本打开，我们可以使用mysql提供的一个指令 ibd2sdi ，通过该指令就可以从ibd文件中提取sdi信息，而sdi数据字典信息中就包含该表的表结构。
+```
+
+
+
+- **逻辑存储结构**
+
+![](image/Snipaste_2022-11-25_10-42-51.png)
+
+
+
+1. 表空间 : InnoDB存储引擎逻辑结构的最高层，ibd文件其实就是表空间文件，在表空间中可以包含多个Segment段。
+2. 段 : 表空间是由各个段组成的， 常见的段有数据段、索引段、回滚段等。InnoDB中对于段的管理，都是引擎自身完成，不需要人为对其控制，一个段中包含多个区。
+3. 区 : 区是表空间的单元结构，每个区的大小为1M。 默认情况下， InnoDB存储引擎页大小为16K， 即一个区中一共有64个连续的页。
+4. 页 : 页是组成区的最小单元，**页也是InnoDB 存储引擎磁盘管理的最小单元**，每个页的大小默认为 16KB。为了保证页的连续性，InnoDB 存储引擎每次从磁盘申请 4-5 个区。
+5. 行 : InnoDB 存储引擎是面向行的，也就是说数据是按行进行存放的，在每一行中除了定义表时所指定的字段以外，还包含两个隐藏字段(后面会详细介绍)。
+
+
+
+#### MYISAM
+
+- **介绍**
+
+MyISAM是MySQL早期的默认存储引擎。
+
+
+
+- **特点**
+
+1. 不支持事务，不支持外键
+2. 支持表锁，不支持行锁
+3. 访问速度快
+
+
+
+- 文件
+
+1. xxx.sdi：存储表结构信息
+2. xxx.MYD：存储数据
+3. xxx.MYI：存储索引
+
+
+
+#### Memory
+
+- **介绍**
+
+Memory引擎的表数据时存储在内存中的，由于受到硬件问题、或断电问题的影响，只能将这些表作为 临时表或缓存使用
+
+
+
+- **特点**
+
+1. 内存存放
+2. hash索引（默认）
+
+
+
+- **文件**
+
+1. xxx.sdi：存储表结构信息
+
+
+
+### 区别及特点
+
+| 特点         | InnoDB            | MyISAM | Memory |
+| ------------ | ----------------- | ------ | ------ |
+| 存储限制     | 64TB              | 有     | 有     |
+| 事务安全     | 支持              | -      | -      |
+| 锁机制       | 行锁              | 表锁   | 表锁   |
+| B+tree索引   | 支持              | 支持   | 支持   |
+| Hash索引     | -                 | -      | 支持   |
+| 全文索引     | 支持(5.6版本之后) | 支持   | -      |
+| 空间使用     | 高                | 底     | N/A    |
+| 内存使用     | 高                | 底     | 中等   |
+| 批量插入速度 | 低                | 高     | 高     |
+| 支持外键     | 支持              | -      | -      |
+
+
+
+    <p class="custom-block-title">面试题:</p>
+    <p>InnoDB引擎与MyISAM引擎的区别 ?</p>
+    <p>①. InnoDB引擎, 支持事务, 而MyISAM不支持。</p>
+    <p>②. InnoDB引擎, 支持行锁和表锁, 而MyISAM仅支持表锁, 不支持行锁。</p>
+    <p>③. InnoDB引擎, 支持外键, 而MyISAM是不支持的。</p>
+    <p>主要是上述三点区别，当然也可以从索引结构、存储限制等方面，更加深入的回答，具体参
+        考如下官方文档：</p>
+    <p><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html" target="_blank"
+          rel="noopener noreferrer">https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html<span><svg
+            xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px"
+            viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor"
+                                                                                     d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon
+            fill="currentColor"
+            points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span
+            class="sr-only">(opens new window)</span></span></a></p>
+    <p><a href="https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html" target="_blank"
+          rel="noopener noreferrer">https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html<span><svg
+            xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px"
+            viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor"
+                                                                                     d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon
+            fill="currentColor"
+            points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span
+            class="sr-only">(opens new window)</span></span></a></p>
+</div>
+
+
+
+### 存储引擎的选择
+
+在选择存储引擎时，应该根据应用系统的特点选择合适的存储引擎。对于复杂的应用系统，还可以根据 实际情况选择多种存储引擎进行组合。
+
+1. InnoDB: 是Mysql的默认存储引擎，支持事务、外键。如果应用对事务的完整性有比较高的要 求，在并发条件下要求数据的一致性，数据操作除了插入和查询之外，还包含很多的更新、删除操 作，那么InnoDB存储引擎是比较合适的选择。
+2. MyISAM ： 如果应用是以读操作和插入操作为主，只有很少的更新和删除操作，并且对事务的完 整性、并发性要求不是很高，那么选择这个存储引擎是非常合适的。
+3. MEMORY：将所有数据保存在内存中，访问速度快，通常用于临时表及缓存。MEMORY的缺陷就是 对表的大小有限制，太大的表无法缓存在内存中，而且无法保障数据的安全性。
 
 
 
 ## MySQL-索引
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
