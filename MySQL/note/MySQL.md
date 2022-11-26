@@ -3539,6 +3539,712 @@ mysql> SELECT COUNT(*) FROM tb_sku;
 1 row in set (11.03 sec)
 ```
 
+这张表中id为主键，有主键索引，而其他字段是没有建立索引的。 我们先来查询其中的一条记录，看 看里面的字段情况，执行如下SQL：
+
+```sql
+select * from tb_sku here id = 1\G;
+
+```
+
+![](image/Snipaste_2022-11-26_09-01-07.png)
+
+可以看到即使有1000w的数据,根据id进行数据查询,性能依然很快，因为主键id是有索引的。 那么接下来，我们再来根据 sn 字段进行查询，执行如下SQL：
+
+```sql
+SELECT * FROM tb_sku WHERE sn = '100000003145001';
+
+```
+
+
+
+![](image/Snipaste_2022-11-26_09-01-53.png)
+
+我们可以看到根据sn字段进行查询，查询返回了一条数据，结果耗时 20.78sec，就是因为sn没有索引，而造成查询效率很低。
+
+那么我们可以针对于sn字段，建立一个索引，建立了索引之后，我们再次根据sn进行查询，再来看一下查询耗时情况。
+
+创建索引：
+
+```sql
+create index idx_sku_sn on tb_sku(sn) ;
+ALTER TABLE tb_sku ADD INDEX idx_sku_sn (sn);
+```
+
+然后再次执行相同的SQL语句，再次查看SQL的耗时。
+
+```sql
+SELECT * FROM tb_sku WHERE sn = '100000003145001';
+
+```
+
+![](image/Snipaste_2022-11-26_09-03-40.png)
+
+
+
+#### 最左前缀法则
+
+如果索引关联了多列（联合索引），要遵守最左前缀法则，最左前缀法则指的是查询从索引的最左列开始，并且不跳过索引中的列。如果跳跃某一列，`索引将部分失效（后面的字段索引失效）`。
+
+以 tb_user 表为例，我们先来查看一下之前 tb_user 表所创建的索引。
+
+> ```sql
+> SHOW INDEX FROM tb_user;
+> ```
+
+
+
+![](image/Snipaste_2022-11-26_09-09-13.png)
+
+在 tb_user 表中，有一个联合索引，这个联合索引涉及到三个字段，顺序分别为：profession，age，status。
+
+对于最左前缀法则指的是，查询时，最左变的列，也就是profession必须存在，否则索引全部失效。而且中间不能跳过某一列，否则该列后面的字段索引将失效。 接下来，我们来演示几组案例，看一下具体的执行计划：
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> 
+> mysql> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref               | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 42      | const,const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程' and age = 31;
+> 
+> mysql> explain select * from tb_user where profession = '软件工程' and age = 31;
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref         | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 38      | const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程';
+> 
+> mysql> explain select * from tb_user where profession = '软件工程';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 36      | const |    4 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+以上的这三组测试中，我们发现只要联合索引最左边的字段 profession存在，**索引就会生效**，只不过索引的长度不同。 而且由以上三组测试，我们也可以推测出profession字段索引长度为36、age字段索引长度为2、status字段索引长度为4。
+
+
+
+
+
+> ```sql
+> mysql> explain select * from tb_user where age = 31 and status = '0';
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |     4.17 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where status = '0';
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |    10.00 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+而通过上面的这两组测试，我们也可以看到索引并未生效，原因是因为不满足最左前缀法则，联合索引最左边的列profession不存在。
+
+
+
+
+
+> ```sql
+> mysql> explain select * from tb_user where profession = '软件工程' and status = '0';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 36      | const |    4 |    10.00 | Using index condition |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+上述的SQL查询时，存在profession字段，最左边的列是存在的，索引满足最左前缀法则的基本条件。但是查询时，跳过了age这个列，所以后面的列索引是不会使用的，也就是索引部分生效，所以索引的长度就是36。
+
+
+
+- **思考**
+
+当执行SQL语句: explain select * from tb_user where age = 31 and status = '0' and profession = '软件工程'； 时，是否满足最左前缀法则，走不走上述的联合索引，索引长度？
+
+> ```sql
+> mysql> explain select * from tb_user where age = 31 and status = '0' and profession = '软件工程';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref               | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 42      | const,const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+可以看到，是完全满足最左前缀法则的，索引长度42，联合索引是生效的。
+
+注意 ： 最左前缀法则中指的最左边的列，是指在查询时，联合索引的最左边的字段(即是第一个字段)必须存在，与我们编写SQL时，条件编写的先后顺序无关。
+
+
+
+#### 范围查询
+
+联合索引中，出现范围查询(>,<)，范围查询右侧的列索引失效。
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程' and age > 30 and status = '0';
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where profession = '软件工程' and age > 30 and status = '0';
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type  | possible_keys | key         | key_len | ref  | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | range | index_p_a_s   | index_p_a_s | 38      | NULL |    2 |    10.00 | Using index condition |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+当范围查询使用> 或 < 时，走联合索引了，但是索引的长度为38，就说明范围查询`右边的status字段是没有走索引`的。
+
+
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程' and age >= 30 and status = '0';
+> 
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where profession = '软件工程' and age >= 30 and status = '0';
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type  | possible_keys | key         | key_len | ref  | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | range | index_p_a_s   | index_p_a_s | 42      | NULL |    2 |    10.00 | Using index condition |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+当范围查询使用>= 或 <= 时，走联合索引了，但是索引的长度为42，就说明所有的字段都是走索引的。
+
+**所以，在业务允许的情况下，尽可能的使用类似于 >= 或 <= 这类的范围查询，而避免使用 > 或 <**
+
+
+
+#### 索引失效情况
+
+- **索引列运算**
+
+<p style="color: red">不要在索引列上进行运算操作， 索引将失效</p>
+
+在tb_user表中，除了前面介绍的联合索引之外，还有一个索引，是phone字段的单列索引。
+
+1. 当根据phone字段进行等值匹配查询时, 索引生效。
+
+> ```sql
+> explain select * from tb_user where phone = '17799990015';
+> 
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where phone = '17799990015';
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type  | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | const | UNIQUE_PHONE  | UNIQUE_PHONE | 35      | const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+2.当根据phone字段进行函数运算操作之后，索引失效。
+
+> ```sql
+> explain select * from tb_user where substring(phone,10,2) = '15';
+> 
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where substring(phone,10,2) = '15';
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |   100.00 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where phone = CONCAT('1779999001', '5');
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type  | possible_keys | key          | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | const | UNIQUE_PHONE  | UNIQUE_PHONE | 35      | const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+-------+---------------+--------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+- **字符串不加引号**
+
+<p style="color: red">字符串类型字段使用时，不加引号，索引将失效</p>
+
+接下来，我们通过两组示例，来看看对于字符串类型的字段，加单引号与不加单引号的区别：
+
+> ```sql
+> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> explain select * from tb_user where profession = '软件工程' and age = 31 and status = 0;
+> 
+> ```
+
+
+
+> ```sql
+> -- 带 ''引号
+> mysql> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref               | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 42      | const,const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> -- 不带 ‘’
+> mysql> explain select * from tb_user where profession = '软件工程' and age = 31 and status = 0;
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref         | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 38      | const,const |    1 |    10.00 | Using index condition |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------------+------+----------+-----------------------+
+> 1 row in set, 2 warnings (0.00 sec)
+> ```
+
+经过上面两组示例，我们会明显的发现，如果字符串不加单引号，对于查询结果，没什么影响，但是数据库存在隐式类型转换，索引将失效。
+
+
+
+#### 模糊查询
+
+<p style="color: red">如果仅仅是尾部模糊匹配，索引不会失效。如果是头部模糊匹配，索引失效</p>
+
+接下来，我们来看一下这三条SQL语句的执行效果，查看一下其执行计划：
+
+由于下面查询语句中，都是根据profession字段查询，符合最左前缀法则，联合索引是可以生效的，
+
+我们主要看一下，模糊查询时，%加在关键字之前，和加在关键字之后的影响。
+
+> ```sql
+> explain select * from tb_user where profession like '软件%';
+> explain select * from tb_user where profession like '%工程';
+> explain select * from tb_user where profession like '%工%';
+> 
+> ```
+
+
+
+> ```sql
+> mysql> explain select * from tb_user where profession like '软件%';
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type  | possible_keys | key         | key_len | ref  | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | range | index_p_a_s   | index_p_a_s | 36      | NULL |    4 |   100.00 | Using index condition |
+> +----+-------------+---------+------------+-------+---------------+-------------+---------+------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where profession like '%工程';
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |    11.11 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where profession like '%工%';
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | NULL          | NULL | NULL    | NULL |   24 |    11.11 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+经过上述的测试，我们发现，在like模糊查询中，在关键字后面加%，索引可以生效。而如果在关键字前面加了%，索引将会失效
+
+
+
+- **OR 连接条件**
+
+<p style="color: red">用or分割开的条件， 如果or前的条件中的列有索引，而后面的列中没有索引，那么涉及的索引都不会被用到</p>
+
+> ```sql
+> explain select * from tb_user where id = 10 or age = 23;
+> explain select * from tb_user where phone = '17799990017' or age = 23;
+> 
+> ```
+
+
+
+> ```sql
+> mysql> explain select * from tb_user where id = 10 or age = 23;
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | PRIMARY       | NULL | NULL    | NULL |   24 |    13.75 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where phone = '17799990017' or age = 23;
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | UNIQUE_PHONE  | NULL | NULL    | NULL |   24 |    19.00 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+由于age没有索引，所以即使id、phone有索引，索引也会失效。所以需要针对于age也要建立索引。
+
+然后，我们可以对age字段建立索引。
+
+> ```sql
+> mysql> ALTER TABLE tb_user ADD INDEX INDEX_AGE (age);
+> Query OK, 0 rows affected (0.03 sec)
+> Records: 0  Duplicates: 0  Warnings: 0
+> ```
+
+建立了索引之后，我们再次执行上述的SQL语句，看看前后执行计划的变化。
+
+> ```sql
+> mysql> explain select * from tb_user where id = 10 or age = 23;
+> +----+-------------+---------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+> | id | select_type | table   | partitions | type        | possible_keys     | key               | key_len | ref  | rows | filtered | Extra
+>                    |
+> +----+-------------+---------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | index_merge | PRIMARY,INDEX_AGE | PRIMARY,INDEX_AGE | 4,2     | NULL |    3 |   100.00 | Using union(PRIMARY,INDEX_AGE); Using where |
+> +----+-------------+---------+------------+-------------+-------------------+-------------------+---------+------+------+----------+---------------------------------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where phone = '17799990017' or age = 23;
+> +----+-------------+---------+------------+-------------+------------------------+------------------------+---------+------+------+----------+--------------------------------------------------+
+> | id | select_type | table   | partitions | type        | possible_keys          | key                    | key_len | ref  | rows | filtered | Extra
+>                                   |
+> +----+-------------+---------+------------+-------------+------------------------+------------------------+---------+------+------+----------+--------------------------------------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | index_merge | UNIQUE_PHONE,INDEX_AGE | UNIQUE_PHONE,INDEX_AGE | 35,2    | NULL |    3 |   100.00 | Using union(UNIQUE_PHONE,INDEX_AGE); Using where |
+> +----+-------------+---------+------------+-------------+------------------------+------------------------+---------+------+------+----------+--------------------------------------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+<p style="color: red">最终，我们发现，当or连接的条件，左右两侧字段都有索引时，索引才会生效</p>
+
+
+
+- **数据分布影响**
+
+<p style="color: red">如果MySQL评估使用索引比全表更慢，则不使用索引</p>
+
+
+
+> ```sql
+> explain select * from tb_user where phone >= '17799990005';
+> explain select * from tb_user where phone >= '17799990015';
+> 
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where phone >= '17799990005';
+> +----+-------------+---------+------------+------+----------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys  | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+----------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | idx_user_phone | NULL | NULL    | NULL |   24 |    79.17 | Using where |
+> +----+-------------+---------+------------+------+----------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where phone >= '17799990015';
+> +----+-------------+---------+------------+-------+----------------+----------------+---------+------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type  | possible_keys  | key            | key_len | ref  | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+-------+----------------+----------------+---------+------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | range | idx_user_phone | idx_user_phone | 46      | NULL |    9 |   100.00 | Using index condition |
+> +----+-------------+---------+------------+-------+----------------+----------------+---------+------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> ```
+
+经过测试我们发现，相同的SQL语句，只是传入的字段值不同，最终的执行计划也完全不一样，这是为什么呢？
+
+```sh
+# 就是因为MySQL在查询时，会评估使用索引的效率与走全表扫描的效率，如果走全表扫描更快，则放弃索引，走全表扫描。 因为索引是用来索引少量数据的，如果通过索引查询返回大批量的数据，则还不如走全表扫描来的快，此时索引就会失效。
+```
+
+接下来，我们再来看看 is null 与 is not null 操作是否走索引。 执行如下两条语句 ：
+
+> ```sql
+> explain select * from tb_user where profession is null;
+> explain select * from tb_user where profession is not null;
+> 
+> ```
+
+> ```sql
+> mysql> explain select * from tb_user where profession is null;
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 36      | const |    1 |   100.00 | Using index condition |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where profession is not null;
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | index_p_a_s   | NULL | NULL    | NULL |   24 |   100.00 | Using where |
+> +----+-------------+---------+------------+------+---------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+接下来，我们做一个操作将profession字段值全部更新为null。
+
+> ```sql
+> -- 可以先开启事务，方便回滚
+> update tb_user set profession = null;
+> 
+> ```
+
+然后，再次执行上述的两条SQL，查看SQL语句的执行计划。
+
+> ```sql
+> mysql> explain select * from tb_user where profession is null;
+> +----+-------------+---------+------------+------+----------------------+------+---------+------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys        | key  | key_len | ref  | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+----------------------+------+---------+------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ALL  | idx_user_pro_age_sta | NULL | NULL    | NULL |   24 |   100.00 | Using where |
+> +----+-------------+---------+------------+------+----------------------+------+---------+------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where profession is not null;
+> +----+-------------+---------+------------+-------+----------------------+----------------------+---------+------+------+----------+-----------------------+
+> | id | select_type | table   | partitions | type  | possible_keys        | key                  | key_len | ref  | rows | filtered | Extra                 |
+> +----+-------------+---------+------------+-------+----------------------+----------------------+---------+------+------+----------+-----------------------+
+> |  1 | SIMPLE      | tb_user | NULL       | range | idx_user_pro_age_sta | idx_user_pro_age_sta | 47      | NULL |    1 |   100.00 | Using index condition |
+> +----+-------------+---------+------------+-------+----------------------+----------------------+---------+------+------+----------+-----------------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> ```
+
+
+
+#### SQL提示
+
+目前tb_user表的数据情况如下:
+
+![](image/Snipaste_2022-11-26_10-36-53.png)
+
+索引情况如下:
+
+![](image/Snipaste_2022-11-26_10-37-27.png)
+
+1、执行SQL : explain select * from tb_user where profession = '软件工程';
+
+> ```sql
+> mysql> explain select * from tb_user where profession = '软件工程';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 36      | const |    4 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+2、执行SQL，创建profession的单列索引：create index idx_user_pro on tb_user(profession);
+
+> ```sql
+> mysql> ALTER TABLE TB_USER ADD INDEX INDEX_PROFESSION (PROFESSION);
+> Query OK, 0 rows affected (0.03 sec)
+> Records: 0  Duplicates: 0  Warnings: 0
+> ```
+
+
+
+3、创建单列索引后，再次执行1中的SQL语句，查看执行计划，看看到底走哪个索引。
+
+```sql
+mysql> explain select * from tb_user where profession = '软件工程';
++----+-------------+---------+------------+------+------------------------------+-------------+---------+-------+------+----------+-------+
+| id | select_type | table   | partitions | type | possible_keys                | key         | key_len | ref   | rows | filtered | Extra |
++----+-------------+---------+------------+------+------------------------------+-------------+---------+-------+------+----------+-------+
+|  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s,INDEX_PROFESSION | index_p_a_s | 36      | const |    4 |   100.00 | NULL  |
++----+-------------+---------+------------+------+------------------------------+-------------+---------+-------+------+----------+-------+
+1 row in set, 1 warning (0.00 sec)
+```
+
+测试结果，我们可以看到，possible_keys中 index_p_a_s,INDEX_PROFESSION 这两个索引都可能用到，最终MySQL选择了index_p_a_s索引。这是MySQL自动选择的结果。
+
+那么，我们能不能在查询的时候，自己来指定使用哪个索引呢？ 答案是肯定的，此时就可以借助于MySQL的SQL提示来完成。 接下来，介绍一下SQL提示。
+
+SQL提示，是优化数据库的一个重要手段，简单来说，就是在SQL语句中加入一些人为的提示来达到优化操作的目的。
+
+
+
+1、<span style="color: red">USE INDEX</span>：建议MySQL使用哪一个索引完成此次查询（仅仅是建议，mysql内部还会再次进行评估）。
+
+> ```sql
+> mysql> explain select * from tb_user use index(INDEX_PROFESSION) where profession = '软件工程';
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys    | key              | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | INDEX_PROFESSION | INDEX_PROFESSION | 36      | const |    4 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+2、<span style="color:red">ignore index</span>：忽略指定的索引
+
+> ```sql
+> mysql> explain select * from tb_user ignore index(index_p_a_s) where profession = '软件工程';
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys    | key              | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | INDEX_PROFESSION | INDEX_PROFESSION | 36      | const |    4 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+------------------+------------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+3、<span style="color:red">force index</span>：强制使用索引。
+
+> ```sql
+> mysql> explain select * from tb_user force index(index_p_a_s) where profession = '软件工程';
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys | key         | key_len | ref   | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s   | index_p_a_s | 36      | const |    4 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+---------------+-------------+---------+-------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+#### 覆盖索引
+
+尽量使用覆盖索引，减少select *。 那么什么是覆盖索引呢？ <span style="color:red">覆盖索引是指查询使用了索引，并且需要返回的列，在该索引中已经全部能够找到 。</span>
+
+> ```sql
+> explain select id, profession from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> explain select id,profession,age, status from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> explain select id,profession,age, status, name from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> 
+> ```
+
+把上述的 INDEX_AGE,这个之前测试使用过的索引直接删除。
+
+> ```sql
+> mysql> ALTER TABLE tb_user DROP INDEX INDEX_AGE;
+> Query OK, 0 rows affected (0.01 sec)
+> Records: 0  Duplicates: 0  Warnings: 0
+> ```
+
+- 查看上述SQL执行计划
+
+> ```sql
+> mysql> explain select id, profession from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys                | key         | key_len | ref               | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s,INDEX_PROFESSION | index_p_a_s | 42      | const,const,const |    1 |   100.00 | Using index |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select id,profession,age, status from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> | id | select_type | table   | partitions | type | possible_keys                | key         | key_len | ref               | rows | filtered | Extra       |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s,INDEX_PROFESSION | index_p_a_s | 42      | const,const,const |    1 |   100.00 | Using index |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select id,profession,age, status, name from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys                | key         | key_len | ref               | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s,INDEX_PROFESSION | index_p_a_s | 42      | const,const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> 
+> mysql> explain select * from tb_user where profession = '软件工程' and age = 31 and status = '0';
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> | id | select_type | table   | partitions | type | possible_keys                | key         | key_len | ref               | rows | filtered | Extra |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> |  1 | SIMPLE      | tb_user | NULL       | ref  | index_p_a_s,INDEX_PROFESSION | index_p_a_s | 42      | const,const,const |    1 |   100.00 | NULL  |
+> +----+-------------+---------+------------+------+------------------------------+-------------+---------+-------------------+------+----------+-------+
+> 1 row in set, 1 warning (0.00 sec)
+> ```
+
+
+
+从上述的执行计划我们可以看到，这四条SQL语句的执行计划前面所有的指标都是一样的，看不出来差异。但是此时，我们主要关注的是后面的Extra(额外的，补充的)，前面两条SQL的结果为 Using where; UsingIndex ; 而后面两条SQL的结果为: Using index condition 。
+
+
+
+
+
+
+
+#### 前缀索引
+
+
+
+
+
+#### 单列索引与联合索引
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
