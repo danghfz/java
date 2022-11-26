@@ -1616,11 +1616,11 @@ SELECT * FROM t23
 
 - **使用细节**
 
-1. 一般来说自增长是和primary key配合使用的
-2. 自增长也可以单独使用[但是需要配合一个unique]
-3. 自增长修饰的字段为整数型的(虽然小数也可以但是非常非常少这样使用)
-4. 自增长默认从1开始,你也可以通过如下命令修改 [altertable表名auto increment=新的开始值] ;
-5. 如果你添加数据时，给自增长字段(列)指定的有值，则以指定的值为准,如果指定了自增长，一般来说，就按照自增长的规则来添加数据
+1. <span style="color: red">一般来说自增长是和primary key配合使用的</span>
+2. <span style="color: red">自增长也可以单独使用[但是需要配合一个unique]</span>
+3. <span style="color: red">自增长修饰的字段为整数型的(虽然小数也可以但是非常非常少这样使用)</span>
+4. <span style="color: red">自增长默认从1开始,你也可以通过如下命令修改 [altertable表名auto increment=新的开始值] ;</span>
+5. <span style="color: red">如果你添加数据时，给自增长字段(列)指定的有值，则以指定的值为准,如果指定了自增长，一般来说，就按照自增长的规则来添加数据</span>
 
 
 
@@ -2829,29 +2829,29 @@ Memory引擎的表数据时存储在内存中的，由于受到硬件问题、�
 
 
 
-    <p class="custom-block-title">面试题:</p>
+<div style="border-radius: .4rem;
+            padding: .1rem .1rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: #42b983;
+            color: #215d42;">
+    <p class="custom-block-title">面试题:：</p>
     <p>InnoDB引擎与MyISAM引擎的区别 ?</p>
-    <p>①. InnoDB引擎, 支持事务, 而MyISAM不支持。</p>
+    <p> ①. InnoDB引擎, 支持事务, 而MyISAM不支持。</p>
     <p>②. InnoDB引擎, 支持行锁和表锁, 而MyISAM仅支持表锁, 不支持行锁。</p>
-    <p>③. InnoDB引擎, 支持外键, 而MyISAM是不支持的。</p>
-    <p>主要是上述三点区别，当然也可以从索引结构、存储限制等方面，更加深入的回答，具体参
-        考如下官方文档：</p>
-    <p><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html" target="_blank"
-          rel="noopener noreferrer">https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html<span><svg
-            xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px"
-            viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor"
-                                                                                     d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon
-            fill="currentColor"
-            points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span
-            class="sr-only">(opens new window)</span></span></a></p>
-    <p><a href="https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html" target="_blank"
-          rel="noopener noreferrer">https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html<span><svg
-            xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" x="0px" y="0px"
-            viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor"
-                                                                                     d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon
-            fill="currentColor"
-            points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg> <span
-            class="sr-only">(opens new window)</span></span></a></p>
+    <p>
+        ③. InnoDB引擎, 支持外键, 而MyISAM是不支持的。
+    </p>
+    <p>
+        主要是上述三点区别，当然也可以从索引结构、存储限制等方面，更加深入的回答，具体参 考如下官方文档：
+    </p>
+    <p>
+        <a ref="https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html">https://dev.mysql.com/doc/refman/8.0/en/innodb-introduction.html</a>
+    </p>
+    <p>
+        <a ref="https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html">https://dev.mysql.com/doc/refman/8.0/en/myisam-storage-engine.html</a>
+    </p>
 </div>
 
 
@@ -3024,13 +3024,27 @@ MySQL中除了支持B+Tree索引，还支持一种索引类型---Hash索引。
 
 在MySQL中，支持hash索引的是Memory存储引擎。 而InnoDB中具有自适应hash功能，hash索引是 InnoDB存储引擎根据B+Tree索引在指定条件下自动构建的。
 
-```sh
-# 思考题： 为什么InnoDB存储引擎选择使用B+tree索引结构?
 
-# 相对于二叉树，层级更少，搜索效率高；
-# 对于B-tree，无论是叶子节点还是非叶子节点，都会保存数据，这样导致一页中存储的键值减少，指针跟着减少，要同样保存大量数据，只能增加树的高度，导致性能降低；
-# 相对Hash索引，B+tree支持范围匹配及排序操作；
-```
+
+<div style="border-radius: .4rem;
+            padding: .1rem .1rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: #42b983;
+            color: #215d42;
+            font-weight: 600;">
+    <p class="custom-block-title">思考题： 为什么InnoDB存储引擎选择使用B+tree索引结构?</p>
+    <p>1、相对于二叉树，层级更少，搜索效率高；</p>
+    <p>
+        2、对于B-tree，无论是叶子节点还是非叶子节点，都会保存数据，这样导致一页中存储的键值减少，指针跟着减少，要同样保存大量数据，只能增加树的高度，导致性能降低；
+    </p>
+    <p>3、相对Hash索引，B+tree支持范围匹配及排序操作；</p>
+</div>
+
+
+
+
 
 
 
@@ -3081,41 +3095,55 @@ MySQL中除了支持B+Tree索引，还支持一种索引类型---Hash索引。
 
 
 
-```sh
-# 回表查询： 这种先到二级索引中查找数据，找到主键值，然后再到聚集索引中根据主键值，获取 数据的方式，就称之为回表查询。
-```
-
-```sh
-# 思考题：
-
-# 以下两条SQL语句，那个执行效率高? 为什么?
-
-# A. select * from user where id = 10 ;
-
-# B. select * from user where name = 'Arm' ;
-
-# 备注: id为主键，name字段创建的有索引；
-
-# 解答：
-
-# A 语句的执行性能要高于B 语句。
-
-# 因为A语句直接走聚集索引，直接返回数据。 而B语句需要先查询name字段的二级索引，然后再查询聚集索引，也就是需要进行回表查询。
-```
+<div style="border-radius: .4rem;
+            padding: .1rem .1rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: #42b983;
+            color: #215d42;
+            font-weight: 600;">
+    <p class="custom-block-title">知识小贴士：</p>
+    <p><code style="color: red">回表查询</code>：这种先到二级索引中查找数据，找到主键值，然后再到聚集索引中根据主键值，获取 数据的方式，就称之为回表查询。</p>
+</div>
 
 
 
-思考题：
+<div style="border-radius: .4rem;
+            padding: .1rem .1rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: red;
+            color: #215d42;
+            font-weight: 600;">
+    <p>
+        思考题
+    </p>
+    <ul><li><p>以下两条SQL语句，那个执行效率高? 为什么?</p> <p>A. select * from user where id = 10 ;</p> <p>B. select * from user where name = 'Arm' ;</p> <p>备注: id为主键，name字段创建的有索引；</p></li></ul>
+    <p>解答</p>
+    <p>A 语句的执行性能要高于B 语句。</p>
+    <p>因为A语句直接走聚集索引，直接返回数据。 而B语句需要先查询name字段的二级索引，然后再查询聚集索引，也就是需要进行回表查询。</p>
+</div>
 
-- InnoDB主键索引的B+tree高度为多高呢?
 
-![](image/Snipaste_2022-11-25_20-02-44.png)
 
-答：假设一行数据大小为1k，一页中可以存储16行这样的数据。InnoDB 的指针占用6个字节的空间，主键假设为bigint，占用字节数为8. 可得公式：`n * 8 + (n + 1) * 6 = 16 * 1024`，其中 8 表示 bigint 占用的字节数，n 表示当前节点存储的key的数量，(n + 1) 表示指针数量（比key多一个）。算出n约为1170。
+<div style="border-radius: .4rem;
+            padding: .1rem .1rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: red;
+            color: #215d42;
+            font-weight: 600;">
+    <p class="custom-block-title">思考题：</p>
+    <p>InnoDB主键索引的B+tree高度为多高呢?</p>
+    <image src="image/Snipaste_2022-11-25_20-02-44.png"></image>
+    <p>
+        答：假设一行数据大小为1k，一页中可以存储16行这样的数据。InnoDB 的指针占用6个字节的空间，主键假设为bigint，占用字节数为8. 可得公式：`n * 8 + (n + 1) * 6 = 16 * 1024`，其中 8 表示 bigint 占用的字节数，n 表示当前节点存储的key的数量，(n + 1) 表示指针数量（比key多一个）。算出n约为1170。如果树的高度为2，那么他能存储的数据量大概为：`1171 * 16 = 18736`； 如果树的高度为3，那么他能存储的数据量大概为：`1171 * 1171 * 16 = 21939856`。
+    </p>
+</div>
 
-如果树的高度为2，那么他能存储的数据量大概为：`1171 * 16 = 18736`； 如果树的高度为3，那么他能存储的数据量大概为：`1171 * 1171 * 16 = 21939856`。
-
-另外，如果有成千上万的数据，那么就要考虑分表，涉及运维篇知识
 
 
 
@@ -4265,15 +4293,234 @@ SQL提示，是优化数据库的一个重要手段，简单来说，就是在SQ
 
 
 
-
-
-
-
-
-
-
-
 ## MySQL-SQL优化
+
+### 插入数据
+
+- INSERT
+
+如果我们需要一次性往数据库表中插入多条记录，可以从以下三个方面进行优化。
+
+```sql
+insert into tb_test values(1,'tom');
+
+insert into tb_test values(2,'cat');
+
+insert into tb_test values(3,'jerry');
+
+.....
+
+```
+
+1、优化方案一
+
+批量插入数据
+
+```sql
+Insert into tb_test values(1,'Tom'),(2,'Cat'),(3,'Jerry');
+
+```
+
+
+
+2、优化方案二
+
+手动控制事务
+
+```sql
+start transaction;
+
+insert into tb_test values(1,'Tom'),(2,'Cat'),(3,'Jerry');
+
+insert into tb_test values(4,'Tom'),(5,'Cat'),(6,'Jerry');
+
+insert into tb_test values(7,'Tom'),(8,'Cat'),(9,'Jerry');
+
+commit;
+
+```
+
+
+
+3、优化方案三
+
+主键顺序插入，性能高于乱序插入
+
+```sql
+-- 主键乱序插入 : 8 1 9 21 88 2 4 15 89 5 7 3
+-- 主键顺序插入 : 1 2 3 4 5 7 8 9 15 21 88 89
+
+```
+
+
+
+#### 大批量插入数据
+
+如果一次性需要插入大批量数据(比如: 几百万的记录)，使用insert语句插入性能较低，此时可以使用MySQL数据库提供的load指令进行插入。操作如下
+
+![](image/Snipaste_2022-11-26_15-06-34.png)
+
+可以执行如下指令，将数据脚本文件中的数据加载到表结构中：
+
+```sql
+-- 客户端连接服务端时，加上参数 -–local-infile
+mysql –-local-infile -u root -p
+
+-- 设置全局参数local_infile为1，开启从本地加载文件导入数据的开关
+set global local_infile = 1;
+
+-- 执行load指令将准备好的数据，加载到表结构中
+load data local infile '/root/sql1.log' into table tb_user fields terminated by ',' lines terminated by '\n' ;
+
+```
+
+
+
+### 主键优化
+
+在上一小节，我们提到，主键顺序插入的性能是要高于乱序插入的。 这一小节，就来介绍一下具体的原因，然后再分析一下主键又该如何设计。
+
+1、数据组织方式
+
+在InnoDB存储引擎中，<span style="color:red">表数据都是根据主键顺序组织存放的</span>，这种存储方式的表称为<span style="color:red">索引组织表</span>(index organized table IOT)。
+
+![](image/Snipaste_2022-11-26_15-08-37.png)
+
+行数据，都是存储在聚集索引的叶子节点上的。而我们之前也讲解过InnoDB的逻辑结构图：
+
+![](image/Snipaste_2022-11-26_15-09-06.png)
+
+
+
+在InnoDB引擎中，数据行是记录在逻辑结构 page 页中的，而每一个页的大小是固定的，默认16K。那也就意味着， 一个页中所存储的行也是有限的，如果插入的数据行row在该页存储不小，将会存储到下一个页中，页与页之间会通过指针连接。
+
+
+
+2、页分裂
+
+页可以为空，也可以填充一半，也可以填充100%。每个页包含了2-N行数据(如果一行数据过大，会行溢出)，根据主键排列。
+
+- 主键顺序插入效果
+
+  - 从磁盘中申请页， 主键顺序插入
+
+  ![](image/Snipaste_2022-11-26_15-10-03.png)
+
+  - 第一个页没有满，继续往第一页插入
+
+  ![](image/Snipaste_2022-11-26_15-10-32.png)
+
+  - 当第一个也写满之后，再写入第二个页，页与页之间会通过指针连接
+
+  ![](image/Snipaste_2022-11-26_15-11-01.png)
+
+  - 当第二页写满了，再往第三页写入
+
+  ![](image/Snipaste_2022-11-26_15-11-24.png)
+
+- 主键乱序插入效果
+
+  - 加入1#,2#页都已经写满了，存放了如图所示的数据
+
+  ![](image/Snipaste_2022-11-26_15-12-10.png)
+
+  - 此时再插入id为50的记录，我们来看看会发生什么现象
+
+    会再次开启一个页，写入新的页中吗？
+
+    ![](image/Snipaste_2022-11-26_15-12-37.png)
+
+不会。因为，索引结构的叶子节点是有顺序的。按照顺序，应该存储在47之后。
+
+![](image/Snipaste_2022-11-26_15-13-04.png)
+
+但是47所在的1#页，已经写满了，存储不了50对应的数据了。 那么此时会开辟一个新的页 3#。
+
+![](image/Snipaste_2022-11-26_15-13-34.png)
+
+但是并不会直接将50存入3#页，而是会将1#页后一半的数据，移动到3#页，然后在3#页，插入50。
+
+![](image/Snipaste_2022-11-26_15-14-36.png)
+
+移动数据，并插入id为50的数据之后，那么此时，这三个页之间的数据顺序是有问题的。 1#的下一个 页，应该是3#， 3#的下一个页是2#。 所以，此时，需要重新设置链表指针。
+
+![](image/Snipaste_2022-11-26_15-14-58.png)
+
+上述的这种现象，称之为 "<span style="color:red">页分裂</span>”，是比较耗费性能的操作。
+
+
+
+3、页合并
+
+- 目前表中已有数据的索引结构(叶子节点)如下：
+
+- 
+
+![](image/Snipaste_2022-11-26_15-17-33.png)
+
+- 当我们对已有数据进行删除时，具体的效果如下:
+- 当删除一行记录时，实际上记录并没有被物理删除，只是记录被标记（flaged）为删除并且它的空间变得允许被其他记录声明使用。
+
+![](image/Snipaste_2022-11-26_15-17-58.png)
+
+- 当我们继续删除2#的数据记录
+
+![](image/Snipaste_2022-11-26_15-18-24.png)
+
+- 当页中删除的记录达到 <span style="color:red">`MERGE_THRESHOLD`</span>（默认为页的50%），InnoDB会开始寻找最靠近的页（前 或后）看看是否可以将两个页合并以优化空间使用。
+
+![](image/Snipaste_2022-11-26_15-19-24.png)
+
+- 删除数据，并将<span style="color:red">页合并</span>之后，再次插入新的数据21，则直接插入3#页
+
+![](image/Snipaste_2022-11-26_15-20-10.png)
+
+- 这个里面所发生的合并页的这个现象，就称之为 "<span style="color:red">页合并</span>”。
+
+<div style="border-radius: .4rem;
+            padding: .5rem 1.5rem;
+            border-left-width: .5rem;
+            border-left-style: solid;
+            background-color: #f3f5f7;
+            border-color: #42b983;
+            color: #215d42;
+            font-weight: 600;">
+    <p class="custom-block-title">知识小贴士：</p>
+    <p><code style="color: red">MERGE_THRESHOLD</code>：合并页的阈值，可以自己设置，在创建表或者创建索引时指定。</p>
+</div>
+
+
+
+4、索引设计原则
+
+1. 满足业务需求的情况下，尽量降低主键的长度。
+2. 插入数据时，尽量选择顺序插入，选择使用`AUTO_INCREMENT`自增主键。
+3. 尽量不要使用`UUID做主键`或者是`其他自然主键`，如身份证号。
+4. 业务操作时，`避免对主键的修改`。
+
+![](image/Snipaste_2022-11-26_15-51-21.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
