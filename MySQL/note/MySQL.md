@@ -1,4 +1,4 @@
-[TOC]
+
 
 # MySQL-基础
 
@@ -3551,7 +3551,7 @@ Explain 执行计划中各个字段的含义:
 
 
 
-### 索引使用
+### 索引使用 unfinish
 
 #### 验证索引效率
 
@@ -5939,11 +5939,907 @@ user_logs表中的数据:
 
 ## MySQL-锁
 
+### 概述
 
+锁是计算机协调多个进程或线程并发访问某一资源的机制。在数据库中，除传统的计算资源（<span style="color: red">`CPU、RAM、I/O`</span>）的争用以外，数据也是一种供许多用户共享的资源。如何保证数据并发访问的一致性、有效性是所有数据库必须解决的一个问题，锁冲突也是影响数据库并发访问性能的一个重要因素。从这个角度来说，锁对数据库而言显得尤其重要，也更加复杂。
+
+MySQL中的锁，按照锁的粒度分，分为以下三类：
+
+- 全局锁：锁定数据库中的所有表。
+- 表级锁：每次操作锁住整张表。
+- 行级锁：每次操作锁住对应的行数据。
+
+
+
+### 全局锁
+
+#### 介绍
+
+全局锁就是对整个数据库实例加锁，加锁后整个实例就处于只读状态，后续的DML的写语句，DDL语句，已经更新操作的事务提交语句都将被阻塞。
+
+其典型的使用场景是做全库的逻辑备份，对所有的表进行锁定，从而获取一致性视图，保证数据的完整性。
+
+为什么全库逻辑备份，就需要加全就锁呢？
+
+A. 我们一起先来分析一下不加全局锁，可能存在的问题。
+
+假设在数据库中存在这样三张表: tb_stock 库存表，tb_order 订单表，tb_orderlog 订单日志表。
+
+![](image/Snipaste_2022-11-27_08-18-54.png)
+
+- 在进行数据备份时，先备份了tb_stock库存表。
+- 然后接下来，在业务系统中，执行了下单操作，扣减库存，生成订单（更新tb_stock表，插入tb_order表）。
+- 然后再执行备份 tb_order表的逻辑。
+- 业务中执行插入订单日志操作。
+- 最后，又备份了tb_orderlog表。
+
+此时备份出来的数据，是存在问题的。因为备份出来的数据，tb_stock表与tb_order表的数据不一致(有最新操作的订单信息,但是库存数没减)。
+
+那如何来规避这种问题呢? 此时就可以借助于MySQL的全局锁来解决
+
+
+
+B. 再来分析一下加了全局锁后的情况
+
+![](image/Snipaste_2022-11-27_08-20-24.png)
+
+对数据库进行进行逻辑备份之前，先对整个数据库加上全局锁，一旦加了全局锁之后，其他的DDL、DML全部都处于阻塞状态，但是可以执行DQL语句，也就是处于只读状态，而数据备份就是查询操作。那么数据在进行逻辑备份的过程中，数据库中的数据就是不会发生变化的，这样就保证了数据的一致性和完整性。
+
+#### 语法
+
+1. 全局加锁
+
+```sql
+flush tables with read lock;
+
+```
+
+2. 数据备份
+
+```sql
+mysqldump -uroot –p1234 itcast > itcast.sql
+
+```
+
+3. 释放锁
+
+```sql
+unlock tables;
+
+```
+
+
+
+#### 特点
+
+数据库中加全局锁，是一个比较重的操作，存在以下问题：
+
+- 如果在主库上备份，那么在备份期间都不能执行更新，业务基本上就得停摆。
+- 如果在从库上备份，那么在备份期间从库不能执行主库同步过来的二进制日志（binlog），会导致主从延迟。
+
+在InnoDB引擎中，我们可以在备份时加上参数 <span style="color: red">--single-transaction</span> 参数来完成不加锁的一致性数据备份。
+
+```sql
+mysqldump --single-transaction -uroot –p123456 itcast > itcast.sql
+
+```
+
+
+
+### 表级锁
+
+#### 介绍
+
+表级锁，每次操作锁住整张表。锁定粒度大，<span style="color:red">发生锁冲突的概率最高，并发度最低</span>。应用在MyISAM、InnoDB、BDB等存储引擎中。
+
+对于表级锁，主要分为以下三类：
+
+- 表锁
+- 元数据锁（meta data lock，MDL）
+- 意向锁
+
+#### 表锁
+
+对于表锁，分为两类：
+
+- 表共享读锁（read lock）
+- 表独占写锁（write lock）
+
+语法：
+
+- 加锁：lock tables 表名... read/write。
+- 释放锁：unlock tables / 客户端断开连接 。
+
+特点:
+
+A. 读锁
+
+![](image/Snipaste_2022-11-27_08-26-04.png)
+
+左侧为客户端一，对指定表加了读锁，不会影响右侧客户端二的读，但是会阻塞右侧客户端的写。
+
+<div>
+    <img src="image/Snipaste_2022-11-27_08-28-59.png" style="zoom:50%;width:50%;float:left"/>
+    <img src="image/Snipaste_2022-11-27_08-31-53.png" style="zoom:50%;width:50%;float:right">
+</div>
+
+
+
+
+
+
+
+
+
+
+
+B. 写锁
+
+<div>
+	<img src="image/Snipaste_2022-11-27_08-36-55.png" style="zoom:50%;float:left;width:50%">
+    <img src="image/Snipaste_2022-11-27_08-37-33.png" style="zoom:50%;float:right;width:50%">
+</div>
+
+
+
+
+
+
+
+
+
+```sh
+# 读锁不会阻塞其他客户端的读，但是会阻塞写。写锁既会阻塞其他客户端的读，又会阻塞其他客户端的写。
+```
+
+
+
+#### 元数据锁
+
+meta data lock , 元数据锁，简写MDL。
+
+MDL加锁过程是系统自动控制，无需显式使用，在访问一张表的时候会自动加上。MDL锁主要作用是维护表元数据的数据一致性，在表上有活动事务的时候，不可以对元数据进行写入操作。**为了避免DML与DDL冲突，保证读写的正确性**。
+
+这里的元数据，大家可以简单理解为就是一张表的表结构。 也就是说，某一张表涉及到未提交的事务时，是不能够修改这张表的表结构的。
+
+在MySQL5.5中引入了MDL，当对一张表进行增删改查的时候，加MDL读锁(共享)；当对表结构进行变更操作的时候，加MDL写锁(排他)。
+
+常见的SQL操作时，所添加的元数据锁：
+
+| 对应SQL                                        | 锁类型                                  | 说明                                             |
+| ---------------------------------------------- | --------------------------------------- | ------------------------------------------------ |
+| lock tables xxx read/write                     | SHARED_READ_ONLY / SHARED_NO_READ_WRITE |                                                  |
+| select 、select ... lock in share mode         | SHARED_READ                             | 与SHARED_READ、SHARED_WRITE兼容，与EXCLUSIVE互斥 |
+| insert 、update、delete、select ... for update | SHARED_WRITE                            | 与SHARED_READ、SHARED_WRITE兼容，与EXCLUSIVE互斥 |
+| alter table ...                                | EXCLUSIVE                               | 与其他的MDL都互斥                                |
+
+
+
+演示：
+
+当执行SELECT、INSERT、UPDATE、DELETE等语句时，添加的是元数据共享锁（SHARED_READ / SHARED_WRITE），之间是兼容的。
+
+<div>
+	<img src="image/Snipaste_2022-11-27_08-50-46.png" style="zoom:50%;float:left;width:50%">
+    <img src="image/Snipaste_2022-11-27_08-51-03.png" style="zoom:50%;float:right;width:50%">
+</div>
+
+
+
+
+
+
+
+
+
+
+
+当执行SELECT语句时，添加的是元数据共享锁（SHARED_READ），会阻塞元数据排他锁（EXCLUSIVE），之间是互斥的。
+
+![](image/Snipaste_2022-11-27_09-24-35.png)
+
+
+
+
+
+我们可以通过下面的SQL，来查看数据库中的元数据锁的情况：
+
+> ```sql
+> mysql> select object_type,object_schema,object_name,lock_type,lock_duration from performance_schema.metadata_locks;
+> +-------------------+--------------------+----------------+---------------------+---------------+
+> | object_type       | object_schema      | object_name    | lock_type           | lock_duration |
+> +-------------------+--------------------+----------------+---------------------+---------------+
+> | TABLE             | performance_schema | metadata_locks | SHARED_READ         | TRANSACTION   |
+> | SCHEMA            | performance_schema | NULL           | INTENTION_EXCLUSIVE | TRANSACTION   |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
+> +-------------------+--------------------+----------------+---------------------+---------------+
+> 13 rows in set (0.06 sec)
+> ```
+
+
+
+#### 意向锁
+
+1、介绍
+
+为了避免DML在执行时，加的行锁与表锁的冲突，在InnoDB中引入了意向锁，使得表锁不用检查每行数据是否加锁，使用意向锁来减少表锁的检查。
+
+假如没有意向锁，客户端一对表加了行锁后，客户端二如何给表加表锁呢，来通过示意图简单分析一下：
+
+首先客户端一，开启一个事务，然后执行DML操作，在执行DML语句时，会对涉及到的行加行锁。
+
+当客户端二，想对这张表加表锁时，会检查当前表是否有对应的行锁，如果没有，则添加表锁，此时就会从第一行数据，检查到最后一行数据，效率较低。
+
+![](image/Snipaste_2022-11-27_08-58-15.png)
+
+有了意向锁之后 :
+
+客户端一，在执行DML操作时，会对涉及的行加行锁，同时也会对该表加上意向锁。
+
+![](image/Snipaste_2022-11-27_08-58-42.png)
+
+而其他客户端，在对这张表加表锁的时候，会根据该表上所加的意向锁来判定是否可以成功加表锁，而不用逐行判断行锁情况了。
+
+![](image/Snipaste_2022-11-27_08-59-01.png)
+
+2. 分类
+
+- **意向共享锁(IS): 由语句select ... lock in share mode添加** 。**与表锁共享锁(read)兼容，与表锁排他锁(write)互斥**。
+- **意向排他锁(IX)**: **由insert、update、delete、select...for update添加 **。**与表锁共享锁(read)及排他锁(write)都互斥，意向锁之间不会互斥**。
+
+```sh
+# 一旦事务提交了，意向共享锁、意向排他锁，都会自动释放。
+```
+
+可以通过以下SQL，查看意向锁及行锁的加锁情况：
+
+> ```sql
+> select object_schema,object_name,index_name,lock_type,lock_mode,lock_data from performance_schema.data_locks;
+> 
+> ```
+
+A.  意向共享锁与表读锁是兼容的
+
+![](image/Snipaste_2022-11-27_09-23-50.png)
+
+
+
+B.  意向排他锁与表读锁、写锁都是互斥的
+
+![](image/Snipaste_2022-11-27_09-24-08.png)
+
+
+
+
+
+### 行级锁
+
+#### 介绍
+
+行级锁，每次操作锁住对应的行数据。<span style="color: red">锁定粒度最小，发生锁冲突的概率最低，并发度最高</span>。应用在InnoDB存储引擎中。
+
+InnoDB的数据是基于索引组织的，行锁是通过对索引上的索引项加锁来实现的，而不是对记录加的锁。对于行级锁，主要分为以下三类：
+
+- 行锁（Record Lock）：锁定单个行记录的锁，防止其他事务对此行进行update和delete。在RC、RR隔离级别下都支持。
+
+![](image/Snipaste_2022-11-27_09-02-32.png)
+
+- 间隙锁（Gap Lock）：锁定索引记录间隙（不含该记录），确保索引记录间隙不变，防止其他事务在这个间隙进行insert，产生幻读。在RR隔离级别下都支持。
+
+![](image/Snipaste_2022-11-27_09-02-57.png)
+
+- 临键锁（Next-Key Lock）：行锁和间隙锁组合，同时锁住数据，并锁住数据前面的间隙Gap。在RR隔离级别下支持。
+
+![](image/Snipaste_2022-11-27_09-03-17.png)
+
+
+
+#### 行锁
+
+1. 介绍
+
+InnoDB实现了以下两种类型的行锁：
+
+- 共享锁（S）：允许一个事务去读一行，阻止其他事务获得相同数据集的排它锁。
+- 排他锁（X）：允许获取排他锁的事务更新数据，阻止其他事务获得相同数据集的共享锁和排他 锁。
+
+两种行锁的兼容情况如下:
+
+![](image/Snipaste_2022-11-27_09-10-55.png)
+
+常见的SQL语句，在执行时，所加的行锁如下：
+
+| SQL                           | 行锁类型   | 说明                                     |
+| ----------------------------- | ---------- | ---------------------------------------- |
+| INSERT ...                    | 排他锁     | 自动加锁                                 |
+| UPDATE ...                    | 排他锁     | 自动加锁                                 |
+| DELETE ...                    | 排他锁     | 自动加锁                                 |
+| SELECT（正常）                | 不加任何锁 |                                          |
+| SELECT ... LOCK IN SHARE MODE | 共享锁     | 需要手动在SELECT之后加LOCK IN SHARE MODE |
+| SELECT ... FOR UPDATE         | 排他锁     | 需要手动在SELECT之后加FOR UPDATE         |
+
+2. 演示
+
+默认情况下，InnoDB在 REPEATABLE READ事务隔离级别运行，InnoDB使用 next-key 锁进行搜索和索引扫描，以防止幻读。
+
+- 针对唯一索引进行检索时，对已存在的记录进行等值匹配时，将会自动优化为行锁。
+- InnoDB的行锁是针对于索引加的锁，不通过索引条件检索数据，那么InnoDB将对表中的所有记录加锁，此时 就会升级为表锁。
+
+可以通过以下SQL，查看意向锁及行锁的加锁情况：
+
+> ```sql
+> select object_schema,object_name,index_name,lock_type,lock_mode,lock_data from performance_schema.data_locks;
+> 
+> ```
+
+
+
+数级准备：
+
+```sql
+CREATE TABLE `stu` (
+	`id` int NOT NULL PRIMARY KEY AUTO_INCREMENT,
+	`name` varchar(255) DEFAULT NULL,
+	`age` int NOT NULL
+) ENGINE = InnoDB CHARACTER SET = utf8mb4;
+INSERT INTO `stu` VALUES (1, 'tom', 1);
+INSERT INTO `stu` VALUES (3, 'cat', 3);
+INSERT INTO `stu` VALUES (8, 'rose', 8);
+INSERT INTO `stu` VALUES (11, 'jetty', 11);
+INSERT INTO `stu` VALUES (19, 'lily', 19);
+INSERT INTO `stu` VALUES (25, 'luci', 25);
+
+```
+
+演示行锁的时候，我们就通过上面这张表来演示一下。
+
+A. 普通的select语句，执行时，不会加锁
+
+<div>
+	<img src="image/Snipaste_2022-11-27_09-17-09.png" style="zoom:50%;float:left;width:50%">
+    <img src="image/Snipaste_2022-11-27_09-16-57.png" style="zoom:50%;float:right;width:50%">
+</div>
+
+
+
+
+
+
+
+
+
+
+
+B. select...lock in share mode，加共享锁，**共享锁与共享锁之间兼容**。
+
+![](image/Snipaste_2022-11-27_09-19-07.png)
+
+共享锁与排他锁之间互斥。
+
+![](image/Snipaste_2022-11-27_09-19-32.png)
+
+客户端一获取的是id为1这行的共享锁，客户端二是可以获取id为3这行的排它锁的，因为不是同一行数据。 而如果客户端二想获取id为1这行的排他锁，会处于阻塞状态，以为共享锁与排他锁之间互斥。
+
+C. **排它锁与排他锁之间互斥**
+
+![](image/Snipaste_2022-11-27_09-19-56.png)
+
+当客户端一，执行update语句，会为id为1的记录加排他锁； 客户端二，如果也执行update语句更新id为1的数据，也要为id为1的数据加排他锁，但是客户端二会处于阻塞状态，因为排他锁之间是互斥的。 直到客户端一，把事务提交了，才会把这一行的行锁释放，此时客户端二，解除阻塞。
+
+D. **无索引行锁升级为表锁**
+
+stu表中数据如下:
+
+```sql
+mysql> select * from stu;
++----+-----+-------+
+| id | age | name  |
++----+-----+-------+
+|  1 |   1 | Java  |
+|  3 |   3 | Java  |
+|  8 |   8 | rose  |
+| 11 |  11 | jetty |
+| 19 |  19 | lily  |
+| 25 |  25 | luci  |
++----+-----+-------+
+6 rows in set (0.00 sec)
+
+```
+
+我们在两个客户端中执行如下操作:
+
+![](image/Snipaste_2022-11-27_09-20-38.png)
+
+在客户端一中，开启事务，并执行update语句，更新name为Lily的数据，也就是id为19的记录 。然后在客户端二中更新id为3的记录，却不能直接执行，会处于阻塞状态，为什么呢？
+
+原因就是因为此时，客户端一，根据name字段进行更新时，name字段是没有索引的，如果没有索引，此时行锁会升级为表锁(因为行锁是对索引项加的锁，而name没有索引)。
+
+接下来，我们再针对name字段建立索引，索引建立之后，再次做一个测试：
+
+![](image/Snipaste_2022-11-27_09-20-59.png)
+
+此时我们可以看到，客户端一，开启事务，然后依然是根据name进行更新。而客户端二，在更新id为3的数据时，更新成功，并未进入阻塞状态。 这样就说明，我们根据索引字段进行更新操作，就可以避免行锁升级为表锁的情况。
+
+
+
+#### 间隙锁&临键锁
+
+默认情况下，InnoDB在 REPEATABLE READ事务隔离级别运行，InnoDB使用 next-key 锁进行搜索和索引扫描，以防止幻读。
+
+- 索引上的等值查询(唯一索引)，给不存在的记录加锁时, 优化为间隙锁 。
+- 索引上的等值查询(非唯一普通索引)，向右遍历时最后一个值不满足查询需求时，next-key lock 退化为间隙锁。
+- 索引上的范围查询(唯一索引)--会访问到不满足条件的第一个值为止。
+
+```sh
+# 注意:
+
+# 间隙锁唯一目的是防止其他事务插入间隙。间隙锁可以共存，一个事务采用的间隙锁不会阻止另一个事务在同一间隙上采用间隙锁。
+```
+
+示例演示
+
+A. **索引上的等值查询(唯一索引)，给不存在的记录加锁时, 优化为**间隙锁 。
+
+![](image/Snipaste_2022-11-27_09-22-02.png)
+
+B. 索引上的等值查询(非唯一普通索引)，向右遍历时最后一个值不满足查询需求时，next-key lock 退化为间隙锁。
+
+介绍分析一下：
+
+我们知道InnoDB的B+树索引，叶子节点是有序的双向链表。 假如，我们要根据这个二级索引查询值为18的数据，并加上共享锁，我们是只锁定18这一行就可以了吗？ 并不是，因为是非唯一索引，这个结构中可能有多个18的存在，所以，在加锁时会继续往后找，找到一个不满足条件的值（当前案例中也就是29）。此时会对18加临键锁，并对29之前的间隙加锁。
+
+![](image/Snipaste_2022-11-27_09-22-28.png)
+
+![](image/Snipaste_2022-11-27_09-22-47.png)
+
+C. 索引上的范围查询(唯一索引)--会访问到不满足条件的第一个值为止。
+
+![](image/Snipaste_2022-11-27_09-23-10.png)
+
+查询的条件为id>=19，并添加共享锁。 此时我们可以根据数据库表中现有的数据，将数据分为三个部分：
+
+[19]
+
+(19,25]
+
+(25,+∞]
+
+所以数据库数据在加锁是，就是将19加了行锁，25的临键锁（包含25及25之前的间隙），正无穷的临键锁(正无穷及之前的间隙)
 
 
 
 ## MySQL-InnoDB引擎
+
+### 逻辑存储引擎
+
+InnoDB的逻辑存储结构如下图所示:
+
+![](image/Snipaste_2022-11-27_10-36-31.png)
+
+1. 表空间
+
+表空间是InnoDB存储引擎逻辑结构的最高层， 如果用户启用了参数 innodb_file_per_table(在8.0版本中默认开启) ，则每张表都会有一个表空间（xxx.ibd），一个mysql实例可以对应多个表空间，用于存储记录、索引等数据。
+
+2. 段
+
+段，分为数据段（Leaf node segment）、索引段（Non-leaf node segment）、回滚段（Rollback segment），InnoDB是索引组织表，数据段就是B+树的叶子节点， 索引段即为B+树的非叶子节点。段用来管理多个Extent（区）。
+
+3. 区
+
+区，表空间的单元结构，每个区的大小为1M。 默认情况下， InnoDB存储引擎页大小为16K， 即一个区中一共有64个连续的页。
+
+4. 页
+
+页，是InnoDB 存储引擎磁盘管理的最小单元，每个页的大小默认为 16KB。为了保证页的连续性，InnoDB 存储引擎每次从磁盘申请 4-5 个区。
+
+5. 行
+
+行，InnoDB 存储引擎数据是按行进行存放的。
+
+在行中，默认有两个隐藏字段：
+
+- Trx_id：每次对某条记录进行改动时，都会把对应的事务id赋值给trx_id隐藏列。
+- Roll_pointer：每次对某条引记录进行改动时，都会把旧的版本写入到undo日志中，然后这个隐藏列就相当于一个指针，可以通过它来找到该记录修改前的信息。
+
+
+
+### 架构
+
+#### 概述
+
+MySQL5.5 版本开始，默认使用InnoDB存储引擎，它擅长事务处理，具有崩溃恢复特性，在日常开发中使用非常广泛。下面是InnoDB架构图，左侧为内存结构，右侧为磁盘结构。
+
+![](image/Snipaste_2022-11-27_10-37-33.png)
+
+
+
+
+
+#### 内存架构
+
+![](image/Snipaste_2022-11-27_10-37-50.png)
+
+在左侧的内存结构中，主要分为这么四大块儿： Buffer Pool、Change Buffer、Adaptive Hash Index、Log Buffer。 下来介绍一下这四个部分。
+
+1. Buffer Pool
+
+InnoDB存储引擎基于磁盘文件存储，访问物理硬盘和在内存中进行访问，速度相差很大，为了尽可能弥补这两者之间的I/O效率的差值，就需要把经常使用的数据加载到缓冲池中，避免每次访问都进行磁盘I/O。
+
+在InnoDB的缓冲池中不仅缓存了索引页和数据页，还包含了undo页、插入缓存、自适应哈希索引以及InnoDB的锁信息等等。
+
+缓冲池 Buffer Pool，是主内存中的一个区域，里面可以缓存磁盘上经常操作的真实数据，在执行增 删改查操作时，先操作缓冲池中的数据（若缓冲池没有数据，则从磁盘加载并缓存），然后再以一定频 率刷新到磁盘，从而减少磁盘IO，加快处理速度。
+
+缓冲池以Page页为单位，底层采用链表数据结构管理Page。根据状态，将Page分为三种类型：
+
+- free page：空闲page，未被使用。
+- clean page：被使用page，数据没有被修改过。
+- dirty page：脏页，被使用page，数据被修改过，也中数据与磁盘的数据产生了不一致。
+
+在专用服务器上，通常将多达80％的物理内存分配给缓冲池 。参数设置： show variables like 'innodb_buffer_pool_size';
+
+```sql
+mysql> show variables like 'innodb_buffer_pool_size';
++-------------------------+-----------+
+| Variable_name           | Value     |
++-------------------------+-----------+
+| innodb_buffer_pool_size | 134217728 |
++-------------------------+-----------+
+1 row in set (0.04 sec)
+```
+
+
+
+2. Change Buffer
+
+Change Buffer，更改缓冲区（针对于非唯一二级索引页），在执行DML语句时，如果这些数据Page没有在Buffer Pool中，不会直接操作磁盘，而会将数据变更存在更改缓冲区 Change Buffer中，在未来数据被读取时，再将数据合并恢复到Buffer Pool中，再将合并后的数据刷新到磁盘中。
+
+Change Buffer的意义是什么呢?
+
+先来看一幅图，这个是二级索引的结构图
+
+![](image/Snipaste_2022-11-27_10-38-54.png)
+
+与聚集索引不同，二级索引通常是非唯一的，并且以相对随机的顺序插入二级索引。同样，删除和更新可能会影响索引树中不相邻的二级索引页，如果每一次都操作磁盘，会造成大量的磁盘IO。有了ChangeBuffer之后，我们可以在缓冲池中进行合并处理，减少磁盘IO。
+
+3. Adaptive Hash Index
+
+自适应hash索引，用于优化对Buffer Pool数据的查询。MySQL的innoDB引擎中虽然没有直接支持hash索引，但是给我们提供了一个功能就是这个自适应hash索引。因为前面我们讲到过，hash索引在进行等值匹配时，一般性能是要高于B+树的，因为hash索引一般只需要一次IO即可，而B+树，可能需要几次匹配，所以hash索引的效率要高，但是hash索引又不适合做范围查询、模糊匹配等。
+
+InnoDB存储引擎会监控对表上各索引页的查询，如果观察到在特定的条件下hash索引可以提升速度，则建立hash索引，称之为自适应hash索引。
+
+**自适应哈希索引，无需人工干预，是系统根据情况自动完成**。
+
+参数：<span style="color: red"> `adaptive_hash_index`</span>
+
+4. Log Buffer
+
+Log Buffer：日志缓冲区，用来保存要写入到磁盘中的log日志数据（redo log 、undo log），默认大小为 16MB，日志缓冲区的日志会定期刷新到磁盘中。如果需要更新、插入或删除许多行的事务，增加日志缓冲区的大小可以节省磁盘 I/O。
+
+参数:
+
+innodb_log_buffer_size：缓冲区大小
+
+innodb_flush_log_at_trx_commit：日志刷新到磁盘时机，取值主要包含以下三个：
+
+ `1`:日志在每次事务提交时写入并刷新到磁盘，默认值。
+
+ `0`:每秒将日志写入并刷新到磁盘一次。
+
+ `2`:日志在每次事务提交后写入，并每秒刷新到磁盘一次。
+
+```sql
+mysql> show variables like 'innodb_flush_log_at_trx_commit';
++--------------------------------+-------+
+| Variable_name                  | Value |
++--------------------------------+-------+
+| innodb_flush_log_at_trx_commit | 1     |
++--------------------------------+-------+
+1 row in set (0.00 sec)
+```
+
+
+
+#### 磁盘结构
+
+接下来，再来看看InnoDB体系结构的右边部分，也就是磁盘结构：
+
+![](image/Snipaste_2022-11-27_10-40-41.png)
+
+1. <span style="color:red">`System Tablespace`</span>
+
+系统表空间是更改缓冲区的存储区域。如果表是在系统表空间而不是每个表文件或通用表空间中创建的，它也可能包含表和索引数据。(在MySQL5.x版本中还包含InnoDB数据字典、undolog等)
+
+参数：innodb_data_file_path
+
+```sql
+mysql> show variables like 'innodb_data_file_path';
++-----------------------+------------------------+
+| Variable_name         | Value                  |
++-----------------------+------------------------+
+| innodb_data_file_path | ibdata1:12M:autoextend |
++-----------------------+------------------------+
+1 row in set (0.00 sec)
+```
+
+
+
+系统表空间，默认的文件名叫 ibdata1。
+
+2. File-Per-Table Tablespaces
+
+如果开启了innodb_file_per_table开关 ，则每个表的文件表空间包含单个InnoDB表的数据和索引 ，并存储在文件系统上的单个数据文件中。
+
+开关参数：<span style="color:red">`innodb_file_per_table`</span>，该参数默认开启。
+
+```sql
+mysql> show variables like 'innodb_file_per_table';
++-----------------------+-------+
+| Variable_name         | Value |
++-----------------------+-------+
+| innodb_file_per_table | ON    |
++-----------------------+-------+
+1 row in set (0.00 sec)
+```
+
+那也就是说，我们每创建一个表，都会产生一个表空间文件，如图：
+
+```sh
+root@7e897ff09af1:/var/lib/mysql/my# ls -l
+total 336
+-rw-r-----. 1 mysql mysql 114688 Nov 27 09:13 stu.ibd
+-rw-r-----. 1 mysql mysql 114688 Nov 27 08:53 student.ibd
+-rw-r-----. 1 mysql mysql 114688 Nov 27 08:34 tb_user.ibd
+root@7e897ff09af1:/var/lib/mysql/my# PWD
+bash: PWD: command not found
+root@7e897ff09af1:/var/lib/mysql/my#
+```
+
+
+
+3. General Tablespaces
+
+通用表空间，需要通过 CREATE TABLESPACE 语法创建通用表空间，在创建表时，可以指定该表空间。
+
+A. 创建表空间
+
+```sql
+CREATE TABLESPACE ts_name ADD DATAFILE 'file_name' ENGINE = engine_name;
+
+mysql> CREATE TABLESPACE ts_name ADD DATAFILE 'file_name' ENGINE = InnoDB;
+ERROR 3121 (HY000): The ADD DATAFILE filepath must end with '.ibd'.
+mysql> CREATE TABLESPACE ts_name ADD DATAFILE 'file_name.ibd' ENGINE = InnoDB;
+Query OK, 0 rows affected (0.01 sec)
+```
+
+
+
+B. 创建表时指定表空间
+
+```sql
+CREATE TABLE xxx ... TABLESPACE ts_name;
+
+mysql> create table a(id int primary key auto_increment,name varchar(10)) engine=innodb tablespace ts_name;
+Query OK, 0 rows affected (0.01 sec)
+
+```
+
+
+
+4. Undo Tablespaces
+
+撤销表空间，MySQL实例在初始化时会自动创建两个默认的undo表空间（初始大小16M），用于存储 undo log日志。
+
+5. Temporary Tablespaces
+
+InnoDB 使用会话临时表空间和全局临时表空间。存储用户创建的临时表等数据。
+
+6. Doublewrite Buffer Files
+
+双写缓冲区，innoDB引擎将数据页从Buffer Pool刷新到磁盘前，先将数据页写入双写缓冲区文件中，便于系统异常时恢复数据。
+
+7. Redo Log
+
+重做日志，是用来实现事务的持久性。该日志文件由两部分组成：重做日志缓冲（redo log buffer）以及重做日志文件（redo log）,前者是在内存中，后者在磁盘中。当事务提交之后会把所有修改信息都会存到该日志中, 用于在刷新脏页到磁盘时,发生错误时, 进行数据恢复使用。
+
+以循环方式写入重做日志文件，涉及两个文件：
+
+```sh
+-rw-r-----. 1 mysql mysql  50331648 10月  2 22:52 ib_logfile0
+-rw-r-----. 1 mysql mysql  50331648 10月  2 22:52 ib_logfile1
+
+```
+
+前面我们介绍了InnoDB的内存结构，以及磁盘结构，那么内存中我们所更新的数据，又是如何到磁盘中的呢？ 此时，就涉及到一组后台线程，接下来，就来介绍一些InnoDB中涉及到的后台线程。
+
+![](image/Snipaste_2022-11-27_10-49-43.png)
+
+
+
+
+
+#### 后台线程
+
+![](image/Snipaste_2022-11-27_10-50-10.png)
+
+在InnoDB的后台线程中，分为4类，分别是：Master Thread 、IO Thread、Purge Thread、Page Cleaner Thread。
+
+1. Master Thread
+
+核心后台线程，负责调度其他线程，还负责将缓冲池中的数据异步刷新到磁盘中, 保持数据的一致性，还包括脏页的刷新、合并插入缓存、undo页的回收 。
+
+2. IO Thread
+
+在InnoDB存储引擎中大量使用了AIO来处理IO请求, 这样可以极大地提高数据库的性能，而IOThread主要负责这些IO请求的回调。
+
+| 线程类型             | 默认个数 | 职责                         |
+| -------------------- | -------- | ---------------------------- |
+| Read thread          | 4        | 负责读操作                   |
+| Write thread         | 4        | 负责写操作                   |
+| Log thread           | 1        | 负责将日志缓冲区刷新到磁盘   |
+| Insert buffer thread | 1        | 负责将写缓冲区内容刷新到磁盘 |
+
+
+
+我们可以通过以下的这条指令，查看到InnoDB的状态信息，其中就包含IO Thread信息。
+
+![](image/Snipaste_2022-11-27_10-52-15.png)
+
+
+
+3. Purge Thread
+
+主要用于回收事务已经提交了的undo log，在事务提交之后，undo log可能不用了，就用它来回收。
+
+4. Page Cleaner Thread
+
+协助 Master Thread 刷新脏页到磁盘的线程，它可以减轻 Master Thread 的工作压力，减少阻塞
+
+
+
+
+
+### 事务原理
+
+#### 事务基础
+
+1. 事务
+
+事务 是一组操作的集合，它是一个不可分割的工作单位，事务会把所有的操作作为一个整体一起向系统提交或撤销操作请求，即这些操作要么同时成功，要么同时失败。
+
+2. 特性
+
+- 原子性（Atomicity）：事务是不可分割的最小操作单元，要么全部成功，要么全部失败。
+- 一致性（Consistency）：事务完成时，必须使所有的数据都保持一致状态。
+- 隔离性（Isolation）：数据库系统提供的隔离机制，保证事务在不受外部并发操作影响的独立环境下运行。
+- 持久性（Durability）：事务一旦提交或回滚，它对数据库中的数据的改变就是永久的。
+
+那实际上，我们研究事务的原理，就是研究MySQL的InnoDB引擎是如何保证事务的这四大特性的
+
+![](image/Snipaste_2022-11-27_10-53-13.png)
+
+而对于这四大特性，实际上分为两个部分。 其中的原子性、一致性、持久化，实际上是由InnoDB中的两份日志来保证的，一份是redo log日志，一份是undo log日志。 而持久性是通过数据库的锁，加上MVCC来保证的。
+
+![](image/Snipaste_2022-11-27_10-53-36.png)
+
+我们在讲解事务原理的时候，主要就是来研究一下<span style="color:red">redolog，undolog以及MVCC</span>
+
+
+
+#### redo log
+
+重做日志，记录的是事务提交时数据页的物理修改，是用来实现事务的持久性。
+
+该日志文件由两部分组成：重做日志缓冲（redo log buffer）以及重做日志文件（redo log file）,前者是在内存中，后者在磁盘中。当事务提交之后会把所有修改信息都存到该日志文件中, 用于在刷新脏页到磁盘,发生错误时, 进行数据恢复使用。
+
+如果没有redolog，可能会存在什么问题的？ 我们一起来分析一下。
+
+我们知道，在InnoDB引擎中的内存结构中，主要的内存区域就是缓冲池，在缓冲池中缓存了很多的数据页。 当我们在一个事务中，执行多个增删改的操作时，InnoDB引擎会先操作缓冲池中的数据，如果缓冲区没有对应的数据，会通过后台线程将磁盘中的数据加载出来，存放在缓冲区中，然后将缓冲池中的数据修改，修改后的数据页我们称为脏页。 而脏页则会在一定的时机，通过后台线程刷新到磁盘中，从而保证缓冲区与磁盘的数据一致。 而缓冲区的脏页数据并不是实时刷新的，而是一段时间之后将缓冲区的数据刷新到磁盘中，假如刷新到磁盘的过程出错了，而提示给用户事务提交成功，而数据却没有持久化下来，这就出现问题了，没有保证事务的持久性。
+
+![](image/Snipaste_2022-11-27_10-54-39.png)
+
+那么，如何解决上述的问题呢？ 在InnoDB中提供了一份日志 redo log，接下来我们再来分析一下，通过redolog如何解决这个问题。
+
+![](image/Snipaste_2022-11-27_10-55-01.png)
+
+
+
+有了redolog之后，当对缓冲区的数据进行增删改之后，会首先将操作的数据页的变化，记录在redo log buffer中。在事务提交时，会将redo log buffer中的数据刷新到redo log磁盘文件中。过一段时间之后，如果刷新缓冲区的脏页到磁盘时，**发生错误，此时就可以借助于redo log进行数据恢复，这样就保证了事务的持久性。** 而如果脏页成功刷新到磁盘 或 或者涉及到的数据已经落盘，此时redolog就没有作用了，就可以删除了，所以存在的两个redolog文件是循环写的。
+
+那为什么每一次提交事务，要刷新redo log 到磁盘中呢，而不是直接将buffer pool中的脏页刷新到磁盘呢 ?
+
+因为在业务操作中，**我们操作数据一般都是随机读写磁盘的，而不是顺序读写磁盘。 而redo log在往磁盘文件中写入数据，由于是日志文件，所以都是顺序写的。顺序写的效率，要远大于随机写。** 这种先写日志的方式，称之为 WAL（Write-Ahead Logging）。
+
+
+
+#### undo log
+
+回滚日志，用于记录数据被修改前的信息 , 作用包含两个 : 提供回滚(保证事务的原子性) 和MVCC(多版本并发控制) 。
+
+undo log和redo log记录物理日志不一样，它是逻辑日志。可以认为当delete一条记录时，undolog中会记录一条对应的insert记录，反之亦然，当update一条记录时，它记录一条对应相反的update记录。当执行rollback时，就可以从undo log中的逻辑记录读取到相应的内容并进行回滚。
+
+Undo log销毁：undo log在事务执行时产生，事务提交时，并不会立即删除undo log，因为这些日志可能还用于MVCC。
+
+Undo log存储：undo log采用段的方式进行管理和记录，存放在前面介绍的 rollback segment回滚段中，内部包含1024个undo log segment。
+
+
+
+
+
+### MVCC
+
+#### 基本概念
+
+1. 当前读
+
+读取的是记录的最新版本，读取时还要保证其他并发事务不能修改当前记录，会对读取的记录进行加锁。对于我们日常的操作，如：<span style="color :red">`select ... lock in share mode`</span>(共享锁)，<span style="color :red">`select ...for update`、`update`、`insert`、`delete`</span>(排他锁)都是一种当前读。
+
+![](image/Snipaste_2022-11-27_10-57-27.png)
+
+在测试中我们可以看到，即使是在默认的RR隔离级别下，事务A中依然可以读取到事务B最新提交的内容，因为在查询语句后面加上了 <span style="color :red">`lock in share mode` </span>共享锁，此时是当前读操作。当然，当我们加排他锁的时候，也是当前读操作。
+
+
+
+2. 快照读
+
+简单的select（不加锁）就是快照读，快照读，读取的是记录数据的可见版本，有可能是历史数据，不加锁，是非阻塞读。
+
+- Read Committed：每次select，都生成一个快照读。
+- Repeatable Read：开启事务后第一个select语句才是快照读的地方。
+- Serializable：快照读会退化为当前读。
+
+测试:
+
+![](image/Snipaste_2022-11-27_10-58-24.png)
+
+在测试中,我们看到即使事务B提交了数据,事务A中也查询不到。 原因就是因为普通的select是快照读，而在当前默认的RR隔离级别下，开启事务后第一个select语句才是快照读的地方，后面执行相同的select语句都是从快照中获取数据，可能不是当前的最新数据，这样也就保证了可重复读。
+
+
+
+3. MVCC
+
+全称 Multi-Version Concurrency Control，多版本并发控制。指维护一个数据的多个版本，使得读写操作没有冲突，快照读为MySQL实现MVCC提供了一个非阻塞读功能。MVCC的具体实现，还需要依赖于数据库记录中的三个隐式字段、undo log日志、readView。
+
+接下来，我们再来介绍一下InnoDB引擎的表中涉及到的隐藏字段 、undolog 以及 readview，从而来介绍一下MVCC的原理。
+
+
+
+#### 隐藏字段
+
+
+
+
+
+
+
+#### undolog
+
+
+
+
+
+#### readview
+
+
+
+
+
+
+
+#### 原理分析
+
+
+
+
 
 
 
@@ -6442,9 +7338,222 @@ Query OK, 0 rows affected (0.00 sec)
 
 # MySQL-运维
 
-
-
 ## MySQL-日志
+
+### 错误日志
+
+错误日志是 MySQL 中最重要的日志之一，它记录了当 mysqld 启动和停止时，以及服务器在运行过程中发生任何严重错误时的相关信息。当数据库出现任何故障导致无法正常使用时，建议首先查看此日志。
+
+```sql
+mysql> show variables like '%log_error%';
++----------------------------+----------------------------------------+
+| Variable_name              | Value                                  |
++----------------------------+----------------------------------------+
+| binlog_error_action        | ABORT_SERVER                           |
+| log_error                  | stderr                                 |
+| log_error_services         | log_filter_internal; log_sink_internal |
+| log_error_suppression_list |                                        |
+| log_error_verbosity        | 2                                      |
++----------------------------+----------------------------------------+
+5 rows in set (0.04 sec)
+
+```
+
+
+
+
+
+### 二进制日志
+
+#### 介绍
+
+二进制日志（BINLOG）记录了所有的 DDL（数据定义语言）语句和 DML（数据操纵语言）语句，但不包括数据查询（SELECT、SHOW）语句。
+
+作用：①. 灾难时的数据恢复；②. MySQL的主从复制。在MySQL8版本中，默认二进制日志是开启着的，涉及到的参数如下：
+
+```sql
+show variables like '%log_bin%';
+
+mysql> show variables like '%log_bin%';
++---------------------------------+-----------------------------+
+| Variable_name                   | Value                       |
++---------------------------------+-----------------------------+
+| log_bin                         | ON                          |
+| log_bin_basename                | /var/lib/mysql/binlog       |
+| log_bin_index                   | /var/lib/mysql/binlog.index |
+| log_bin_trust_function_creators | OFF                         |
+| log_bin_use_v1_row_events       | OFF                         |
+| sql_log_bin                     | ON                          |
++---------------------------------+-----------------------------+
+6 rows in set (0.01 sec)
+```
+
+![](image/Snipaste_2022-11-27_09-46-41.png)
+
+
+
+参数说明：
+
+- <span style="color:red">`log_bin_basename`</span>：当前数据库服务器的binlog日志的基础名称(前缀)，具体的binlog文件名需要再该basename的基础上加上编号(编号从000001开始)。
+- <span style="color:red">`log_bin_index`</span>：binlog的索引文件，里面记录了当前服务器关联的binlog文件有哪些。
+
+
+
+#### 格式
+
+MySQL服务器中提供了多种格式来记录二进制日志，具体格式及特点如下
+
+| 日志格式  | 含义                                                         |
+| --------- | ------------------------------------------------------------ |
+| STATEMENT | 基于SQL语句的日志记录，记录的是SQL语句，对数据进行修改的SQL都会记录在日志文件中。 |
+| ROW       | 基于行的日志记录，记录的是每一行的数据变更。（默认）         |
+| MIXED     | 混合了STATEMENT和ROW两种格式，默认采用STATEMENT，在某些特殊情况下会自动切换为ROW进行记录。 |
+
+```sql
+show variables like '%binlog_format';
+
+mysql> show variables like '%binlog_format';
++---------------+-------+
+| Variable_name | Value |
++---------------+-------+
+| binlog_format | ROW   |
++---------------+-------+
+1 row in set (0.03 sec)
+```
+
+如果我们需要配置二进制日志的格式，只需要在 /etc/my.cnf 中配置 binlog_format 参数即可。
+
+#### 查看
+
+由于日志是以二进制方式存储的，不能直接读取，需要通过二进制日志查询工具 mysqlbinlog 来查看，具体语法：
+
+```sh
+mysqlbinlog [ 参数选项 ] logfilename
+
+参数选项：
+	-d 指定数据库名称，只列出指定的数据库相关操作。
+	-o 忽略掉日志中的前n行命令。
+	-v 将行事件(数据变更)重构为SQL语句
+	-vv 将行事件(数据变更)重构为SQL语句，并输出注释信息
+
+```
+
+
+
+#### 删除
+
+对于比较繁忙的业务系统，每天生成的binlog数据巨大，如果长时间不清除，将会占用大量磁盘空间。可以通过以下几种方式清理日志
+
+| 指令                                             | 含义                                                         |
+| ------------------------------------------------ | ------------------------------------------------------------ |
+| reset master                                     | 删除全部 binlog 日志，删除之后，日志编号，将从 binlog.000001重新开始 |
+| purge master logs to 'binlog.*'                  | 删除 * 编号之前的所有日志                                    |
+| purge master logs before 'yyyy-mm-dd hh24:mi:ss' | 删除日志为 "yyyy-mm-dd hh24:mi:ss" 之前产生的所有日志        |
+
+也可以在mysql的配置文件中配置二进制日志的过期时间，设置了之后，二进制日志过期会自动删除。
+
+```sh
+show variables like '%binlog_expire_logs_seconds%';
+
+mysql> show variables like '%binlog_expire_logs_seconds%';
++----------------------------+---------+
+| Variable_name              | Value   |
++----------------------------+---------+
+| binlog_expire_logs_seconds | 2592000 |
++----------------------------+---------+
+1 row in set (0.00 sec)
+```
+
+
+
+
+
+### 查询日志
+
+查询日志中记录了客户端的所有操作语句，而二进制日志不包含查询数据的SQL语句。默认情况下，查询日志是未开启的。
+
+```sql
+show variables like '%general%';
+
+mysql> show variables like '%general%';
++------------------+---------------------------------+
+| Variable_name    | Value                           |
++------------------+---------------------------------+
+| general_log      | OFF                             |
+| general_log_file | /var/lib/mysql/7e897ff09af1.log |
++------------------+---------------------------------+
+2 rows in set (0.00 sec)
+```
+
+如果需要开启查询日志，可以修改MySQL的配置文件 /etc/my.cnf 文件，添加如下内容：
+
+```ini
+#该选项用来开启查询日志 ， 可选值 ： 0 或者 1 ； 0 代表关闭， 1 代表开启
+
+general_log=1
+
+#设置日志的文件名 ， 如果没有指定， 默认的文件名为 host_name.log
+
+general_log_file=mysql_query.log
+
+```
+
+开启了查询日志之后，在MySQL的数据存放目录，也就是 /var/lib/mysql/ 目录下就会出现mysql_query.log 文件。之后所有的客户端的增删改查操作都会记录在该日志文件之中，长时间运行后，该日志文件将会非常大
+
+
+
+### 慢查询日志
+
+慢查询日志记录了所有执行时间超过参数 long_query_time 设置值并且扫描记录数不小于 min_examined_row_limit 的所有的SQL语句的日志，默认未开启。long_query_time 默认为10 秒，最小为 0， 精度可以到微秒。
+
+如果需要开启慢查询日志，需要在MySQL的配置文件 /etc/my.cnf 中配置如下参数：
+
+```ini
+#慢查询日志
+slow_query_log=1
+
+#执行时间参数
+long_query_time=2
+
+```
+
+默认情况下，不会记录管理语句，也不会记录不使用索引进行查找的查询。可以使用 log_slow_admin_statements和 更改此行为 log_queries_not_using_indexes，如下所述。
+
+```ini
+#记录执行较慢的管理语句
+log_slow_admin_statements =1
+
+#记录执行较慢的未使用索引的语句
+log_queries_not_using_indexes = 1
+
+```
+
+```sh
+# 上述所有的参数配置完成之后，都需要重新启动MySQL服务器才可以生效。
+```
+
+
+
+```sh
+[root@frx01 mysql]# tail -f frx01-slow.log
+# Query_time: 4.687803  Lock_time: 0.000077 Rows_sent: 1  Rows_examined: 0
+use frx01;
+SET timestamp=1664871559;
+SELECT COUNT(*) FROM `tb_user`;
+/usr/sbin/mysqld, Version: 8.0.26 (MySQL Community Server - GPL). started with:
+Tcp port: 3306  Unix socket: /var/lib/mysql/mysql.sock
+Time                 Id Command    Argument
+/usr/sbin/mysqld, Version: 8.0.26 (MySQL Community Server - GPL). started with:
+Tcp port: 3306  Unix socket: /var/lib/mysql/mysql.sock
+Time                 Id Command    Argument
+# Time: 2022-10-05T13:40:50.099040Z
+# User@Host: root[root] @ localhost []  Id:     8
+# Query_time: 3.980600  Lock_time: 0.000070 Rows_sent: 0  Rows_examined: 1000000
+use frx01;
+SET timestamp=1664977246;
+select * from tb_user limit 1000000,10;
+
+```
 
 
 
@@ -6452,13 +7561,368 @@ Query OK, 0 rows affected (0.00 sec)
 
 ## MySQL-主从复制
 
+### 概述
+
+主从复制是指将主数据库的 DDL 和 DML 操作通过二进制日志传到从库服务器中，然后在从库上对这些日志重新执行（也叫重做），从而使得从库和主库的数据保持同步。
+
+MySQL支持一台主库同时向多台从库进行复制， 从库同时也可以作为其他从服务器的主库，实现链状复制。
+
+![](image/Snipaste_2022-11-27_09-54-26.png)
+
+MySQL 复制的优点主要包含以下三个方面：
+
+- 主库出现问题，可以快速切换到从库提供服务。
+- 实现读写分离，降低主库的访问压力。
+- 可以在从库中执行备份，以避免备份期间影响主库服务
 
 
 
+### 原理
+
+MySQL主从复制的核心就是 二进制日志，具体的过程如下：
+
+![](image/Snipaste_2022-11-27_09-55-06.png)
+
+从上图来看，复制分成三步：
+
+1. Master 主库在事务提交时，会把数据变更记录在二进制日志文件 `Binlog` 中。
+2. 从库读取主库的二进制日志文件 `Binlog` ，写入到从库的中继日志 `Relay Log` 。
+3. slave重做中继日志中的事件，将改变反映它自己的数据。
+
+
+
+### 搭建
+
+#### 准备
+
+![](image/Snipaste_2022-11-27_09-55-38.png)
+
+准备好两台服务器之后，在上述的两台服务器中分别安装好MySQL，并完成基础的初始化准备(安装、密码配置等操作)工作。 其中：
+
+- 192.168.91.166 作为主服务器master
+- 192.168.91.167 作为从服务器slave
+
+
+
+#### 主库配置
+
+1. 修改配置文件 /etc/my.cnf
+
+```ini
+#mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 232-1，默认为1
+server-id=1
+
+#是否只读,1 代表只读, 0 代表读写
+read-only=0
+
+#忽略的数据, 指不需要同步的数据库
+#binlog-ignore-db=mysql
+#指定同步的数据库
+#binlog-do-db=db01
+
+```
+
+2. 重启MySQL服务器
+
+```sh
+systemctl restart mysqld
+
+```
+
+3. 登录mysql，创建远程连接的账号，并授予主从复制权限
+
+```sql
+#创建itcast用户，并设置密码，该用户可在任意主机连接该MySQL服务
+CREATE USER 'itcast'@'%' IDENTIFIED WITH mysql_native_password BY 'Root@123456';
+
+#为 'itcast'@'%' 用户分配主从复制权限
+GRANT REPLICATION SLAVE ON *.* TO 'itcast'@'%';
+
+```
+
+4. 通过指令，查看二进制日志坐标
+
+```sql
+mysql>  show master status;
++---------------+----------+--------------+------------------+-------------------+
+| File          | Position | Binlog_Do_DB | Binlog_Ignore_DB | Executed_Gtid_Set |
++---------------+----------+--------------+------------------+-------------------+
+| binlog.000019 |      663 |              |                  |                   |
++---------------+----------+--------------+------------------+-------------------+
+1 row in set (0.00 sec)
+
+```
+
+字段含义说明：
+
+- file : 从哪个日志文件开始推送日志文件
+- position ： 从哪个位置开始推送日志
+- binlog_ignore_db : 指定不需要同步的数据库
+
+
+
+#### 从库配置
+
+1. 修改配置文件 /etc/my.cnf
+
+```ini
+#mysql 服务ID，保证整个集群环境中唯一，取值范围：1 – 2^32-1，和主库不一样即可
+server-id=2
+
+#是否只读,1 代表只读, 0 代表读写
+read-only=1
+
+```
+
+2. 重新启动MySQL服务
+
+```sh
+systemctl restart mysqld
+
+```
+
+3. 登录mysql，设置主库配置
+
+```sh
+# 注意
+
+# 这里的binlog.000004，663一定要与master二进制日志坐标保持一致
+```
+
+```sh
+CHANGE REPLICATION SOURCE TO SOURCE_HOST='192.168.91.166', SOURCE_USER='itcast', SOURCE_PASSWORD='Root@123456', SOURCE_LOG_FILE='binlog.000004', SOURCE_LOG_POS=663;
+
+```
+
+上述是8.0.23中的语法。如果mysql是 8.0.23 之前的版本，执行如下SQL：
+
+```sql
+CHANGE MASTER TO MASTER_HOST='192.168.91.166', MASTER_USER='itcast', MASTER_PASSWORD='Root@123456', MASTER_LOG_FILE='binlog.000004', MASTER_LOG_POS=663;
+
+```
+
+| 参数名          | 含义               | 8.0.23之前      |
+| --------------- | ------------------ | --------------- |
+| SOURCE_HOST     | 主库IP地址         | MASTER_HOST     |
+| SOURCE_USER     | 连接主库的用户名   | MASTER_USER     |
+| SOURCE_PASSWORD | 连接主库的密码     | MASTER_PASSWORD |
+| SOURCE_LOG_FILE | binlog日志文件名   | MASTER_LOG_FILE |
+| SOURCE_LOG_POS  | binlog日志文件位置 | MASTER_LOG_POS  |
+
+4. 开启同步操作
+
+```sql
+start replica ; #8.0.22之后
+start slave ; #8.0.22之前
+```
+
+5. 查看主从同步状态
+
+```sql
+show replica status ; #8.0.22之后
+show slave status ; #8.0.22之前
+
+```
+
+```sql
+mysql> show replica status\G
+*************************** 1. row ***************************
+             Replica_IO_State: Waiting for source to send event
+                  Source_Host: 192.168.91.166
+                  Source_User: itcast
+                  Source_Port: 3306
+                Connect_Retry: 60
+              Source_Log_File: binlog.000001
+          Read_Source_Log_Pos: 156
+               Relay_Log_File: MySQL-Slave-relay-bin.000003
+                Relay_Log_Pos: 365
+        Relay_Source_Log_File: binlog.000001
+           Replica_IO_Running: Yes
+          Replica_SQL_Running: Yes
+
+```
+
+
+
+测试：
+
+1.主库 192.168.91,166 上创建数据库、表，并插入数据
+
+```sql
+create database db01;
+use db01;
+create table tb_user(
+	id int(11) primary key not null auto_increment,
+	name varchar(50) not null,
+	sex varchar(1)
+)engine=innodb default charset=utf8mb4;
+insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(null,'Dawn','1');
+
+```
+
+2. 在从库 192.168.91.167 中查询数据，验证主从是否同步
+
+![](image/Snipaste_2022-11-27_10-00-57.png)
 
 
 
 ## MySQL-分库分表
+
+### 介绍
+
+#### 问题分析
+
+
+
+#### 拆分策略
+
+
+
+
+
+#### 垂直拆分
+
+
+
+
+
+#### 水平拆分
+
+
+
+
+
+#### 实现技术
+
+
+
+### MyCat 概述
+
+#### 介绍
+
+
+
+
+
+#### 下载
+
+
+
+#### 安装
+
+
+
+
+
+#### 目录介绍
+
+
+
+
+
+#### 概念介绍
+
+
+
+
+
+
+
+### MyCat 入门
+
+#### 需求
+
+
+
+
+
+#### 环境准备
+
+
+
+
+
+#### 配置
+
+
+
+
+
+#### 测试
+
+
+
+
+
+
+
+### MyCat 配置
+
+
+
+#### schema.xml
+
+
+
+
+
+#### rule.xml
+
+
+
+
+
+#### server.xml
+
+
+
+### MyCat 分片
+
+
+
+#### 垂直拆分
+
+
+
+
+
+
+
+#### 水平拆分
+
+
+
+
+
+
+
+#### 分片规则
+
+
+
+
+
+
+
+
+
+### MyCat 管理及监控
+
+
+
+#### MyCat 原理
+
+
+
+
+
+#### MyCat 管理
+
+
+
+#### MyCat-eye
+
+
 
 
 
@@ -6466,11 +7930,131 @@ Query OK, 0 rows affected (0.00 sec)
 
 ## MySQL-读写分离
 
+### 介绍
+
+读写分离,简单地说是把对数据库的读和写操作分开,以对应不同的数据库服务器。主数据库提供写操作，从数据库提供读操作，这样能有效地减轻单台数据库的压力。
+
+通过MyCat即可轻易实现上述功能，不仅可以支持MySQL，也可以支持Oracle和SQL Server。
+
+![](image/Snipaste_2022-11-27_10-18-31.png)
 
 
 
+### 一主一从
+
+查看[MySQL-主从复制](# MySQL-主从复制)章节
 
 
 
+### 一主一从读写分离
 
+MyCat控制后台数据库的读写分离和负载均衡由schema.xml文件datahost标签的balance属性控制。
+
+#### schema.xml配置
+
+```xml
+<!-- 配置逻辑库 -->
+<schema name="ITCAST_RW" checkSQLschema="true" sqlMaxLimit="100" dataNode="dn7">
+</schema>
+<dataNode name="dn7" dataHost="dhost7" database="itcast01" />
+
+<dataHost name="dhost7" maxCon="1000" minCon="10" balance="1" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+	<heartbeat>select user()</heartbeat>
+	<writeHost host="master1" url="jdbc:mysql://192.168.91.166:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root" password="123456" >
+	<readHost host="slave1" url="jdbc:mysql://192.168.91.167:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root" password="123456" />
+	</writeHost>
+</dataHost>
+
+```
+
+上述配置的具体关联对应情况如下：
+
+![](image/Snipaste_2022-11-27_10-25-04.png)
+
+writeHost代表的是写操作对应的数据库，readHost代表的是读操作对应的数据库。 所以我们要想实现读写分离，就得配置writeHost关联的是主库，readHost关联的是从库。
+
+而仅仅配置好了writeHost以及readHost还不能完成读写分离，还需要配置一个非常重要的负责均衡的参数 balance，取值有4种，具体含义如下：
+
+| 参数值 | 含义                                                         |
+| ------ | ------------------------------------------------------------ |
+| 0      | 不开启读写分离机制 , 所有读操作都发送到当前可用的writeHost上 |
+| 1      | 全部的readHost 与 备用的writeHost 都参与select 语句的负载均衡（主要针对于双主双从模式） |
+| 2      | 所有的读写操作都随机在writeHost , readHost上分发             |
+| 3      | 所有的读请求随机分发到writeHost对应的readHost上执行, writeHost不负担读压力 |
+
+所以，在一主一从模式的读写分离中，balance配置1或3都是可以完成读写分离的。
+
+
+
+#### server.xml配置
+
+配置root用户可以访问SHOPPING、ITCAST 以及 ITCAST_RW逻辑库。
+
+```xml
+<user name="root" defaultAccount="true">
+	<property name="password">123456</property>
+	<property name="schemas">SHOPPING,ITCAST,ITCAST_RW</property>
+    
+    <!-- 表级 DML 权限设置 -->
+    <!--
+    <privileges check="true">
+		<schema name="DB01" dml="0110" >
+			<table name="TB_ORDER" dml="1110"></table>
+		</schema>
+	</privileges>
+-->
+</user>
+
+```
+
+
+
+#### 测试
+
+配置完毕MyCat后，重新启动MyCat。
+
+```sh
+bin/mycat stop
+bin/mycat start
+
+```
+
+然后观察，在执行增删改操作时，对应的主库及从库的数据变化。 在执行查询操作时，检查主库及从库对应的数据变化。
+
+![](image/Snipaste_2022-11-27_10-26-32.png)
+
+在数据库写入一条数据，发现主从节点都增加一条数据，其实这条数据是从主节点写入的，因为数据是由主机点同步到从节点。
+
+在数据库修改一条数据，发现主节点没有改变，从节点改变了，还是因为数据是由主机点同步到从节点。
+
+在测试中，我们可以发现当主节点Master宕机之后，业务系统就只能够读，而不能写入数据了。
+
+```sql
+mysql> select * from tb_user;
++------+---------+-----+
+| id   | name    | sex |
++------+---------+-----+
+|    1 | Tom     | 1   |
+|    2 | Trigger | 0   |
+|    3 | Dawn    | 1   |
+|    8 | It5     | 0   |
++------+---------+-----+
+4 rows in set (0.01 sec)
+
+mysql> insert into tb_user(id,name,sex) values(10,'It5',0);
+ERROR:
+No operations allowed after connection closed.
+mysql>
+
+```
+
+那如何解决这个问题呢？这个时候我们就得通过另外一种主从复制结构来解决了，也就是我们接下来演示的双主双从
+
+
+
+### docker搭建
+
+```sh
+# 查看 docker 篇章
+```
 
