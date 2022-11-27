@@ -6815,6 +6815,238 @@ Undo log存储：undo log采用段的方式进行管理和记录，存放在前�
 
 #### 隐藏字段
 
+- **介绍**
+
+![](image/Snipaste_2022-11-27_14-39-16.png)
+
+当我们创建了上面的这张表，我们在查看表结构的时候，就可以显式的看到这三个字段。 实际上除了这三个字段以外，InnoDB还会自动的给我们添加三个隐藏字段及其含义分别是：
+
+| 隐藏字段      | 含义                                                         |
+| ------------- | ------------------------------------------------------------ |
+| DB_TRX_ID     | 最近修改事务ID，记录插入这条记录或最后一次修改该记录的事务ID。 |
+| `DB_ROLL_PTR` | 回滚指针，指向这条记录的上一个版本，用于配合undo log，指向上一个版本。 |
+| `DB_ROW_ID`   | 隐藏主键，如果表结构没有指定主键，将会生成该隐藏字段。       |
+
+而上述的前两个字段是肯定会添加的， 是否添加最后一个字段DB_ROW_ID，得看当前表有没有主键，如果有主键，则不会添加该隐藏字段。
+
+
+
+1. 查看有主键的表 stu
+
+进入服务器中的 /var/lib/mysql/my/ , 查看stu的表结构信息, 通过如下指令:
+
+```sh
+ibd2sdi stu.ibd
+
+```
+
+
+
+查看到的表结构信息中，有一栏 columns，在其中我们会看到处理我们建表时指定的字段以外，还有额外的两个字段 分别是：DB_TRX_ID 、 DB_ROLL_PTR ，因为该表有主键，所以没有DB_ROW_ID隐藏字段。
+
+```json
+"columns": [
+            {
+                "name": "id",
+                "type": 4,
+                "is_nullable": false,
+                "is_zerofill": false,
+                "is_unsigned": false,
+                "is_auto_increment": true,
+                "is_virtual": false,
+                "hidden": 1,
+                "ordinal_position": 1,
+                "char_length": 11,
+                "numeric_precision": 10,
+                "numeric_scale": 0,
+                "numeric_scale_null": false,
+                "datetime_precision": 0,
+                "datetime_precision_null": 1,
+                "has_no_default": false,
+                "default_value_null": false,
+                "srs_id_null": true,
+                "srs_id": 0,
+                "default_value": "AAAAAA==",
+                "default_value_utf8_null": true,
+                "default_value_utf8": "",
+                "default_option": "",
+                "update_option": "",
+                "comment": "",
+                "generation_expression": "",
+                "generation_expression_utf8": "",
+                "options": "interval_count=0;",
+                "se_private_data": "table_id=1070;",
+                "engine_attribute": "",
+                "secondary_engine_attribute": "",
+                "column_key": 2,
+                "column_type_utf8": "int",
+                "elements": [],
+                "collation_id": 255,
+                "is_explicit_collation": false
+            },
+            {
+                "name": "name",
+                "type": 16,
+                "is_nullable": true,
+                "is_zerofill": false,
+                "is_unsigned": false,
+                "is_auto_increment": false,
+                "is_virtual": false,
+                "hidden": 1,
+                "ordinal_position": 2,
+                "char_length": 1020,
+                "numeric_precision": 0,
+                "numeric_scale": 0,
+                "numeric_scale_null": true,
+                "datetime_precision": 0,
+                "datetime_precision_null": 1,
+                "has_no_default": false,
+                "default_value_null": true,
+                "srs_id_null": true,
+                "srs_id": 0,
+                "default_value": "",
+                "default_value_utf8_null": true,
+                "default_value_utf8": "",
+                "default_option": "",
+                "update_option": "",
+                "comment": "",
+                "generation_expression": "",
+                "generation_expression_utf8": "",
+                "options": "interval_count=0;",
+                "se_private_data": "table_id=1070;",
+                "engine_attribute": "",
+                "secondary_engine_attribute": "",
+                "column_key": 1,
+                "column_type_utf8": "varchar(255)",
+                "elements": [],
+                "collation_id": 255,
+                "is_explicit_collation": false
+            },
+            {
+                "name": "age",
+                "type": 4,
+                "is_nullable": false,
+                "is_zerofill": false,
+                "is_unsigned": false,
+                "is_auto_increment": false,
+                "is_virtual": false,
+                "hidden": 1,
+                "ordinal_position": 3,
+                "char_length": 11,
+                "numeric_precision": 10,
+                "numeric_scale": 0,
+                "numeric_scale_null": false,
+                "datetime_precision": 0,
+                "datetime_precision_null": 1,
+                "has_no_default": true,
+                "default_value_null": false,
+                "srs_id_null": true,
+                "srs_id": 0,
+                "default_value": "AAAAAA==",
+                "default_value_utf8_null": true,
+                "default_value_utf8": "",
+                "default_option": "",
+                "update_option": "",
+                "comment": "",
+                "generation_expression": "",
+                "generation_expression_utf8": "",
+                "options": "interval_count=0;",
+                "se_private_data": "table_id=1070;",
+                "engine_attribute": "",
+                "secondary_engine_attribute": "",
+                "column_key": 1,
+                "column_type_utf8": "int",
+                "elements": [],
+                "collation_id": 255,
+                "is_explicit_collation": false
+            },
+            {
+                "name": "DB_TRX_ID",
+                "type": 10,
+                "is_nullable": false,
+                "is_zerofill": false,
+                "is_unsigned": false,
+                "is_auto_increment": false,
+                "is_virtual": false,
+                "hidden": 2,
+                "ordinal_position": 4,
+                "char_length": 6,
+                "numeric_precision": 0,
+                "numeric_scale": 0,
+                "numeric_scale_null": true,
+                "datetime_precision": 0,
+                "datetime_precision_null": 1,
+                "has_no_default": false,
+                "default_value_null": true,
+                "srs_id_null": true,
+                "srs_id": 0,
+                "default_value": "",
+                "default_value_utf8_null": true,
+                "default_value_utf8": "",
+                "default_option": "",
+                "update_option": "",
+                "comment": "",
+                "generation_expression": "",
+                "generation_expression_utf8": "",
+                "options": "",
+                "se_private_data": "table_id=1070;",
+                "engine_attribute": "",
+                "secondary_engine_attribute": "",
+                "column_key": 1,
+                "column_type_utf8": "",
+                "elements": [],
+                "collation_id": 63,
+                "is_explicit_collation": false
+            },
+            {
+                "name": "DB_ROLL_PTR",
+                "type": 9,
+                "is_nullable": false,
+                "is_zerofill": false,
+                "is_unsigned": false,
+                "is_auto_increment": false,
+                "is_virtual": false,
+                "hidden": 2,
+                "ordinal_position": 5,
+                "char_length": 7,
+                "numeric_precision": 0,
+                "numeric_scale": 0,
+                "numeric_scale_null": true,
+                "datetime_precision": 0,
+                "datetime_precision_null": 1,
+                "has_no_default": false,
+                "default_value_null": true,
+                "srs_id_null": true,
+                "srs_id": 0,
+                "default_value": "",
+                "default_value_utf8_null": true,
+                "default_value_utf8": "",
+                "default_option": "",
+                "update_option": "",
+                "comment": "",
+                "generation_expression": "",
+                "generation_expression_utf8": "",
+                "options": "",
+                "se_private_data": "table_id=1070;",
+                "engine_attribute": "",
+                "secondary_engine_attribute": "",
+                "column_key": 1,
+                "column_type_utf8": "",
+                "elements": [],
+                "collation_id": 63,
+                "is_explicit_collation": false
+            }
+        ],
+```
+
+
+
+
+
+
+
+
+
 
 
 
@@ -6823,21 +7055,172 @@ Undo log存储：undo log采用段的方式进行管理和记录，存放在前�
 
 #### undolog
 
+- **介绍**
 
+回滚日志，在insert、update、delete的时候产生的便于数据回滚的日志。
+
+当insert的时候，产生的undo log日志只在回滚时需要，在事务提交后，可被立即删除。
+
+而update、delete的时候，产生的undo log日志不仅在回滚时需要，在快照读时也需要，不会立即被删除
+
+
+
+- **版本链**
+
+有一张表原始数据为：
+
+![](image/Snipaste_2022-11-27_14-47-44.png)
+
+
+
+然后，有四个并发事务同时在访问这张表
+
+A>
+
+![](image/Snipaste_2022-11-27_14-48-26.png)
+
+当事务2执行第一条修改语句时，会记录undo log日志，记录数据变更之前的样子; 然后更新记录，并且记录本次操作的事务ID，回滚指针，回滚指针用来指定如果发生回滚，回滚到哪一个版本。
+
+![](image/Snipaste_2022-11-27_14-49-08.png)
+
+B>
+
+![](image/Snipaste_2022-11-27_14-49-35.png)
+
+当事务3执行第一条修改语句时，也会记录undo log日志，记录数据变更之前的样子; 然后更新记录，并且记录本次操作的事务ID，回滚指针，回滚指针用来指定如果发生回滚，回滚到哪一个版本。
+
+![](image/Snipaste_2022-11-27_14-50-02.png)
+
+C>
+
+![](image/Snipaste_2022-11-27_14-50-20.png)
+
+当事务4执行第一条修改语句时，也会记录undo log日志，记录数据变更之前的样子; 然后更新记录，并且记录本次操作的事务ID，回滚指针，回滚指针用来指定如果发生回滚，回滚到哪一个版本。
+
+![](image/Snipaste_2022-11-27_14-50-48.png)
+
+
+
+```sh
+# 最终我们发现，不同事务或相同事务对同一条记录进行修改，会导致该记录的undolog生成一条记录版本链表，链表的头部是最新的旧记录，链表尾部是最早的旧记录。
+```
 
 
 
 #### readview
 
+ReadView（读视图）是 <span style="color:red">快照读 </span>SQL执行时MVCC提取数据的依据，记录并维护系统当前活跃的事务（未提交的）id。
+
+ReadView中包含了四个核心字段：
+
+| 字段           | 含义                                                 |
+| -------------- | ---------------------------------------------------- |
+| m_ids          | 当前活跃的事务ID集合                                 |
+| min_trx_id     | 最小活跃事务ID                                       |
+| max_trx_id     | 预分配事务ID，当前最大事务ID+1（因为事务ID是自增的） |
+| creator_trx_id | ReadView创建者的事务ID                               |
+
+而在readview中就规定了版本链数据的访问规则：
+
+trx_id 代表当前undolog版本链对应事务ID。
+
+| 条件                               | 是否可以访问                              | 说明                                       |
+| ---------------------------------- | ----------------------------------------- | ------------------------------------------ |
+| trx_id == creator_trx_id           | 可以访问该版本                            | 成立，说明数据是当前这个事务更改的。       |
+| trx_id < min_trx_id                | 可以访问该版本                            | 成立，说明数据已经提交了。                 |
+| trx_id > max_trx_id                | 不可以访问该版本                          | 成立，说明该事务是在ReadView生成后才开启。 |
+| min_trx_id <= trx_id <= max_trx_id | 如果trx_id不在m_ids中，是可以访问该版本的 | 成立，说明数据已经提交。                   |
 
 
 
+不同的隔离级别，生成ReadView的时机不同：
+
+- READ COMMITTED ：在事务中每一次执行快照读时生成ReadView。
+- REPEATABLE READ：仅在事务中第一次执行快照读时生成ReadView，后续复用该ReadView。
 
 
 
 #### 原理分析
 
+##### RC隔离级别
 
+RC隔离级别下，在事务中**每一次**执行快照读时生成ReadView。
+
+我们就来分析事务5中，两次快照读读取数据，是如何获取数据的?
+
+在事务5中，查询了两次id为30的记录，由于隔离级别为Read Committed，所以每一次进行快照读都会生成一个ReadView，那么两次生成的ReadView如下。
+
+![](image/Snipaste_2022-11-27_14-53-54.png)
+
+那么这两次快照读在获取数据时，就需要根据所生成的ReadView以及ReadView的版本链访问规则，到undolog版本链中匹配数据，最终决定此次快照读返回的数据。
+
+A. 先来看第一次快照读具体的读取过程：
+
+![](image/Snipaste_2022-11-27_14-54-31.png)
+
+在进行匹配时，会从undo log的版本链，从上到下进行挨个匹配：
+
+1. 先匹配
+
+![](image/Snipaste_2022-11-27_14-55-07.png)
+
+这条记录，这条记录对应的trx_id为4，也就是将4带入右侧的匹配规则中。 ①不满足 ②不满足 ③不满足 ④也不满足 ，都不满足，则继续匹配undo log版本链的下一条。
+
+
+
+2. 再匹配第二条
+
+![](image/Snipaste_2022-11-27_14-55-40.png)
+
+，这条记录对应的trx_id为3，也就是将3带入右侧的匹配规则中。①不满足 ②不满足 ③不满足 ④也不满足 ，都不满足，则继续匹配undo log版本链的下一条。
+
+
+
+3. 再匹配第三条
+
+![](image/Snipaste_2022-11-27_14-56-10.png)
+
+，这条记录对应的trx_id为2，也就是将2带入右侧的匹配规则中。①不满足 ②满足 终止匹配，此次快照读，返回的数据就是版本链中记录的这条数据。
+
+B. 再来看第二次快照读具体的读取过程:
+
+![](image/Snipaste_2022-11-27_14-56-35.png)
+
+
+
+在进行匹配时，会从undo log的版本链，从上到下进行挨个匹配：
+
+1. 先匹配
+
+![](image/Snipaste_2022-11-27_14-57-01.png)
+
+这条记录，这条记录对应的trx_id为4，也就是将4带入右侧的匹配规则中。 ①不满足 ②不满足 ③不满足 ④也不满足 ，都不满足，则继续匹配undo log版本链的下一条。
+
+
+
+2. 再匹配第二条
+
+![](image/Snipaste_2022-11-27_14-57-32.png)
+
+这条记录对应的trx_id为3，也就是将3带入右侧的匹配规则中。①不满足 ②满足 。终止匹配，此次快照读，返回的数据就是版本链中记录的这条数据
+
+
+
+##### RR隔离级别
+
+RR隔离级别下，仅在事务中第一次执行快照读时生成ReadView，后续复用该ReadView。 而RR 是可重复读，在一个事务中，执行两次相同的select语句，查询到的结果是一样的。
+
+那MySQL是如何做到可重复读的呢? 我们简单分析一下就知道了
+
+![](image/Snipaste_2022-11-27_14-58-42.png)
+
+
+
+我们看到，在RR隔离级别下，只是在事务中**第一次**快照读时生成ReadView，后续都是复用该ReadView，那么既然ReadView都一样， ReadView的版本链匹配规则也一样， 那么最终快照读返回的结果也是一样的。
+
+所以呢，MVCC的实现原理就是通过 InnoDB表的隐藏字段、UndoLog 版本链、ReadView来实现的。而MVCC + 锁，则实现了事务的隔离性。 而一致性则是由redolog 与 undolog保证
+
+![](image/Snipaste_2022-11-27_14-58-59.png)
 
 
 
@@ -7772,9 +8155,26 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### 问题分析
 
+![](image/Snipaste_2022-11-27_15-00-45.png)
+
+随着互联网及移动互联网的发展，应用系统的数据量也是成指数式增长，若采用单数据库进行数据存储，存在以下性能瓶颈：
+
+1. IO瓶颈：热点数据太多，数据库缓存不足，产生大量磁盘IO，效率较低。 请求数据太多，带宽不够，网络IO瓶颈。
+2. CPU瓶颈：排序、分组、连接查询、聚合统计等SQL会耗费大量的CPU资源，请求数太多，CPU出现瓶颈。
+
+为了解决上述问题，我们需要对数据库进行分库分表处理。
+
+![](image/Snipaste_2022-11-27_15-01-06.png)
+
+分库分表的中心思想都是将数据分散存储，使得单一数据库/表的数据量变小来缓解单一数据库的性能问题，从而达到提升数据库性能的目的。
+
 
 
 #### 拆分策略
+
+分库分表的形式，主要是两种：垂直拆分和水平拆分。而拆分的粒度，一般又分为分库和分表，所以组成的拆分策略最终如下：
+
+<img src="image/Snipaste_2022-11-27_15-01-41.png" style="height:300px">
 
 
 
@@ -7782,11 +8182,67 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### 垂直拆分
 
+1. 垂直分库
 
+<img src="image/Snipaste_2022-11-27_15-02-52.png" style="height:300px">
+
+垂直分库：以表为依据，根据业务将不同表拆分到不同库中。
+
+特点：
+
+- 每个库的表结构都不一样。
+- 每个库的数据也不一样。
+- 所有库的并集是全量数据。
+
+
+
+2. 垂直分表
+
+<img src="image/Snipaste_2022-11-27_15-03-22.png" style="height:300px">
+
+垂直分表：以字段为依据，根据字段属性将不同字段拆分到不同表中。
+
+特点：
+
+- 每个表的结构都不一样。
+- 每个表的数据也不一样，一般通过一列（主键/外键）关联。
+- 所有表的并集是全量数据
 
 
 
 #### 水平拆分
+
+1. 水平分库
+
+<img src="image/Snipaste_2022-11-27_15-04-00.png" style="height:300px"/>
+
+水平分库：以字段为依据，按照一定策略，将一个库的数据拆分到多个库中。
+
+特点：
+
+- 每个库的表结构都一样。
+- 每个库的数据都不一样。
+- 所有库的并集是全量数据。
+
+
+
+2. 水平分表
+
+<img src="image/Snipaste_2022-11-27_15-04-39.png" style="height:300px"/>
+
+水平分表：以字段为依据，按照一定策略，将一个表的数据拆分到多个表中。
+
+特点：
+
+- 每个表的表结构都一样。
+- 每个表的数据都不一样。
+- 所有表的并集是全量数据。
+
+
+
+```sh
+# 在业务系统中，为了缓解磁盘IO及CPU的性能瓶颈，到底是垂直拆分，还是水平拆分；具体是分库，还是分表，都需要根据具体的业务需求具体分析
+```
 
 
 
@@ -7794,35 +8250,110 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### 实现技术
 
+- <span style="color:red">`shardingJDBC`</span>：基于AOP原理，在应用程序中对本地执行的SQL进行拦截，解析、改写、路由处理。需要自行编码配置实现，只支持java语言，性能较高。
+- <span style="color:red">`MyCat`</span>：数据库分库分表中间件，不用调整代码即可实现分库分表，支持多种语言，性能不及前者
+
 
 
 ### MyCat 概述
 
 #### 介绍
 
+Mycat是开源的、活跃的、基于Java语言编写的MySQL<span style="color:red">数据库中间件</span>。可以像使用mysql一样来使用mycat，对于开发人员来说根本感觉不到mycat的存在。
+
+开发人员只需要连接MyCat即可，而具体底层用到几台数据库，每一台数据库服务器里面存储了什么数据，都无需关心。 具体的分库分表的策略，只需要在MyCat中配置即可。
+
+![](image/Snipaste_2022-11-27_15-10-51.png)
 
 
 
+优势：
 
-#### 下载
+- 性能可靠稳定
+- 强大的技术团队
+- 体系完善
+- 社区活跃
+
+
+
+#### 下载 NULL
 
 
 
 #### 安装
 
+Mycat是采用java语言开发的开源的数据库中间件，支持Windows和Linux运行环境，下面介绍MyCat的Linux中的环境搭建。我们需要在准备好的服务器中安装如下软件。
 
+- MySQL
+- JDK
+- Mycat
+
+| 服务器         | 安装软件   | 说明              |
+| -------------- | ---------- | ----------------- |
+| 192.168.91.166 | JDK、Mycat | MyCat中间件服务器 |
+| 192.168.91.166 | MySQL      | 分片服务器        |
+| 192.168.91.167 | MySQL      | 分片服务器        |
+| 192.168.91.168 | MySQL      | 分片服务器        |
+
+- 安装Mycat
+- 使用XFTP工具将下载好的文件上传到Linux系统上。
+- 使用解压命令
+
+```sh
+tar -zxvf Mycat-server-1.6.7.3-release-20190828135747-linux.tar.gz -C /usr/local
+
+```
 
 
 
 #### 目录介绍
 
+```sh
+[root@MySQL-Master mycat]# ll
+总用量 12
+drwxr-xr-x 2 root root  190 10月  6 11:36 bin
+drwxrwxrwx 2 root root    6 7月  18 2019 catlet
+drwxrwxrwx 4 root root 4096 10月  6 11:36 conf
+drwxr-xr-x 2 root root 4096 10月  6 11:36 lib
+drwxrwxrwx 2 root root    6 8月  28 2019 logs
+-rwxrwxrwx 1 root root  227 8月  28 2019 version.txt
 
+```
+
+
+
+bin : 存放可执行文件，用于启动停止mycat
+
+conf：存放mycat的配置文件
+
+lib：存放mycat的项目依赖包（jar）
+
+logs：存放mycat的日志文件
+
+- 由于mycat中的mysql的JDBC驱动包版本比较低，所以我们将它删去，下载8.0版本的
+
+```sh
+cd /usr/local/mycat/lib/
+rm -rf mysql-connector-java-5.1.35.jar
+
+```
+
+- [mysql驱动包下载地址(opens new window)](https://downloads.mysql.com/archives/c-j/)
+- 将下载好的驱动包通过XFTP工具上传到Linux系统的/usr/local/mycat/lib/目录
 
 
 
 #### 概念介绍
 
+在MyCat的整体结构中，分为两个部分：上面的逻辑结构、下面的物理结构。
 
+<img src="image/Snipaste_2022-11-27_15-15-02.png">
+
+
+
+在MyCat的逻辑结构主要负责逻辑库、逻辑表、分片规则、分片节点等逻辑结构的处理，而具体的数据存储还是在物理结构，也就是数据库服务器中存储的。
+
+在后面讲解MyCat入门以及MyCat分片时，还会讲到上面所提到的概念。
 
 
 
@@ -7832,17 +8363,136 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### 需求
 
+由于 tb_order 表中数据量很大，磁盘IO及容量都到达了瓶颈，现在需要对 tb_order 表进行数据分片，分为三个数据节点，每一个节点主机位于不同的服务器上, 具体的结构，参考下图
 
+![](image/Snipaste_2022-11-27_15-15-54.png)
 
 
 
 #### 环境准备
 
+准备3台服务器：
 
+- 192.168.91.166：MyCat中间件服务器，同时也是第一个分片服务器。
+- 192.168.91.167：第二个分片服务器。
+- 192.168.91.168：第三个分片服务器。
+
+![](image/Snipaste_2022-11-27_15-16-22.png)
+
+并且在上述3台数据库中创建数据库 db01 。
 
 
 
 #### 配置
+
+1. schema.xml
+
+在schema.xml中配置逻辑库、逻辑表、数据节点、节点主机等相关信息。具体的配置如下：
+
+> ```xml
+> <?xml version="1.0"?>
+> <!DOCTYPE mycat:schema SYSTEM "schema.dtd">
+> <mycat:schema xmlns:mycat="http://io.mycat/">
+>     <schema name="DB01" checkSQLschema="true" sqlMaxLimit="100">
+>         <table name="TB_ORDER" dataNode="dn1,dn2,dn3" rule="auto-sharding-long"/>
+>     </schema>
+>     <dataNode name="dn1" dataHost="dhost1" database="db01"/>
+>     <dataNode name="dn2" dataHost="dhost2" database="db01"/>
+>     <dataNode name="dn3" dataHost="dhost3" database="db01"/>
+>     <dataHost name="dhost1" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+>         <heartbeat>select user()</heartbeat>
+>         <writeHost host="master" url="jdbc:mysql://192.168.91.166:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root" password="123456"/>
+>     </dataHost>
+>     <dataHost name="dhost2" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+>         <heartbeat>select user()</heartbeat>
+>         <writeHost host="master" url="jdbc:mysql://192.168.91.167:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root" password="123456"/>
+>     </dataHost>
+>     <dataHost name="dhost3" maxCon="1000" minCon="10" balance="0" writeType="0" dbType="mysql" dbDriver="jdbc" switchType="1" slaveThreshold="100">
+>         <heartbeat>select user()</heartbeat>
+>         <writeHost host="master" url="jdbc:mysql://192.168.91.168:3306?useSSL=false&amp;serverTimezone=Asia/Shanghai&amp;characterEncoding=utf8" user="root" password="123456"/>
+>     </dataHost>
+> </mycat:schema>
+> 
+> ```
+
+
+
+2. server.xml
+
+需要在server.xml中配置用户名、密码，以及用户的访问权限信息，具体的配置如下：
+
+> ```xml
+> <user name="root" defaultAccount="true">
+> 	<property name="password">123456</property>
+> 	<property name="schemas">DB01</property>
+> 	<!-- 表级 DML 权限设置 -->
+> 	<!--
+> 	<privileges check="true">
+> 		<schema name="DB01" dml="0110" >
+> 			<table name="TB_ORDER" dml="1110"></table>
+> 		</schema>
+> 	</privileges>
+> 	-->
+> </user>
+> <user name="user">
+> 	<property name="password">123456</property>
+> 	<property name="schemas">DB01</property>
+> 	<property name="readOnly">true</property>
+> </user>
+> 
+> ```
+
+上述的配置表示，定义了两个用户 root 和 user ，这两个用户都可以访问 DB01 这个逻辑库，访问密码都是123456，但是root用户访问DB01逻辑库，既可以读，又可以写，但是 user用户访问DB01逻辑库是只读的。
+
+> ```xml
+> <?xml version="1.0" encoding="UTF8"?>
+> <!DOCTYPE mycat:server SYSTEM "server.dtd">
+> <mycat:server xmlns:mycat="http://io.mycat/">
+> 	<system>
+> 	<property name="nonePasswordLogin">0</property> 
+> 	<property name="useHandshakeV10">1</property>
+> 	<property name="useSqlStat">0</property>  
+> 	<property name="useGlobleTableCheck">0</property>  
+> 		<property name="sqlExecuteTimeout">300</property>  
+> 		<property name="sequnceHandlerType">2</property>
+> 		<property name="sequnceHandlerPattern">(?:(\s*next\s+value\s+for\s*MYCATSEQ_(\w+))(,|\)|\s)*)+</property>
+> 	<property name="subqueryRelationshipCheck">false</property> 
+>     
+> 		<property name="processorBufferPoolType">0</property>
+> 		<property name="handleDistributedTransactions">0</property>
+> 
+> 		<property name="useOffHeapForMerge">0</property>
+> 
+>         <property name="memoryPageSize">64k</property>
+> 
+> 		<property name="spillsFileBufferSize">1k</property>
+> 
+> 		<property name="useStreamOutput">0</property>
+> 
+> 		<property name="systemReserveMemorySize">384m</property>
+> 
+> 
+> 		<property name="useZKSwitch">false</property>
+> 		<property name="strictTxIsolation">false</property>
+> 		
+> 		<property name="useZKSwitch">true</property>
+> 		
+> 	</system>
+> 	
+> 	<user name="root" defaultAccount="true">
+> 		<property name="password">123456</property>
+> 		<property name="schemas">DB01</property>
+> 	</user>
+> 
+> 	<user name="user">
+> 		<property name="password">123456</property>
+> 		<property name="schemas">DB01</property>
+> 		<property name="readOnly">true</property>
+> 	</user>
+> 
+> </mycat:server>
+> 
+> ```
 
 
 
@@ -7850,7 +8500,125 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### 测试
 
+1. 启动
 
+配置完毕后，先启动涉及到的3台分片服务器，然后启动MyCat服务器。切换到Mycat的安装目录，执行如下指令，启动Mycat：
+
+```sh
+#启动
+bin/mycat start
+#停止
+bin/mycat stop
+
+```
+
+Mycat启动之后，占用端口号 8066。
+
+启动完毕之后，可以查看logs目录下的启动日志，查看Mycat是否启动完成。
+
+> ```sh
+> [root@MySQL-Master mycat]# tail -10 logs/wrapper.log
+> STATUS | wrapper  | 2022/10/06 23:08:01 | TERM trapped.  Shutting down.
+> STATUS | wrapper  | 2022/10/06 23:08:03 | <-- Wrapper Stopped
+> STATUS | wrapper  | 2022/10/06 23:08:08 | --> Wrapper Started as Daemon
+> STATUS | wrapper  | 2022/10/06 23:08:08 | Launching a JVM...
+> INFO   | jvm 1    | 2022/10/06 23:08:08 | Java HotSpot(TM) 64-Bit Server VM warning: ignoring option MaxPermSize=64M; support was removed in 8.0
+> INFO   | jvm 1    | 2022/10/06 23:08:08 | Wrapper (Version 3.2.3) http://wrapper.tanukisoftware.org
+> INFO   | jvm 1    | 2022/10/06 23:08:08 |   Copyright 1999-2006 Tanuki Software, Inc.  All Rights Reserved.
+> INFO   | jvm 1    | 2022/10/06 23:08:08 |
+> INFO   | jvm 1    | 2022/10/06 23:08:09 | Loading class `com.mysql.jdbc.Driver'. This is deprecated. The new driver class is `com.mysql.cj.jdbc.Driver'. The driver is automatically registered via the SPI and manual loading of the driver class is generally unnecessary.
+> INFO   | jvm 1    | 2022/10/06 23:08:11 | MyCAT Server startup successfully. see logs in logs/mycat.log
+> 
+> ```
+
+
+
+2. 测试
+
+通过如下指令，就可以连接并登陆MyCat。
+
+```sh
+mysql -h 192.168.91.166 -P 8066 -u root -p 123456
+
+[root@MySQL-Master ~]# mysql -h 192.168.91.166 -P 8066 -u root -p
+Enter password:
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 2
+Server version: 5.6.29-mycat-1.6.7.3-release-20190828215749 MyCat Server (OpenCloudDB)
+
+Copyright (c) 2000, 2021, Oracle and/or its affiliates.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+
+```
+
+我们看到我们是通过MySQL的指令来连接的MyCat，因为MyCat在底层实际上是模拟了MySQL的协议。
+
+
+
+然后就可以在MyCat中来创建表，并往表结构中插入数据，查看数据在MySQL中的分布情况。
+
+```sql
+CREATE TABLE TB_ORDER (
+	id BIGINT(20) NOT NULL,
+    title VARCHAR(100) NOT NULL ,
+	PRIMARY KEY (id)
+) ENGINE=INNODB DEFAULT CHARSET=utf8 ;
+INSERT INTO TB_ORDER(id,title) VALUES(1,'goods1');
+INSERT INTO TB_ORDER(id,title) VALUES(2,'goods2');
+INSERT INTO TB_ORDER(id,title) VALUES(3,'goods3');
+
+INSERT INTO TB_ORDER(id,title) VALUES(1,'goods1');
+INSERT INTO TB_ORDER(id,title) VALUES(2,'goods2');
+INSERT INTO TB_ORDER(id,title) VALUES(3,'goods3');
+INSERT INTO TB_ORDER(id,title) VALUES(5000000,'goods5000000');
+INSERT INTO TB_ORDER(id,title) VALUES(10000000,'goods10000000');
+INSERT INTO TB_ORDER(id,title) VALUES(10000001,'goods10000001');
+INSERT INTO TB_ORDER(id,title) VALUES(15000000,'goods15000000');
+INSERT INTO TB_ORDER(id,title) VALUES(15000001,'goods15000001');
+
+```
+
+```sql
+mysql> INSERT INTO TB_ORDER(id,title) VALUES(5000000,'goods5000000');
+Query OK, 1 row affected (0.00 sec)
+ OK!
+
+mysql> INSERT INTO TB_ORDER(id,title) VALUES(10000000,'goods10000000');
+Query OK, 1 row affected (0.03 sec)
+ OK!
+
+mysql> INSERT INTO TB_ORDER(id,title) VALUES(10000001,'goods10000001');
+Query OK, 1 row affected (0.00 sec)
+ OK!
+
+mysql> INSERT INTO TB_ORDER(id,title) VALUES(15000000,'goods15000000');
+Query OK, 1 row affected (0.00 sec)
+ OK!
+
+mysql> INSERT INTO TB_ORDER(id,title) VALUES(15000001,'goods15000001');
+ERROR 1064 (HY000): can't find any valid datanode :TB_ORDER -> ID -> 1500                                                                              0001
+
+```
+
+
+
+![](image/Snipaste_2022-11-27_15-20-10.png)
+
+经过测试，我们发现，在往 TB_ORDER 表中插入数据时：
+
+- 如果id的值在1-500w之间，数据将会存储在第一个分片数据库中。
+- 如果id的值在500w-1000w之间，数据将会存储在第二个分片数据库中。
+- 如果id的值在1000w-1500w之间，数据将会存储在第三个分片数据库中。
+- 如果id的值超出1500w，在插入数据时，将会报错。
+
+为什么会出现这种现象，数据到底落在哪一个分片服务器到底是如何决定的呢？ 这是由逻辑表配置时的一个参数 rule 决定的，而这个参数配置的就是分片规则，关于分片规则的配置，在后面会详细讲解
 
 
 
@@ -7858,15 +8626,85 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 ### MyCat 配置
 
-
-
 #### schema.xml
 
+schema.xml 作为MyCat中最重要的配置文件之一 , 涵盖了MyCat的逻辑库 、 逻辑表 、 分片规则、分片节点及数据源的配置。
 
+<img src="image/Snipaste_2022-11-27_15-21-20.png">
+
+主要包含以下三组标签：
+
+- schema标签
+- datanode标签
+- datahost标签
+
+
+
+##### schema标签
+
+1. schema 定义逻辑库
+
+![](image/Snipaste_2022-11-27_15-22-51.png)
+
+schema 标签用于定义 MyCat实例中的逻辑库 , 一个MyCat实例中, 可以有多个逻辑库 , 可以通过 schema 标签来划分不同的逻辑库。MyCat中的逻辑库的概念，等同于MySQL中的database概念, 需要操作某个逻辑库下的表时, 也需要切换逻辑库(use xxx)。
+
+核心属性：
+
+- name：指定自定义的逻辑库库名
+- checkSQLschema：在SQL语句操作时指定了数据库名称，执行时是否自动去除；true：自动去除，false：不自动去除
+- sqlMaxLimit：如果未指定limit进行查询，列表查询模式查询多少条记录
+
+
+
+2. schema 中的table定义逻辑表
+
+![](image/Snipaste_2022-11-27_15-23-22.png)
+
+table 标签定义了MyCat中逻辑库schema下的逻辑表 , 所有需要拆分的表都需要在table标签中定义 。
+
+核心属性：
+
+- name：定义逻辑表表名，在该逻辑库下唯一
+- dataNode：定义逻辑表所属的dataNode，该属性需要与dataNode标签中name对应；多个dataNode逗号分隔
+- rule：分片规则的名字，分片规则名字是在rule.xml中定义的
+- primaryKey：逻辑表对应真实表的主键
+- type：逻辑表的类型，目前逻辑表只有全局表和普通表，如果未配置，就是普通表；全局表，配 置为 global
+
+
+
+##### datanode标签
+
+![](image/Snipaste_2022-11-27_15-24-10.png)
+
+核心属性：
+
+- name：定义数据节点名称
+- dataHost：数据库实例主机名称，引用自 dataHost 标签中name属性
+- database：定义分片所属数据库
+
+
+
+##### datahost标签
+
+![](image/Snipaste_2022-11-27_15-24-33.png)
+
+该标签在MyCat逻辑库中作为底层标签存在, 直接定义了具体的数据库实例、读写分离、心跳语句。
+
+核心属性：
+
+- name：唯一标识，供上层标签使用
+- maxCon/minCon：最大连接数/最小连接数
+- balance：负载均衡策略，取值 0,1,2,3
+- writeType：写操作分发方式（0：写操作转发到第一个writeHost，第一个挂了，切换到第二个；1：写操作随机分发到配置的writeHost）
+- dbDriver：数据库驱动，支持 native、jdbc
 
 
 
 #### rule.xml
+
+rule.xml中定义所有拆分表的规则, 在使用过程中可以灵活的使用分片算法, 或者对同一个分片算法使用不同的参数, 它让分片过程可配置化。主要包含两类标签：<span style="color:red">`tableRule`、`Function`</span>。
+
+<img src="image/Snipaste_2022-11-27_15-25-32.png">
 
 
 
@@ -7874,9 +8712,54 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 #### server.xml
 
+server.xml配置文件包含了MyCat的系统配置信息，主要有两个重要的标签：system、user
+
+1. system标签
+
+![](image/Snipaste_2022-11-27_15-26-19.png)
+
+主要配置MyCat中的系统配置信息，对应的系统配置项及其含义，如下：
+
+| 属性                      | 取值       | 含义                                                         |
+| ------------------------- | ---------- | ------------------------------------------------------------ |
+| charset                   | utf8       | 设置Mycat的字符集, 字符集需要与MySQL的字符集保持一致         |
+| nonePasswordLogin         | 0,1        | 0为需要密码登陆、1为不需要密码登陆 ,默认为0，设置为1则需要指定默认账户 |
+| useHandshakeV10           | 0,1        | 使用该选项主要的目的是为了能够兼容高版本的jdbc驱动, 是否采用HandshakeV10Packet来与client进行通信, 1:是, 0:否 |
+| useSqlStat                | 0,1        | 开启SQL实时统计, 1 为开启 , 0 为关闭 ;开启之后, MyCat会自动统计SQL语句的执行情况 ; mysql -h 127.0.0.1 -P 9066 -u root -p 查看MyCat执行的SQL, 执行效率比较低的SQL , SQL的整体执行情况、读写比例等 ; show @@sql ; show @@sql.slow ; show @@sql.sum ; |
+| useGlobleTableCheck       | 0,1        | 是否开启全局表的一致性检测。1为开启 ，0为关闭 。             |
+| sqlExecuteTimeout         | 1000       | SQL语句执行的超时时间 , 单位为 s ;                           |
+| sequnceHandlerType        | 0,1,2      | 用来指定Mycat全局序列类型，0 为本地文件，1 为数据库方式，2 为时间戳列方式，默认使用本地文件方式，文件方式主要用于测试 |
+| sequnceHandlerPattern     | 正则表达式 | 必须带有MYCATSEQ或者 mycatseq进入序列匹配流程 注意MYCATSEQ_有空格的情况 |
+| subqueryRelationshipCheck | true,false | 子查询中存在关联查询的情况下,检查关联字段中是否有分片字段 .默认 false |
+| useCompression            | 0,1        | 开启mysql压缩协议 , 0 : 关闭, 1 : 开启                       |
+| fakeMySQLVersion          | 5.5,5.6    | 设置模拟的MySQL版本号                                        |
+| defaultSqlParser          |            | 由于MyCat的最初版本使用了FoundationDB的SQL解析器, 在MyCat1.3后增加了Druid解析器, 所以要设置defaultSqlParser属性来指定默认的解析器; 解析器有两个 :druidparser 和 fdbparser, 在MyCat1.4之后,默认是druidparser,fdbparser已经废除了 |
+| processors                | 1,2....    | 指定系统可用的线程数量, 默认值为CPU核心x 每个核心运行线程数量; processors 会影响processorBufferPool,processorBufferLocalPercent,processorExecutor属性, 所有, 在性能调优时, 可以适当地修改processors值 |
+| processorBufferChunk      |            | 指定每次分配Socket Direct Buffer默认值为4096字节, 也会影响BufferPool长度,如果一次性获取字节过多而导致buffer不够用, 则会出现警告, 可以调大该值 |
+| processorExecutor         |            | 指定NIOProcessor上共享businessExecutor固定线程池的大小; MyCat把异步任务交给 businessExecutor线程池中, 在新版本的MyCat中这个连接池使用频次不高, 可以适当地把该值调小 |
+| packetHeaderSize          |            | 指定MySQL协议中的报文头长度, 默认4个字节                     |
+| maxPacketSize             |            | 指定MySQL协议可以携带的数据最大大小, 默认值为16M             |
+| idleTimeout               | 30         | 指定连接的空闲时间的超时长度;如果超时,将关闭资源并回收, 默认30分钟 |
+| txIsolation               | 1,2,3,4    | 初始化前端连接的事务隔离级别,默认为REPEATED_READ , 对应数字为3 READ_UNCOMMITED=1;READ_COMMITTED=2; REPEATED_READ=3;SERIALIZABLE=4; |
+| sqlExecuteTimeout         | 300        | 执行SQL的超时时间, 如果SQL语句执行超时, 将关闭连接; 默认300秒; |
+| serverPort                | 8066       | 定义MyCat的使用端口, 默认8066                                |
+| managerPort               | 9066       | 定义MyCat的管理端口, 默认9066                                |
 
 
-### MyCat 分片
+
+2. user标签
+
+配置MyCat中的用户、访问密码，以及用户针对于逻辑库、逻辑表的权限信息，具体的权限描述方式及配置说明如下：
+
+![](image/Snipaste_2022-11-27_15-27-55.png)
+
+在测试权限操作时，我们只需要将 privileges 标签的注释放开。 在 privileges 下的schema标签中配置的dml属性配置的是逻辑库的权限。 在privileges的schema下的table标签的dml属性中配置逻辑表的权限
+
+
+
+
+
+### MyCat 分片 NULL
 
 
 
@@ -7908,19 +8791,92 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 ### MyCat 管理及监控
 
-
-
 #### MyCat 原理
 
+<img src="image/Snipaste_2022-11-27_15-28-38.png" style="height:450px">
 
+在MyCat中，当执行一条SQL语句时，MyCat需要进行SQL解析、分片分析、路由分析、读写分离分析等操作，最终经过一系列的分析决定将当前的SQL语句到底路由到那几个(或哪一个)节点数据库，数据库将数据执行完毕后，如果有返回的结果，则将结果返回给MyCat，最终还需要在MyCat中进行结果合并、聚合处理、排序处理、分页处理等操作，最终再将结果返回给客户端。
+
+而在MyCat的使用过程中，MyCat官方也提供了一个管理监控平台MyCat-Web（MyCat-eye）。Mycat-web 是 Mycat 可视化运维的管理和监控平台，弥补了 Mycat 在监控上的空白。帮 Mycat分担统计任务和配置管理任务。Mycat-web 引入了 ZooKeeper 作为配置中心，可以管理多个节点。Mycat-web 主要管理和监控 Mycat 的流量、连接、活动线程和内存等，具备 IP 白名单、邮件告警等模块，还可以统计 SQL 并分析慢 SQL 和高频 SQL 等。为优化 SQL 提供依据。
 
 
 
 #### MyCat 管理
 
+Mycat默认开通2个端口，可以在server.xml中进行修改。
+
+- 8066 数据访问端口，即进行 DML 和 DDL 操作。
+- 9066 数据库管理端口，即 mycat 服务管理控制功能，用于管理mycat的整个集群状态
+
+连接MyCat的管理控制台：
+
+```sh
+mysql -h 192.168.91.166 -p9066 -u root -p 123456
+
+```
+
+| 命令              | 含义                        |
+| ----------------- | --------------------------- |
+| show @@help       | 查看Mycat管理工具帮助文档   |
+| show @@version    | 查看Mycat的版本             |
+| reload @@config   | 重新加载Mycat的配置文件     |
+| show @@datasource | 查看Mycat的数据源信息       |
+| show @@datanode   | 查看MyCat现有的分片节点信息 |
+| show @@threadpool | 查看Mycat的线程池信息       |
+| show @@sql        | 查看执行的SQL               |
+| show @@sql.sum    | 查看执行的SQL统计           |
+
 
 
 #### MyCat-eye
+
+##### 介绍
+
+Mycat-web(Mycat-eye)是对mycat-server提供监控服务，功能不局限于对mycat-server使用。他通过JDBC连接对Mycat、Mysql监控，监控远程服务器(目前仅限于linux系统)的cpu、内存、网络、磁盘。
+
+Mycat-eye运行过程中需要依赖zookeeper，因此需要先安装zookeeper
+
+
+
+##### 安装
+
+1. zookeeper安装
+
+```sh
+# 在springCloud 笔记中有详细说明
+# 配置文件中 dataDir=/tmp/zookeeper
+```
+
+
+
+2. 启动Zookeeper
+
+```sh
+bin/zkServer.sh start
+
+bin/zkServer.sh status
+
+```
+
+
+
+
+
+
+
+
+
+
+
+##### 配置
+
+
+
+
+
+
+
+##### 测试
 
 
 
