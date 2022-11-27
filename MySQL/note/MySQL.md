@@ -7559,7 +7559,7 @@ select * from tb_user limit 1000000,10;
 
 
 
-## MySQL-主从复制
+## MySQL-主从复制<a name="mysql-master-s"></a>
 
 ### 概述
 
@@ -7942,7 +7942,7 @@ insert into tb_user(id,name,sex) values(null,'Tom', '1'),(null,'Trigger','0'),(n
 
 ### 一主一从
 
-查看[MySQL-主从复制](# MySQL-主从复制)章节
+查看[MySQL-主从复制](#mysql-master-s)章节
 
 
 
