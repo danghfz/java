@@ -2189,6 +2189,13 @@ docker run -it --privileged=true --volumes-from 父类 --name u2 ubuntu
 
 ```
 创建数据库时携带 charset utf8就不会出现错误
+
+# 配置文件配置
+[mysqld]
+collation_server = utf8mb4_0900_ai_ci
+character_set_server = utf8mb4
+[client]
+default_character_set=utf8mb4
 ```
 
 
@@ -5033,7 +5040,7 @@ EXPOSE 6001
 >  
 
 -----------------------------------------------------------------------
-  
+
 
 ```shell
 docker run -d -p 8000:8000 -p 9000:9000 --name portainer \
