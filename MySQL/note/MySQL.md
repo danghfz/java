@@ -5205,7 +5205,7 @@ insert into tb_user_view values(10);
 1. 创建
 
 ```sql
-CREATE PROCEDURE 存储过程名称 ([ 参数列表 ])
+CREATE PROCEDURE 存储过程名称 ([ 参数列表 ])  -- procedure 程序
 BEGIN
 	-- SQL语句
 END ;
@@ -5245,23 +5245,26 @@ DROP PROCEDURE [ IF EXISTS ] 存储过程名称 ；
 - 演示案例
 
 ```sql
--- 存储过程基本语法
--- 创建
-create procedure p1()
-begin
-	select count(*) from student;
-end;
--- 调用
-call p1()
+-- 创建存储过程
+CREATE PROCEDURE p1()
+BEGIN
+    SELECT COUNT(1) FROM tb_user;
+END;
 
--- 查看
-select * from information_schema.ROUTINES where ROUTINE_SCHEMA = 'MySQL_Advanced';
+-- 使用
+CALL p1();
 
-show create procedure p1;
+-- 查看指定数据库的存储过程及状态信息
+SELECT * FROM information_schema.routines WHERE routine_schema = 'my';
+-- 查看 存储过程的  创建语句
+SHOW CREATE PROCEDURE p1;
 
 -- 删除
-drop procedure if exists p1;
+DROP PROCEDURE IF EXISTS p1;
+```
 
+```sh
+# DELIMITER $$  设置MySQL命令行结束符（默认是 ;）
 ```
 
 
@@ -5277,8 +5280,9 @@ drop procedure if exists p1;
 1. 查看系统变量
 
    ```sql
+   -- variable 变量
    SHOW [ SESSION | GLOBAL ] VARIABLES ;               -- 查看所有系统变量
-   SHOW [ SESSION | GLOBAL ] VARIABLES LIKE '......';  -- 可以通过LIKE模糊匹配方式查找变量
+   SHOW [ SESSION | GLOBAL ] VARIABLES LIKE '......'; -- 可以通过LIKE模糊匹配方式查找变量
    SELECT @@[SESSION | GLOBAL] 系统变量名;               -- 查看指定变量的值
    
    ```
@@ -5357,12 +5361,13 @@ SELECT @var_name ;
 
 演示案例:
 
-```sh
+```sql
 -- 用户变量
 SET @myname = 'xustudyxu';
 set @myage := 21;
 set @mygender := '男',@myhobby := 'java';
 
+-- 将查询结果赋值给变量
 select @mycolor := 'red';
 SELECT COUNT(*) into @mycount from student;
 
@@ -5382,11 +5387,18 @@ SELECT @mycolor,@mycount;
 1. 声明
 
 ```sql
+-- declare 声明
 DECLARE 变量名 变量类型 [DEFAULT ... ] ;
 
 ```
 
 变量类型就是数据库字段类型：INT、BIGINT、CHAR、VARCHAR、DATE、TIME等。
+
+```sh
+# 局部变量的声明只能在 子程序需中即 BEGIN   NED; 代码块中
+```
+
+
 
 2. 赋值
 
@@ -5653,14 +5665,48 @@ call p7(100);
 
 
 
+#### repeat
+
+1、介绍
+
+repeat是有条件的循环控制语句，当满足条件的时候退出循环，具体语法为：
+
+```sql
+-- 先执行一次逻辑，判断条件，满足退出
+REPEAT
+	SQL 逻辑
+	UNTIL 条件
+END REPEAT;
+```
+
+2、案例
+
+```sql
+CREATE PROCEDURE p5(IN n INT, IN step INT)
+BEGIN
+    DECLARE count INT DEFAULT 100;
+    REPEAT
+        SET n := n + step;
+        set count := count - 1;
+    UNTIL count <= 0
+        END REPEAT;
+    SELECT n;
+END;
+CALL p5(0,1);
+
+-- 100
+```
+
+
+
 #### loop
 
 1. 介绍
 
 LOOP 实现简单的循环，如果不在SQL逻辑中增加退出循环的条件，可以用其来实现简单的死循环。LOOP可以配合一下两个语句使用：
 
-- LEAVE ：配合循环使用，退出循环。
-- ITERATE：必须用在循环中，作用是跳过当前循环剩下的语句，直接进入下一次循环。
+- LEAVE ：配合循环使用，退出循环。break
+- ITERATE：必须用在循环中，作用是跳过当前循环剩下的语句，直接进入下一次循环。continue
 
 ```sql
 [begin_label:] LOOP
@@ -5716,11 +5762,11 @@ begin
 		declare total int default 0;
 		sum:loop
 				if n<=0 then
-					leave sum;
+					leave sum; -- 退出
 				end if;						
 				if n%2=1 then
 					set n := n - 1;
-					iterate sum;
+					iterate sum; -- 进入下次循环
 				end if;	
 				set total := total + n;
 				set n := n - 1;
@@ -5743,7 +5789,7 @@ call p10(10);
 A. 声明游标
 
 ```sql
-DECLARE 游标名称 CURSOR FOR 查询语句 ;
+DECLARE 游标名称 CURSOR FOR 查询语句;
 
 ```
 
@@ -5822,7 +5868,7 @@ call p11(40);
 
 
 
-#### 条件处理器
+#### 条件处理程序
 
 1. 介绍
 
@@ -5893,7 +5939,7 @@ B. 通过SQLSTATE的代码简写方式 NOT FOUND
 > 		declare upro varchar(100);
 > 		declare u_cursor cursor for select name,profession from tb_user where age <= uage;
 > 		-- 声明条件处理程序 ： 当SQL语句执行抛出的状态码为02000时，将关闭游标u_cursor，并退出
-> 		declare exit hander for sqlstate not found close u_cursor;
+> 		declare exit hander for not found close u_cursor;
 > 		
 > 		drop table if exists tb_user_pro;
 > 		create table if not exists tb_user_pro(
@@ -5992,7 +6038,7 @@ select fun1(50);
 ```sql
 CREATE TRIGGER trigger_name
 BEFORE/AFTER INSERT/UPDATE/DELETE
-ON tbl_name FOR EACH ROW -- 行级触发器
+ON tb_name FOR EACH ROW -- 行级触发器
 BEGIN
 	trigger_stmt ;
 END;
@@ -6024,13 +6070,13 @@ DROP TRIGGER [schema_name.]trigger_name ;
 ```sql
 -- 准备工作 : 日志表 user_logs
 create table user_logs(
-id int(11) not null auto_increment,
+	id int(11) not null auto_increment,
 	operation varchar(20) not null comment '操作类型, insert/update/delete',
 	operate_time datetime not null comment '操作时间',
 	operate_id int(11) not null comment '操作的ID',
 	operate_params varchar(500) comment '操作参数',
 	primary key(`id`)
-)engine=innodb default charset=utf8;
+)engine=innodb default charset=utf8mb4;
 
 ```
 

@@ -2187,11 +2187,48 @@ docker run -it --privileged=true --volumes-from 父类 --name u2 ubuntu
 
     -   docker上默认字符集编码隐患
 
-```
+```ini
 创建数据库时携带 charset utf8就不会出现错误
 
-# 配置文件配置
+# MySQL8配置文件配置
+# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; version 2 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
+
+#
+# The MySQL  Server configuration file.
+#
+# For explanations see
+# http://dev.mysql.com/doc/mysql/en/server-system-variables.html
+
 [mysqld]
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+datadir         = /var/lib/mysql
+secure-file-priv= NULL
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+
+# Custom config should go here
+!includedir /etc/mysql/conf.d/
+
+# 慢查询日志
+# 开启慢查询日志
+slow_query_log = 1
+# 超过 2 s未慢查询
+long_query_time = 2
+# utf8
 collation_server = utf8mb4_0900_ai_ci
 character_set_server = utf8mb4
 [client]
