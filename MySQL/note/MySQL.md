@@ -2121,15 +2121,11 @@ set session transaction isolation level READ UNCOMMITTED;
 
 **幻读**
 
-> ```
-> MySQL的读已提交没有完全解决 幻读问题
-> ```
+![](image/Snipaste_2022-12-01_15-08-56.png)
 
-![](image/Snipaste_2022-11-24_21-53-31.png)
+如图：当事务二提交后，在客户端一中，查询不到id为5的数据，但是插入的时候，报错 id 5 是重复的，id为5的这条数据就好像幻影一样。
 
-
-
-![](image/Snipaste_2022-11-24_21-58-48.png)
+解决方式就是在查询条件范围内  加锁 ，让其都不要插入数据。
 
 
 
@@ -6243,9 +6239,11 @@ flush tables with read lock;
 
 2. 数据备份
 
-```sql
-mysqldump -uroot –p1234 itcast > itcast.sql
+```sh
+mysqldump -uroot –p1234 db_name > filename.sql
 
+# 使用 powershell 导出中文乱码
+# 使用 cmd 导出正常（原因不知）
 ```
 
 3. 释放锁
@@ -6266,9 +6264,10 @@ unlock tables;
 
 在InnoDB引擎中，我们可以在备份时加上参数 <span style="color: red">--single-transaction</span> 参数来完成不加锁的一致性数据备份。
 
-```sql
+```sh
 mysqldump --single-transaction -uroot –p123456 itcast > itcast.sql
 
+--single-transaction 底层是通过快照完成的
 ```
 
 
@@ -6393,25 +6392,9 @@ MDL加锁过程是系统自动控制，无需显式使用，在访问一张表�
 
 > ```sql
 > mysql> select object_type,object_schema,object_name,lock_type,lock_duration from performance_schema.metadata_locks;
-> +-------------------+--------------------+----------------+---------------------+---------------+
-> | object_type       | object_schema      | object_name    | lock_type           | lock_duration |
-> +-------------------+--------------------+----------------+---------------------+---------------+
-> | TABLE             | performance_schema | metadata_locks | SHARED_READ         | TRANSACTION   |
-> | SCHEMA            | performance_schema | NULL           | INTENTION_EXCLUSIVE | TRANSACTION   |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> | COLUMN STATISTICS | performance_schema | metadata_locks | SHARED_READ         | STATEMENT     |
-> +-------------------+--------------------+----------------+---------------------+---------------+
-> 13 rows in set (0.06 sec)
 > ```
+
+![](image/Snipaste_2022-12-01_10-33-37.png)
 
 
 
@@ -6441,8 +6424,8 @@ MDL加锁过程是系统自动控制，无需显式使用，在访问一张表�
 
 2. 分类
 
-- **意向共享锁(IS): 由语句select ... lock in share mode添加** 。**与表锁共享锁(read)兼容，与表锁排他锁(write)互斥**。
-- **意向排他锁(IX)**: **由insert、update、delete、select...for update添加 **。**与表锁共享锁(read)及排他锁(write)都互斥，意向锁之间不会互斥**。
+- **意向共享锁(IS): 由语句select ... lock in share mode添加。与表锁共享锁(read)兼容，与表锁排他锁(write)互斥**。
+- **意向排他锁(IX)**: **由insert、update、delete、select...for update添加 。与表锁共享锁(read)及排他锁(write)都互斥，意向锁之间不会互斥**。
 
 ```sh
 # 一旦事务提交了，意向共享锁、意向排他锁，都会自动释放。
@@ -6481,7 +6464,7 @@ InnoDB的数据是基于索引组织的，行锁是通过对索引上的索引�
 
 ![](image/Snipaste_2022-11-27_09-02-32.png)
 
-- 间隙锁（Gap Lock）：锁定索引记录间隙（不含该记录），确保索引记录间隙不变，防止其他事务在这个间隙进行insert，产生幻读。在RR隔离级别下都支持。
+- 间隙锁（Gap Lock）：锁定索引记录间隙（不含该记录），确保索引记录间隙不变，`防止其他事务在这个间隙进行insert，产生幻读`。在RR隔离级别下都支持。
 
 ![](image/Snipaste_2022-11-27_09-02-57.png)
 
@@ -6643,7 +6626,7 @@ B. 索引上的等值查询(非唯一普通索引)，向右遍历时最后一个
 
 介绍分析一下：
 
-我们知道InnoDB的B+树索引，叶子节点是有序的双向链表。 假如，我们要根据这个二级索引查询值为18的数据，并加上共享锁，我们是只锁定18这一行就可以了吗？ 并不是，因为是非唯一索引，这个结构中可能有多个18的存在，所以，在加锁时会继续往后找，找到一个不满足条件的值（当前案例中也就是29）。此时会对18加临键锁，并对29之前的间隙加锁。
+我们知道InnoDB的B+树索引，叶子节点是有序的双向链表。 假如，我们要根据这个二级索引查询值为18的数据，并加上共享锁，我们是只锁定18这一行就可以了吗？ 并不是，因为是非唯一索引，这个结构中可能有多个18的存在，所以，在加锁时会继续往后找，找到一个不满足条件的值（当前案例中也就是29）。此时会对18加临键锁【锁住18和18之前的间隙】，并对29之前的间隙加锁。
 
 ![](image/Snipaste_2022-11-27_09-22-28.png)
 
@@ -6662,6 +6645,87 @@ C. 索引上的范围查询(唯一索引)--会访问到不满足条件的第一�
 (25,+∞]
 
 所以数据库数据在加锁是，就是将19加了行锁，25的临键锁（包含25及25之前的间隙），正无穷的临键锁(正无穷及之前的间隙)
+
+
+
+### 总结
+
+全局锁：
+
+```sql
+-- 加锁
+flush tables with read lock;
+-- 释放锁
+unlock tables;
+```
+
+整个表都进行加锁，其他客户端的行为都被阻塞，一般用于备份，保证数据一致性
+
+
+
+表级锁：
+
+1、表锁
+
+```sql
+-- 加锁：
+lock tables tb_name read [ | write]
+-- 释放锁：
+unlock tables -- 客户端断开连接 
+```
+
+读锁为共享锁，写锁为排他锁
+
+
+
+2、元数据锁
+
+系统自动加，为了防止 DML 语句 与 DDL语句冲突
+
+DML语句时，增加的是共享锁【因为不可能加一个锁，只让一个客户端操作，效率低死，所以有大量共享锁
+
+DDL 时，增加排他锁
+
+3、意向锁
+
+意向锁是为了解决 行锁与表锁 的冲突问题，比如加了行锁，再加表锁，此时会产生锁冲突，但是加表锁时会一行一行去找看有没有行锁，耗费时间。
+
+加了意向锁，就类似一个全局的变量，直接告诉数据库有没有加行锁。省去了大量判断时间
+
+```sql
+-- 共享锁 IS
+select ... lock in share mode;
+-- 排他锁 IX
+insert[ | updae | delete | select] ... for update;
+```
+
+如果加的是共享锁，与表锁共享锁兼容，
+
+如果是排他锁，则不兼容
+
+
+
+行锁：
+
+1、行锁
+
+| INSERT ...     | 排他锁     | 自动加锁 |
+| -------------- | ---------- | -------- |
+| UPDATE ...     | 排他锁     | 自动加锁 |
+| DELETE ...     | 排他锁     | 自动加锁 |
+| SELECT（正常） | 不加任何锁 |          |
+
+在事务中，一个事务对该行进行了修改，改行进行加行锁，其他事务无法修改
+
+2、间隙锁、临键锁
+
+默认情况下，InnoDB在 REPEATABLE READ事务隔离级别运行，InnoDB使用 next-key 锁进行搜索和索引扫描，以防止幻读。
+
+- 索引上的等值查询(唯一索引)，给不存在的记录加锁时, 优化为间隙锁 。
+- 索引上的等值查询(非唯一普通索引)，向右遍历时最后一个值不满足查询需求时，next-key lock 退化为间隙锁。
+- 索引上的范围查询(唯一索引)--会访问到不满足条件的第一个值为止。
+
+在间隙加锁，使得间隙内不得插入数据，
 
 
 
@@ -6884,7 +6948,7 @@ Query OK, 0 rows affected (0.01 sec)
 
 4. Undo Tablespaces
 
-撤销表空间，MySQL实例在初始化时会自动创建两个默认的undo表空间（初始大小16M），用于存储 undo log日志。
+撤销表空间，MySQL实例在初始化时会自动创建两个默认的undo表空间（初始大小16M），用于存储 undo log日志。undo_001，undo_002
 
 5. Temporary Tablespaces
 
@@ -6893,6 +6957,13 @@ InnoDB 使用会话临时表空间和全局临时表空间。存储用户创建�
 6. Doublewrite Buffer Files
 
 双写缓冲区，innoDB引擎将数据页从Buffer Pool刷新到磁盘前，先将数据页写入双写缓冲区文件中，便于系统异常时恢复数据。
+
+```sh
+-rw-r-----. 1 polkitd input   196608 12月  1 11:09 #ib_16384_0.dblwr
+-rw-r-----. 1 polkitd input  8585216 11月 29 16:09 #ib_16384_1.dblwr
+```
+
+
 
 7. Redo Log
 
@@ -6938,6 +7009,10 @@ InnoDB 使用会话临时表空间和全局临时表空间。存储用户创建�
 
 
 我们可以通过以下的这条指令，查看到InnoDB的状态信息，其中就包含IO Thread信息。
+
+```sql
+SHOW ENGINE INNODB STATUS;
+```
 
 ![](image/Snipaste_2022-11-27_10-52-15.png)
 
@@ -7096,192 +7171,27 @@ ibd2sdi stu.ibd
             {
                 "name": "id",
                 "type": 4,
-                "is_nullable": false,
-                "is_zerofill": false,
-                "is_unsigned": false,
-                "is_auto_increment": true,
-                "is_virtual": false,
-                "hidden": 1,
-                "ordinal_position": 1,
-                "char_length": 11,
-                "numeric_precision": 10,
-                "numeric_scale": 0,
-                "numeric_scale_null": false,
-                "datetime_precision": 0,
-                "datetime_precision_null": 1,
-                "has_no_default": false,
-                "default_value_null": false,
-                "srs_id_null": true,
-                "srs_id": 0,
-                "default_value": "AAAAAA==",
-                "default_value_utf8_null": true,
-                "default_value_utf8": "",
-                "default_option": "",
-                "update_option": "",
-                "comment": "",
-                "generation_expression": "",
-                "generation_expression_utf8": "",
-                "options": "interval_count=0;",
-                "se_private_data": "table_id=1070;",
-                "engine_attribute": "",
-                "secondary_engine_attribute": "",
-                "column_key": 2,
-                "column_type_utf8": "int",
-                "elements": [],
-                "collation_id": 255,
-                "is_explicit_collation": false
+				 ...
             },
             {
                 "name": "name",
                 "type": 16,
-                "is_nullable": true,
-                "is_zerofill": false,
-                "is_unsigned": false,
-                "is_auto_increment": false,
-                "is_virtual": false,
-                "hidden": 1,
-                "ordinal_position": 2,
-                "char_length": 1020,
-                "numeric_precision": 0,
-                "numeric_scale": 0,
-                "numeric_scale_null": true,
-                "datetime_precision": 0,
-                "datetime_precision_null": 1,
-                "has_no_default": false,
-                "default_value_null": true,
-                "srs_id_null": true,
-                "srs_id": 0,
-                "default_value": "",
-                "default_value_utf8_null": true,
-                "default_value_utf8": "",
-                "default_option": "",
-                "update_option": "",
-                "comment": "",
-                "generation_expression": "",
-                "generation_expression_utf8": "",
-                "options": "interval_count=0;",
-                "se_private_data": "table_id=1070;",
-                "engine_attribute": "",
-                "secondary_engine_attribute": "",
-                "column_key": 1,
-                "column_type_utf8": "varchar(255)",
-                "elements": [],
-                "collation_id": 255,
-                "is_explicit_collation": false
+                 ...
             },
             {
                 "name": "age",
                 "type": 4,
-                "is_nullable": false,
-                "is_zerofill": false,
-                "is_unsigned": false,
-                "is_auto_increment": false,
-                "is_virtual": false,
-                "hidden": 1,
-                "ordinal_position": 3,
-                "char_length": 11,
-                "numeric_precision": 10,
-                "numeric_scale": 0,
-                "numeric_scale_null": false,
-                "datetime_precision": 0,
-                "datetime_precision_null": 1,
-                "has_no_default": true,
-                "default_value_null": false,
-                "srs_id_null": true,
-                "srs_id": 0,
-                "default_value": "AAAAAA==",
-                "default_value_utf8_null": true,
-                "default_value_utf8": "",
-                "default_option": "",
-                "update_option": "",
-                "comment": "",
-                "generation_expression": "",
-                "generation_expression_utf8": "",
-                "options": "interval_count=0;",
-                "se_private_data": "table_id=1070;",
-                "engine_attribute": "",
-                "secondary_engine_attribute": "",
-                "column_key": 1,
-                "column_type_utf8": "int",
-                "elements": [],
-                "collation_id": 255,
-                "is_explicit_collation": false
+                 ...
             },
             {
                 "name": "DB_TRX_ID",
                 "type": 10,
-                "is_nullable": false,
-                "is_zerofill": false,
-                "is_unsigned": false,
-                "is_auto_increment": false,
-                "is_virtual": false,
-                "hidden": 2,
-                "ordinal_position": 4,
-                "char_length": 6,
-                "numeric_precision": 0,
-                "numeric_scale": 0,
-                "numeric_scale_null": true,
-                "datetime_precision": 0,
-                "datetime_precision_null": 1,
-                "has_no_default": false,
-                "default_value_null": true,
-                "srs_id_null": true,
-                "srs_id": 0,
-                "default_value": "",
-                "default_value_utf8_null": true,
-                "default_value_utf8": "",
-                "default_option": "",
-                "update_option": "",
-                "comment": "",
-                "generation_expression": "",
-                "generation_expression_utf8": "",
-                "options": "",
-                "se_private_data": "table_id=1070;",
-                "engine_attribute": "",
-                "secondary_engine_attribute": "",
-                "column_key": 1,
-                "column_type_utf8": "",
-                "elements": [],
-                "collation_id": 63,
-                "is_explicit_collation": false
+                 ...
             },
             {
                 "name": "DB_ROLL_PTR",
-                "type": 9,
-                "is_nullable": false,
-                "is_zerofill": false,
-                "is_unsigned": false,
-                "is_auto_increment": false,
-                "is_virtual": false,
-                "hidden": 2,
-                "ordinal_position": 5,
-                "char_length": 7,
-                "numeric_precision": 0,
-                "numeric_scale": 0,
-                "numeric_scale_null": true,
-                "datetime_precision": 0,
-                "datetime_precision_null": 1,
-                "has_no_default": false,
-                "default_value_null": true,
-                "srs_id_null": true,
-                "srs_id": 0,
-                "default_value": "",
-                "default_value_utf8_null": true,
-                "default_value_utf8": "",
-                "default_option": "",
-                "update_option": "",
-                "comment": "",
-                "generation_expression": "",
-                "generation_expression_utf8": "",
-                "options": "",
-                "se_private_data": "table_id=1070;",
-                "engine_attribute": "",
-                "secondary_engine_attribute": "",
-                "column_key": 1,
-                "column_type_utf8": "",
-                "elements": [],
-                "collation_id": 63,
-                "is_explicit_collation": false
+                "type": 9
+                ...
             }
         ],
 ```
@@ -7342,7 +7252,7 @@ C>
 
 ![](image/Snipaste_2022-11-27_14-50-20.png)
 
-当事务4执行第一条修改语句时，也会记录undo log日志，记录数据变更之前的样子; 然后更新记录，并且记录本次操作的事务ID，回滚指针，回滚指针用来指定如果发生回滚，回滚到哪一个版本。
+当事务4执行第一条修改语 句时，也会记录undo log日志，记录数据变更之前的样子; 然后更新记录，并且记录本次操作的事务ID，回滚指针，回滚指针用来指定如果发生回滚，回滚到哪一个版本。
 
 ![](image/Snipaste_2022-11-27_14-50-48.png)
 
