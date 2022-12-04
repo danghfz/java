@@ -7415,6 +7415,7 @@ Mysql数据库安装完成后，自带了一下四个数据库，具体作用如
 	-h, --host=name #指定服务器IP或域名
 	-P, --port=port #指定连接端口
 	-e, --execute=name #执行SQL语句并退出
+	--ssl --ssl=false #
 
 ```
 
