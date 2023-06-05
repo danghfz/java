@@ -14,7 +14,7 @@
 ## Clone
 
 ```
-git clone git@github.com:dangHuifeng/java.git
+git clone git@github.com:danghfz/java.git
 ```
 
 
@@ -80,4 +80,3 @@ git rebase -i HEAD~x
     <p class="custom-block-title">注意：</p>
     <p><code style="color: red">code</code>：something。</p>
 </div>
-
