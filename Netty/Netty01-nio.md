@@ -128,37 +128,50 @@ end
 使用 FileChannel 来读取文件内容
 
 ```java
-@Slf4j
+package com.nio;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import utils.FilePathConstant;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+
+/**
+ * @author danghf
+ * @version 1.0
+ * @date 2023/6/18/0018 10:25
+ */
 public class TestByteBuffer {
-    private static final int _1M = 1024 * 1024;
-    private static final String FILE_PATH = "nioBasis/src/main/resources/data.txt";
+    private static final Logger logger = LoggerFactory.getLogger(TestByteBuffer.class);
+    private static final int MB = 1024 * 1024;
+
     public static void main(String[] args) {
-        // FileChannel
-        // 1. 输入输出流获取FileChannel  2.RandomAccessFile
-        try (FileChannel channel = new FileInputStream(FILE_PATH).getChannel()){
+        //RandomAccessFile
+        //使用 FileInputStream 获取 FileChannel
+        ByteBuffer buffer;
+        try (FileChannel channel = new FileInputStream(FilePathConstant.DATA_FILE_PATH).getChannel()) {
             // 缓冲区
-//            ByteBuffer byteBuffer = ByteBuffer.allocateDirect(_1M); // 开辟直接内存
-            ByteBuffer buffer = ByteBuffer.allocate(_1M);
-            while (true){
-                // 从 channel 读取数据，写入缓冲区
-                int read = channel.read(buffer);
-                log.info("读取到的字节数{}", read);
-                if (read == -1){ // 读完了
-                    break;
-                }
-                // 切换到 buffer 读模式
+            // buffer = ByteBuffer.allocateDirect(MB); // 开辟直接内存
+            buffer = ByteBuffer.allocate(3);
+            // channel.read(buffer) != -1 代表还有数据
+            // channel 读取数据 写入 buffer
+            while (channel.read(buffer) != -1) {
+                // buffer切换到读模式
                 buffer.flip();
-                while (buffer.hasRemaining()){ // 是否还有剩余数据，有就读
-                    byte b = buffer.get(); // get() 无参，读一个字节
-                    log.info("读取到的字节{}", (char) b);
+                // 是否还有剩余的数据
+                while (buffer.hasRemaining()) {
+                    logger.info("{}", (char) buffer.get());
                 }
-                // buffer 切换成写模式
+                // 切换到写模式
                 buffer.clear();
             }
-        }catch (IOException e){
-            e.printStackTrace();
+        } catch (Exception e) {
+            logger.error("{}", e.getMessage());
         }
-
     }
 }
 
@@ -167,27 +180,25 @@ public class TestByteBuffer {
 输出
 
 ```
-10:09:15.382 [main] INFO com.dhf.TestByteBuffer - 读取到的字节数18
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节-
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节-
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节 
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节h
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节e
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节l
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节l
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节o
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节
+11:41:32.062 [main] INFO com.nio.TestByteBuffer - -
+11:41:32.078 [main] INFO com.nio.TestByteBuffer - -
+11:41:32.078 [main] INFO com.nio.TestByteBuffer -  
+11:41:32.078 [main] INFO com.nio.TestByteBuffer - h
+11:41:32.078 [main] INFO com.nio.TestByteBuffer - e
+11:41:32.078 [main] INFO com.nio.TestByteBuffer - l
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - l
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - o
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - 
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - 
 
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节-
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节-
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节 
-10:09:15.386 [main] INFO com.dhf.TestByteBuffer - 读取到的字节w
-10:09:15.387 [main] INFO com.dhf.TestByteBuffer - 读取到的字节o
-10:09:15.387 [main] INFO com.dhf.TestByteBuffer - 读取到的字节r
-10:09:15.387 [main] INFO com.dhf.TestByteBuffer - 读取到的字节l
-10:09:15.387 [main] INFO com.dhf.TestByteBuffer - 读取到的字节d
-10:09:15.387 [main] INFO com.dhf.TestByteBuffer - 读取到的字节数-1
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - -
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - -
+11:41:32.079 [main] INFO com.nio.TestByteBuffer -  
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - w
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - o
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - r
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - l
+11:41:32.079 [main] INFO com.nio.TestByteBuffer - d
 
 Process finished with exit code 0
 
@@ -240,6 +251,8 @@ compact 方法，是把未读完的部分向前压缩，然后切换至写模式
 
 
 #### 💡 调试工具类
+
+
 
 ```java
 // netty-all 4.1.39.Final
@@ -513,32 +526,34 @@ buffer.reset(); // pos = 2,limit = 4，回到标记位置
 #### 字符串与 ByteBuffer 互转
 
 ```java
- public void ByteBufferAndStringTran(){
-        // 1.字符串 ——> byteBuffer
-        String str = "hello";
+public class ByteBufferAndStringTran {
+    private static final Charset UTF_8 = StandardCharsets.UTF_8;
+    private static final Logger log = LoggerFactory.getLogger(ByteBufferAndStringTran.class);
+    public static void main(String[] args) {
+        // 1、String -> ByteBuffer
+        String hello = "hello";
+        byte[] bytes = hello.getBytes(UTF_8);
         ByteBuffer buffer = ByteBuffer.allocate(10);
-        buffer.put(str.getBytes(StandardCharsets.UTF_8));
-        debugAll(buffer); // pos = 5
+        buffer.put(bytes);
+        // position: [5], limit: [10] 写模式
+        debugAll(buffer);
 
-        // 2.charSet
-        // StandardCharsets 标准字符集
-        Charset utf8 = StandardCharsets.UTF_8;
-        ByteBuffer encode = utf8.encode(str);
-        // 使用 encode 方法会自动切换成读模式
-        debugAll(encode); // pos = 0, limit = 5
+        // 2、Charset
+        // position: [0], limit: [5] 自动切换到读模式
+        ByteBuffer encode = UTF_8.encode(hello);
 
-        // 3. wrap
-        ByteBuffer wrap = ByteBuffer.wrap(str.getBytes(StandardCharsets.UTF_8));
-        // wrap 会自动切换成读模式
-        debugAll(wrap);  // pos = 0, limit = 5
+        // 3、ByteBuffer.wrap()
+        // position: [0], limit: [5] 自动切换到读模式
+        ByteBuffer wrap = ByteBuffer.wrap(hello.getBytes(UTF_8));
 
         // byteBuffer -> str
-//        Charset.forName("UTF-8") == StandardCharsets.UTF_8
         // 解码 decode 需要 wrap 是 读模式，否则失败
         buffer.flip();
-        CharBuffer decode = StandardCharsets.UTF_8.decode(buffer);
-        System.out.println(decode);
+        String decode = StandardCharsets.UTF_8.decode(buffer).toString();
+        log.info("decode: {}" + decode);
     }
+}
+
 ```
 
 输出
@@ -565,7 +580,7 @@ position: [0], limit: [5]
 +--------+-------------------------------------------------+----------------+
 |00000000| 68 65 6c 6c 6f                                  |hello           |
 +--------+-------------------------------------------------+----------------+
-hello
+decode：hello
 
 ===============================================
 Default Suite
@@ -698,31 +713,41 @@ onetwothreefourfive
 现在要求你编写程序，将错乱的数据恢复成原始的按 \n 分隔的数据
 
 ```java
-public static void main(String[] args) {
-    ByteBuffer source = ByteBuffer.allocate(32);
-    //                     11            24
-    source.put("Hello,world\nI'm zhangsan\nHo".getBytes());
-    split(source);
+public class TestByteBufferExam {
+    private static Logger logger = LoggerFactory.getLogger(TestByteBufferExam.class);
 
-    source.put("w are you?\nhaha!\n".getBytes());
-    split(source);
-}
-
-private static void split(ByteBuffer source) {
-    source.flip(); // 读模式
-    int oldLimit = source.limit();// limit,字节数
-    for (int i = 0; i < oldLimit; i++) {
-        if (source.get(i) == '\n') {
-            System.out.println(i);
-            ByteBuffer target = ByteBuffer.allocate(i + 1 - source.position());
-            // 0 ~ limit
-            source.limit(i + 1);
-            target.put(source); // 从source 读，向 target 写
-            debugAll(target);
-            source.limit(oldLimit);
-        }
+    public static void main(String[] args) {
+        ByteBuffer source = ByteBuffer.allocate(32);
+        //                     11            24
+        source.put("Hello,world\nI'm zhangsan\nHo".getBytes());
+        split(source, '\n');
+        source.put("w are you?\nhaha!\n".getBytes());
+        split(source, '\n');
     }
-    source.compact();
+
+    private static void split(ByteBuffer buffer, char newLine) {
+        // 切换到读模式
+        buffer.flip();
+        int size = buffer.limit();
+        // 读到换行符
+        // 我希望拿到最后一个换行符
+        for (int i = 0; i < size; i++) {
+            byte b;
+            ByteBuffer target;
+            if ((b = buffer.get(i)) == newLine){
+                // 将之前的数据全部存入新的buffer
+                int length = i + 1 - buffer.position();
+                target = ByteBuffer.allocate(length);
+                // [position, i+1)
+                buffer.limit(i+1);
+                target.put(buffer);
+                debugAll(target);
+                buffer.limit(size);
+            }
+        }
+        // 切换到写模式
+        buffer.compact();
+    }
 }
 ```
 
@@ -731,41 +756,45 @@ private static void split(ByteBuffer source) {
 **MyCode**
 
 ```java
-@Slf4j
-public class TestFinallyByteBuffer {
-    private static int count = 0;
+public class TestByteBufferExam {
+    private static Logger logger = LoggerFactory.getLogger(TestByteBufferExam.class);
 
     public static void main(String[] args) {
         ByteBuffer source = ByteBuffer.allocate(32);
         //                     11            24
         source.put("Hello,world\nI'm zhangsan\nHo".getBytes());
-        split(source);
-
+        split(source, '\n');
         source.put("w are you?\nhaha!\n".getBytes());
-        split(source);
+        split(source, '\n');
     }
 
-    public static void split(ByteBuffer buffer) {
-        // 获取当前数据大小
-        int oldLimit = buffer.flip().limit();
-        // 开始读取
-        for (int i = 0; i < oldLimit; i++) {
-            // 遇到 \n 读取前面所有的
-            if (buffer.get(i) == '\n') {
-                // 遇到 '\n',获取 pos - (i-1);
-                ByteBuffer buf = ByteBuffer.allocate(i - buffer.position());
+    private static void split(ByteBuffer buffer, char newLine) {
+        // 切换到读模式
+        buffer.flip();
+        int size = buffer.limit();
+        // 读到换行符
+        // 我希望拿到最后一个换行符
+        for (int i = 0; i < size; i++) {
+            byte b;
+            ByteBuffer target;
+            if ((b = buffer.get(i)) == newLine) {
+                // 将之前的数据全部存入新的buffer
+                // [position, i) 将这部分写入 target
+                // 如果是 i + 1则会读取 \n，我不想要
                 buffer.limit(i);
-                buf.put(buffer); // 放入 buf
-                buf.flip(); // 变成 读 模式
-                String message = StandardCharsets.UTF_8.decode(buf).toString();
-                log.info("收到第{}条消息,{}", ++count, message);
-                // 读完之后，将 pos 移到 i + 1
-                buffer.limit(oldLimit); // 复原 limit
+                int length = i - buffer.position();
+                target = ByteBuffer.allocate(length);
+                // put 之后，buffer 的 position 会移动
+                target.put(buffer);
+                target.flip();
+                String message = StandardCharsets.UTF_8.decode(target).toString();
+                logger.info("message: {}", message);
+                buffer.limit(size);
+                // 重新设置 position ，跳过 \n
                 buffer.position(i + 1);
-                // 继续读
             }
         }
-        // 读完后，可能还有剩余，将剩余内容向前压缩
+        // 切换到写模式
         buffer.compact();
     }
 }
@@ -1223,40 +1252,81 @@ public static void copy() throws IOException {
 
 ```java
 public class Server {
-    private static ByteBuffer buffer = ByteBuffer.allocate(FileUtil._1M);
-
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
     public static void main(String[] args) throws IOException {
-        // 1. 创建服务器
-        ServerSocketChannel open = ServerSocketChannel.open();
-        // 2. 绑定监听端口
-        open.bind(new InetSocketAddress(InetAddress.getLocalHost(), 8080));
-        ArrayList<SocketChannel> list = new ArrayList<>();
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        // 使用 nio 理解阻塞io
+        // 1、创建服务器通道
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        // 2、绑定端口
+        serverChannel.bind(new InetSocketAddress(8080));
+        // 3、accept 建立连接
         while (true) {
-            // 3. accept 建立连接, socketChannel 与客户端通信
-            log.info("connecting ...");
-            // accept(),阻塞方法，线程停止运行
-            SocketChannel socketChannel = open.accept();
-            log.info("connection success ...");
-            list.add(socketChannel);
-            // 4. 接收客户端数据
-            list.forEach(channel -> {
-                try {
-                    log.info("before read");
-                    // read() 阻塞方法
-                    channel.read(buffer);
-                    buffer.flip();
-                    FileUtil.readBuffer(buffer);
-                    buffer.clear();
-                    log.info("after read");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-
+            log.info("waiting for client connect...");
+            // 阻塞方法
+            SocketChannel accept = serverChannel.accept();
+            // 4、获取客户端连接的地址
+            SocketAddress remoteAddress = accept.getRemoteAddress();
+            log.info("client connect success：{}", remoteAddress);
+            // 阻塞方法
+            accept.read(buffer);
+            buffer.flip();
+            String message = StandardCharsets.UTF_8.decode(buffer).toString();
+            log.info("接收到客户端的数据：{}", message);
+            buffer.clear();
         }
     }
 }
+```
 
+多线程的方式
+
+```java
+public class Server {
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
+
+    public static void main(String[] args) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        // 使用 nio 理解阻塞io
+        // 1、创建服务器通道
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        // 2、绑定端口
+        serverChannel.bind(new InetSocketAddress(8080));
+        // 3、accept 建立连接
+        while (true) {
+            log.info("waiting for client connect...");
+            // 阻塞方法
+            SocketChannel accept = serverChannel.accept();
+            new Thread(new ServerThread(accept)).start();
+        }
+    }
+
+    static class ServerThread implements Runnable {
+        private final SocketChannel socketChannel;
+
+        public ServerThread(SocketChannel socketChannel) {
+            this.socketChannel = socketChannel;
+        }
+
+        @Override
+        public void run() {
+            log.warn("thread name: {}", Thread.currentThread().getName());
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            try {
+                SocketAddress remoteAddress = socketChannel.getRemoteAddress();
+                log.info("client connect success：{}", remoteAddress);
+                // 阻塞方法
+                socketChannel.read(buffer);
+                buffer.flip();
+                String message = StandardCharsets.UTF_8.decode(buffer).toString();
+                log.info("接收到客户端的数据：{}", message);
+                buffer.clear();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
 ```
 
 客户端
@@ -1299,43 +1369,44 @@ public class Client {
 服务器端，客户端代码不变
 
 ```java
-public static void main(String[] args) throws IOException {
-        // 1. 创建服务器
-        ServerSocketChannel open = ServerSocketChannel.open();
-        open.configureBlocking(false); // 切换成 非阻塞模式
-        // 2. 绑定监听端口
-        open.bind(new InetSocketAddress(InetAddress.getLocalHost(), 8080));
-        ArrayList<SocketChannel> list = new ArrayList<>();
-        while (true) {
-            // 3. accept 建立连接, socketChannel 与客户端通信
-//            log.info("connecting ...");
-            // accept(),阻塞方法，线程停止运行
-            // 非阻塞后 socketChannel 没有连接会是 null
-            SocketChannel socketChannel = open.accept();
-            if (socketChannel != null){
-                log.info("connection success ...");
-                socketChannel.configureBlocking(false); // 设置非阻塞模式
-                list.add(socketChannel);
-            }
-            // 4. 接收客户端数据
-            list.forEach(channel -> {
-                try {
-//                    log.info("before read");
-                    // read() 阻塞方法
-                    int read = channel.read(buffer);
-                    buffer.flip();
-                    if (read > 0){
-                        FileUtil.readBuffer(buffer);
-                        log.info("after read");
-                    }
-                    buffer.clear();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
+public class Server {
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
 
+    public static void main(String[] args) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        // 使用 nio 理解阻塞io
+        // 1、创建服务器通道
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        // 设置为非阻塞
+        serverChannel.configureBlocking(false);
+        // 2、绑定端口
+        serverChannel.bind(new InetSocketAddress(8080));
+        List<SocketChannel> channels = new ArrayList<>();
+        // 3、accept 建立连接
+        while (true) {
+            // 非阻塞时，没有连接返回 null
+            SocketChannel accept = serverChannel.accept();
+            if (accept != null) {
+                // 4、获取客户端连接的地址
+                SocketAddress remoteAddress = accept.getRemoteAddress();
+                log.info("client connect success：{}", remoteAddress);
+                // 设置非阻塞
+                accept.configureBlocking(false);
+                channels.add(accept);
+            }
+            for (SocketChannel channel : channels) {
+                channel.read(buffer);
+                buffer.flip();
+                String message = StandardCharsets.UTF_8.decode(buffer).toString();
+                if (message.length() != 0) {
+                    log.info("接收到{}的数据：{}", channel.getRemoteAddress(), message);
+                }
+                buffer.clear();
+            }
         }
     }
+}
+
 ```
 
 
@@ -1522,44 +1593,74 @@ public class Client {
 服务器端代码为
 
 ```java
-@Slf4j
-public class ChannelDemo6 {
-    public static void main(String[] args) {
-        try (ServerSocketChannel channel = ServerSocketChannel.open()) {
-            channel.bind(new InetSocketAddress(8080));
-            System.out.println(channel);
-            Selector selector = Selector.open();
-            channel.configureBlocking(false);
-            channel.register(selector, SelectionKey.OP_ACCEPT);
+public class Server {
+    private static final Logger log = LoggerFactory.getLogger(Server.class);
+    private static final int DEFAULT_PORT = 8080;
 
-            while (true) {
-                int count = selector.select();
-//                int count = selector.selectNow();
-                log.debug("select count: {}", count);
-//                if(count <= 0) {
-//                    continue;
-//                }
+    public static void main(String[] args) throws IOException {
+        // 1、创建selector 管理多个channel
+        Selector selector = Selector.open();
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        ServerSocketChannel serverChannel = ServerSocketChannel.open();
+        serverChannel.configureBlocking(false);
 
-                // 获取所有事件
-                Set<SelectionKey> keys = selector.selectedKeys();
-
-                // 遍历所有事件，逐一处理
-                Iterator<SelectionKey> iter = keys.iterator();
-                while (iter.hasNext()) {
-                    SelectionKey key = iter.next();
-                    // 判断事件类型
-                    if (key.isAcceptable()) {
-                        ServerSocketChannel c = (ServerSocketChannel) key.channel();
-                        // 必须处理
-                        SocketChannel sc = c.accept();
-                        log.debug("{}", sc);
-                    }
-                    // 处理完毕，必须将事件移除
-                    iter.remove();
+        /**
+         * selector：表示要注册到的Selector对象。Selector负责监视通道的事件，并在事件发生时通知相应的处理程序。
+         *
+         * interestOps：表示所关注的事件类型。可以使用以下常量进行设置：
+         *
+         * SelectionKey.OP_CONNECT：连接就绪事件（客户端通道）
+         * SelectionKey.OP_ACCEPT：接受连接事件（服务器通道）
+         * SelectionKey.OP_READ：读取数据事件
+         * SelectionKey.OP_WRITE：写入数据事件
+         * 可以使用按位或（|）操作符组合多个事件类型，如SelectionKey.OP_READ | SelectionKey.OP_WRITE表示关注读取和写入事件。
+         *
+         * attachment：表示可选的附件对象。可以将一个对象附加到SelectionKey上，在处理事件时获取该附件对象。如果不需要附件，可以传入null
+         */
+        // 2、注册channel到selector
+        // 事件发生后，通过 register
+        // 当前的serverChannel仅仅需要关注accept事件 (0 表示不关注任何事件)
+        serverChannel.register(selector, SelectionKey.OP_ACCEPT, null);
+        log.info("serverChannel register success");
+        serverChannel.bind(new InetSocketAddress(DEFAULT_PORT));
+        while (true) {
+            // 3、select()、让线程阻塞，有事件发生，继续执行
+            // select()在事件发生后，要么处理，要么取消，否则会一直存在，不阻塞
+            selector.select();
+            log.info("The selector detects the event being sent");
+            // 4、获取事件  selectedKeys内部包含所有事件
+            Set<SelectionKey> set = selector.selectedKeys();
+            // 5、遍历事件
+            Iterator<SelectionKey> iterator = set.iterator();
+            while (iterator.hasNext()) {
+                SelectionKey next = iterator.next();
+                // 区分事件类型
+                if (next.isAcceptable()) {
+                    // 发生事件的 channel
+                    // 如果没有处理，会一直存在，会进入下一次的 selector.select()
+                    ServerSocketChannel channel = (ServerSocketChannel) next.channel();
+                    // 取消事件（不会进入下一次selector.select()）
+                    //next.cancel();
+                    SocketChannel accept = channel.accept();
+                    accept.configureBlocking(false);
+                    // 注册
+                    accept.register(selector, SelectionKey.OP_READ, null);
+                    log.info("accept:{}", accept);
+                } else if (next.isReadable()) {
+                    SocketChannel channel = (SocketChannel) next.channel();
+                    SocketAddress address = channel.getRemoteAddress();
+                    // 读取数据
+                    channel.read(buffer);
+                    buffer.flip();
+                    log.info("ip {}, read:{}", address, StandardCharsets.UTF_8.decode(buffer).toString());
+                    buffer.clear();
+                }else {
+                    // 其他事件 取消
+                    next.cancel();
                 }
+                // 移除事件
+                iterator.remove();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
@@ -2637,6 +2738,8 @@ public class UdpClient {
 
 
 当调用一次 channel.read 或 stream.read 后，会切换至操作系统内核态来完成真正数据读取，而读取又分为两个阶段，分别为：
+
+
 
 * 等待数据阶段
 * 复制数据阶段

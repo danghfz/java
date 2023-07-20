@@ -9,7 +9,7 @@ MQ，Message Queue，是一种提供消息队列服务的中间件，也称为�
 
 * 限流削峰
     * MQ可以将系统的超量请求暂存其中，以便系统后期可以慢慢进行处理，从而避免了请求的丢失或系统被压垮。
-![输入图片说明](./images/QQ截图20220208101908.png "QQ截图20201229183512.png")
+    ![输入图片说明](./images/QQ截图20220208101908.png "QQ截图20201229183512.png")
 
 * 异步解耦
     * 上游系统对下游系统的调用若为同步调用，则会大大降低系统的吞吐量与并发度，且系统耦合度太高。而异步调用则会解决这些问题。所以两层之间若要实现由同步到异步的转化，一般性做法就是，在这两层间添加一个MQ层。
@@ -88,6 +88,7 @@ Topic表示一类消息的集合，每个主题包含若干条消息，每条消
 和消费一种Topic的消息。 producer:topic 1:n consumer:topic 1:1
 
 ### 3 标签（Tag）
+
 >为消息设置的标签，用于同一主题下区分不同类型的消息。来自同一业务单元的消息，可以根据不同业务目的在同一主题下设置不同标签。标签能够有效地保持代码的清晰度和连贯性，并优化RocketMQ提供的查询系统。消费者可以根据Tag实现对不同子主题的不同消费逻辑，实现更好的扩展性。
 
 Topic是消息的一级分类，Tag是消息的二级分类。
@@ -103,9 +104,10 @@ Topic是消息的一级分类，Tag是消息的二级分类。
 * topic=货物 tag = *
 
 ### 4 队列（Queue）
+
 存储消息的物理实体。一个Topic中可以包含多个Queue，每个Queue中存放的就是该Topic的消息。一个Topic的Queue也被称为一个Topic中消息的分区（Partition）。
 
-一个Topic的Queue中的消息只能被一个消费者组中的一个消费者消费。一个Queue中的消息不允许同一个消费者组中的多个消费者同时消费。
+[一个Topic的Queue中的消息只能被一个消费者组中的一个消费者消费。](一个Queue中的消息不允许同一个消费者组中的多个消费者同时消费。)
 
 ![输入图片说明](./images/QQ截图20220208104018.png "QQ截图20201229183512.png")
 
@@ -129,6 +131,7 @@ RocketMQ架构上主要分为四部分构成：
 ### 1 Producer
 消息生产者，负责生产消息。Producer通过MQ的负载均衡模块选择相应的Broker集群队列进行消息投
 递，投递的过程支持快速失败并且低延迟。
+
 > 例如，业务系统产生的日志写入到MQ的过程，就是消息生产的过程
 
 > 再如，电商平台中用户提交的秒杀请求写入到MQ的过程，就是消息生产的过程
@@ -143,7 +146,7 @@ RocketMQ中的消息生产者都是以生产者组（Producer Group）的形式�
 
 >再如，电商平台的业务系统从MQ中读取到秒杀请求，并对请求进行处理的过程就是消息消费的过程。
 
-RocketMQ中的消息消费者都是以消费者组（Consumer Group）的形式出现的。消费者组是同一类消费者的集合，这类Consumer消费的是同一个Topic类型的消息。消费者组使得在消息消费方面，实现负载均衡（将一个Topic中的不同的Queue平均分配给同一个Consumer Group的不同的Consumer，注意，并不是将消息负载均衡）和容错（一个Consmer挂了，该Consumer Group中的其它Consumer可以接着消费原Consumer消费的Queue）的目标变得非常容易。
+RocketMQ中的消息消费者都是以消费者组（Consumer Group）的形式出现的。消费者组是同一类消费者的集合，这类Consumer消费的是同一个Topic类型的消息。消费者组使得在消息消费方面，实现负载均衡（将一个Topic中的不同的**Queue**平均分配给同一个Consumer Group的不同的Consumer，注意，并不是将消息负载均衡）和容错（一个Consmer挂了，该Consumer Group中的其它Consumer可以接着消费原Consumer消费的**Queue**）的目标变得非常容易。
 
 ![输入图片说明](./images/QQ截图20220208105007.png "QQ截图20201229183512.png")
 
@@ -153,14 +156,17 @@ RocketMQ中的消息消费者都是以消费者组（Consumer Group）的形式�
 
 不过，一个Topic类型的消息可以被多个消费者组同时消费。
 >注意，
-* 1 ）消费者组只能消费一个Topic的消息，不能同时消费多个Topic消息
-* 2 ）一个消费者组中的消费者必须订阅完全相同的Topic
+>
+>1 ）消费者组只能消费一个Topic的消息，不能同时消费多个Topic消息
+>
+>2 ）一个消费者组中的消费者必须订阅完全相同的Topic
+
 
 ### 3 Name Server
 
 #### 功能介绍
 
-NameServer是一个Broker与Topic路由的注册中心，支持Broker的动态注册与发现。
+NameServer是一个Broker与Topic路由的注册中心(zookeeper，nacos等)，支持Broker的动态注册与发现。
 
 RocketMQ的思想来自于Kafka，而Kafka是依赖了Zookeeper的。所以，在RocketMQ的早期版本，即在MetaQ v1.0与v2.0版本中，也是依赖于Zookeeper的。从MetaQ v3.0，即RocketMQ开始去掉了Zookeeper依赖，使用了自己的NameServer。
 
