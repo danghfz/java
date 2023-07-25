@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+<!--基于xml配置aop-->
+<!--    创建对象-->
+    <bean id="user" class="AOP.dao.User"/>
+    <bean id="superUser" class="AOP.dao.SuperUser"/>
+    <!--    配置切入点设置-->
+    <aop:config>
+        <!--        切入点-->
+        <aop:pointcut id="add" expression="execution(* AOP.dao.SuperUser.before())"/>
+        <!--        配置切面-->
+        <aop:aspect ref="superUser">
+            <!--            增强在具体的方法上-->
+            <aop:before method="before" pointcut-ref="add"/>
+        </aop:aspect>
+    </aop:config>
+    <aop:aspectj-autoproxy/>
+</beans>

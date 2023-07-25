@@ -1,0 +1,43 @@
+server:
+  port: 8080
+  tomcat:
+    accesslog:
+      condition-unless:
+#  servlet:
+#    context-path: /dhf #前置路径，之后所有的请求都要加这个路径http://localhost:8080/dhf/...
+
+#spring:
+#  mvc:
+#    #静态资源访问前缀
+#    static-path-pattern: /resource/**
+#    #静态资源访问路径
+#  web:
+#    resources:
+#      static-locations:
+#        - classpath:/static/
+#        - classpath:/public/
+#        - classpath:/resources/
+#        - classpath:/META-INF/resources/
+spring:
+  web:
+    resources:
+      cache:
+        max-age: 3600 #缓存时间
+      static-locations:
+        - classpath:/static/
+        - classpath:/public/
+        - classpath:/resources/
+        - classpath:/META-INF/resources/
+      # add-mappings: false 禁用静态资源访问
+      add-mappings: true
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true #开启表单Rest功能,PUT,DELETE,请求Restful风格
+
+    contentnegotiation: #内容协商
+      favor-parameter: true #开启参数内容协商
+      parameter-name: format #参数名称(参数内容协商)
+
+  thymeleaf:
+    prefix: classpath:/static/ #Controller跳转到html页面配置

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>
+    <h1>首页</h1>
+</div>
+<div>
+
+    <form th:action="@{/testRequestBody}" method="post">
+        姓名 <input type="text" name="username"><br>
+        密码 <input type="password" name="password"><br>
+        <button type="submit">testRequestBody</button>
+    </form>
+</div>
+<br>
+<div>
+
+    <form th:action="@{/testRequestEntity}" method="post">
+        姓名 <input type="text" name="username"><br>
+        密码 <input type="password" name="password"><br>
+        <button type="submit">testRequestEntity</button>
+    </form>
+</div>
+<div>
+    <a th:href="@{/testResponse}">testResponse</a>
+</div>
+<div>
+    <a th:href="@{/testUser}">testJsonUser</a>
+</div>
+<div>
+    <a id="ajax" th:href="@{/testAjax}">testAjax</a>
+</div>
+<div>
+    <a th:href="@{/file}">文件测试</a>
+</div>
+<script th:src="@{/static/jquery-1.7.2.js}"></script>
+<script>
+    $(function () {
+        $("#ajax").click(function () {
+            $.ajax({
+                url: $("#ajax").prop("href"),
+                data: {
+                    username : "admin",
+                    password : "123456"
+                },//参数
+                type: "GET",
+                success: function (data) {//响应数据
+                    alert(data.username+"=="+data.password)
+                },
+                dataType: "json"
+            })
+            return false;
+        })
+    })
+</script>
+</body>
+</html>

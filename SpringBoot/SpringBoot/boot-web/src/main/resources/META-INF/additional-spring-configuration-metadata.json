@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "spring.web.resources.cache.max-age",
+      "type": "java.lang.String",
+      "description": "Description for spring.web.resources.cache.max-age."
+  }
+] }

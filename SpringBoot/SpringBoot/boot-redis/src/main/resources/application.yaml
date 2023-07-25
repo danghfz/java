@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+        - classpath:/public/
+        - classpath:/resources/
+        - classpath:/META-INF/resources/
+        - classpath:/templates/
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 15 # 默认的数据库
+    timeout: 1800000 # 超时时间毫秒
+    jedis:
+      pool:
+        max-active: 20 # 最大连接数
+        max-wait: -1 #最大阻塞时间
+        max-idle: 5 # 连接池最大空闲连接
+        min-idle: 0
+    client-type: jedis # jedis连接工厂
+#    client-type: lettuce # lettuce连接工厂
+#    lettuce:
+#      pool:
+#        max-active: 20 # 最大连接数
+#        max-wait: -1 #最大阻塞时间
+#        max-idle: 5 # 连接池最大空闲连接
+#        min-idle: 0

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>success</title>
+    <style>
+        div
+        {
+            overflow:auto;
+            word-wrap:break-word;
+            /*width:100px;*/
+            /*height:100px;*/
+            /*background:rgb(248,251,132);*/
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <div>请求体RequestBody</div>
+        <p th:text="${requestBody}"></p>
+    </div>
+    <div>
+        <div>请求实体requestEntity</div>
+        <div th:text="${requestEntity}"></div>
+        <div th:text="请求体+${requestEntity.Body}"></div>
+        <div th:text="请求头+${requestEntity.Headers}"></div>
+
+    </div>
+</body>
+</html>

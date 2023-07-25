@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!--iframe标签可以在页面上开辟一个小区域显示一个单独的页面-->
+
+<iframe
+        src = 'img标签.html' width="600" height="700" name="abc">
+</iframe>
+<!--iframe和a标签的联合使用步骤
+        1.在iframe标签使用 name 定义一个名称
+        2.在a标签中设置 target 属性为iframe的 name值
+        只后超链接的结果就会在iframe中展示
+-->
+<br/>
+<ul>
+    <li><a href = '0标签语法.html' target="abc">菜单一</a></li>
+    <li><a href="1.font标签.html" target="abc">菜单二</a></li>
+    <li><a href="表格.html" target="abc"></a></li>
+</ul>
+</body>
+</html>

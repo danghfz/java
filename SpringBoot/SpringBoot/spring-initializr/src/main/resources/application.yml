@@ -1,0 +1,39 @@
+#  public class Person {
+#    private String userName;
+#    private Boolean boss;
+#    private Date birth;
+#    private Integer age;
+#    private Pet pet;
+      #private String name;
+      #private Double weight;
+#    private String[] interests;
+#    private List<String> animal;
+#    private Map<String, Object> score;
+#    private Set<Double> salarys;
+#    private Map<String, List<Pet>> allPets;
+#  }
+# 容器中放入一个Person对象
+person: # @ConfigurationProperties(prefix = "person")
+  user-name: tom
+  boss: false
+  birth: 2022/5/30 11:59:00
+  age: 30
+  pet:
+    name: cat
+    weight: 22.4
+  interests: [football, basketball, swimming]
+  animal: #list 和 数组一样
+    - cat
+    - dog
+  score: #map<Object,Object>
+    {chinese: 90, math: 100, english: 100}
+  salarys: #set
+    - 100.0
+    - 200.0
+    - 300.0
+  allPets: #Map<String,List<Pet>>
+    one: [{name: tomcat, weight: 22.4}]
+    two:
+      - {name: cat, weight: 22.4}
+      - {name: dog, weight: 22.4}
+

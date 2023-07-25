@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>测试获取请求参数</title>
+</head>
+<body>
+    <h1>测试获取请求参数</h1>
+    <a th:href="@{/testRequestAPI?username='dhf'}">/testRequestAPI?username='dhf'</a><br>
+    <a th:href="@{/testParam(username='dhf')}">通过控制器方法的形参/testParam</a><br>
+    <a th:href="@{/testParameter/dhf}">占位符形式获取形参/testParameter</a><br>
+    <form th:action="@{/testForm}" method="post">
+        用户名：<input type="text" name="username"><br>
+        密  码：<input type="password" name="password"><br>
+        爱  好：<input type="checkbox" name="hobby" value="a">a
+        <input type="checkbox" checked name="hobby" value="b">b
+        <input type="checkbox" name="hobby" value="c">c
+        <input type="checkbox" name="hobby" value="d">d<br>
+        <input type="submit">
+    </form>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>request域
+    <div th:text="${#request.getAttribute('msg')}"></div>
+    <!--request域中的数据可以直接${key}取出-->
+    <div th:text="${msg}"></div>
+</div>
+<br>
+<div>session域
+    <div th:text="${#session.getAttribute('msg')}"></div>
+    <div th:text="${session.msg}"></div>
+</div>
+<br>
+<div>Application域
+    <div th:text="${#servletContext.getAttribute('msg')}"></div>
+    <div th:text="${application.msg}"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script>
+        //静态注册
+        //提交之间检查,如果发现错误
+        function fun(){
+            //检查
+            if (0) {
+                alert("静态提交");
+                return true;
+            }else { //发现不合法
+                alert('不合法,阻止');
+                return false;
+            }
+        }
+        //动态提交
+        window.onsubmit = function (){
+            var obj = document.getElementById("01");
+            obj.onsubmit = function (){
+                //检查
+                if (1) {
+                    alert("动态态提交");
+                    return true;
+                }else { //发现不合法
+                    alert('不合法,阻止');
+                    return false;
+                }
+            }
+        }
+    </script>
+</head>
+<body>
+<!--return 可以阻止提交-->
+<form onsubmit="return fun()" action="https://localhost:8080" method="post">
+    <input type="submit" value="静态提交">
+</form>
+<form id="01" action="https://localhost:8080" method="post">
+    <input type="submit" value="动态提交">
+</form>
+</body>
+</html>

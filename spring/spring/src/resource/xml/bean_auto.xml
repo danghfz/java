@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <!--自动装配
+    bean的autowire属性
+    byName根据名称注入，注入bean的id值和类属性名称一样
+    byType根据属性类型注入-->
+    <bean autowire="byName" id="employee" class="com.local.spring5.ioc.xml.bean.Employee"/>
+    <bean id="dept" class="com.local.spring5.ioc.xml.bean.Dept">
+        <constructor-arg name="depton" value="0001"/>
+        <constructor-arg name="dname" value="安保部"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>
+<table border="1">
+    <tr>
+        <td>#</td>
+        <td>id</td>
+        <td>name</td>
+        <td>age</td>
+        <td>email</td>
+        <td>操作</td>
+    </tr>
+    <tr th:each="emp,stat:${page.records}" >
+        <td th:text="${stat.count}"></td>
+        <td th:text="${emp.id}"></td>
+        <td th:text="${emp.name}"></td>
+        <td th:text="${emp.age}"></td>
+        <td th:text="${emp.email}"></td>
+        <td>
+            <a th:href="@{/del(id=${emp.id},page=${page.current})}" type="button">删除</a>
+        </td>
+    </tr>
+
+</table>
+</div>
+<div>
+    当前第【[[${page.current}]]】页，共[[${page.total}]]页
+</div>
+<ul>
+    <li><a th:href="@{/getPage(page=${page.current}-1)}" th:enctype="false">前一页</a></li>
+        <li th:each="num:${#numbers.sequence(1,page.pages)}">
+        <a th:href="@{/getPage(page=${num})}">[[${num}]]</a>
+    </li>
+    <li><a th:href="@{/getPage(page=${page.current}+1)}">后一页</a></li>
+</ul>
+</body>
+</html>

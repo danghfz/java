@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <base th:href="${#request.getScheme}+'://'+${#request.getServerName}+':'+${#request.getServerPort}+${#request.contextPath}+'/'">
+</head>
+<body>
+<h2>测试PoJo传参</h2>
+
+<form action="pojo" method="post">
+<table border="1">
+    <tr>
+        <td>name</td>
+        <td><input type="text" name="name"/></td>
+        <h1 th:text="${msg}"></h1>
+    </tr>
+    <tr>
+        <td>age</td>
+        <td><input type="text" name="age"></td>
+    </tr>
+    <tr>
+        <td>pet.name</td>
+        <td><input type="text" name="pet.name"></td>
+    </tr>
+    <tr>
+        <td>pet.age</td>
+        <td><input type="text" name="pet.age"/></td>
+    </tr>
+    <tr>
+        <td>提交</td>
+        <td><input type="submit" name="but" value="提交"/></td>
+    </tr>
+</table>
+</form>
+<table border="1">
+    <tr>
+        <td>name</td>
+        <td><input type="text" th:value="${user.name}" disabled></td>
+    </tr>
+    <tr>
+        <td>age</td>
+        <td><input type="text" th:value="${user.age}" disabled></td>
+    </tr>
+    <tr>
+        <td>pet.name</td>
+        <td><input type="text" th:value="${user.pet.name}" disabled></td>
+    </tr>
+    <tr>
+        <td>pet.age</td>
+        <td><input type="text" th:value="${user.pet.age}" disabled></td>
+    </tr>
+</table>
+</body>
+</html>

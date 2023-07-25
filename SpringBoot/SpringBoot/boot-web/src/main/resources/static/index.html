@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <base th:href="${#request.getScheme}+'://'+${#request.getServerName}+':'+${#request.getServerPort}+'/'+${#request.contextPath}+'/'">
+</head>
+<body>
+    <h1>
+        首页 WelCome
+    </h1>
+<br>
+<a href="user.html">user.html测试rest风格</a><br>
+<a href="param.html">param.html测试参数传递</a><br>
+<a href="PoJo.html">自定义参数传递PoJo</a>
+</body>
+</html>

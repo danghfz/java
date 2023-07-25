@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.local.dhf.bootmybatis.mapper.UserMapper">
+<!--    User getUser(String id);-->
+    <select id="getUser" resultType="com.local.dhf.bootmybatis.pojo.User">
+        select * from test where id = #{id}
+    </select>
+</mapper>

@@ -1,0 +1,33 @@
+server:
+  port: 8801
+spring:
+  application:
+    name: cloud-stream-producter
+  rabbitmq:
+    host: centos.com
+    password: dhf200827
+    username: danghf
+    port: 5672
+  cloud:
+    stream:
+      binders: # 配置绑定的rabbitmq的服务信息 Map<String, BinderProperties> binders
+        rabbit_1: # 是定义的名称，用于binding整合
+          type: rabbit # 服务组件类型
+          environment: # 设置rabbit相关的环境配置 Map<String,Object>
+            spring:
+              rabbitmq:
+                host: centos.com
+                password: dhf200827
+                username: danghf
+                port: 5672
+      bindings: # 服务的整合处理 Map<String, BindingProperties> bindings
+        producer-out-0: # 通道名称，表示生产者
+          destination: topicExchange # 表示使用的exchange名称
+          connect-type: application/json # 设置消息的类型，文本：text/plain，json：application/json
+          binder: rabbit_1  # 设置要绑定的消息服务的具体设置
+eureka:
+  instance:
+    instance-id: producter8801
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka

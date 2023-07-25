@@ -1,0 +1,37 @@
+server:
+  port: 8002
+#  servlet:
+#    encoding:
+#      charset: UTF-8
+#      enabled: true
+#      force: true
+spring:
+  application:
+    name: cloud-payment-service
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/cloud
+    password: root
+    username: root
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+Eureka:
+  instance:
+    instance-id: payment8002
+    prefer-ip-address: true # 访问路径可以显示ip
+  client:
+    # 将自己注册进 EurekaService 默认 true
+    register-with-eureka: true
+    # 是否从 Eureka抓取已有注册信息
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:7001/eureka,http://localhost:7002/eureka  # 集群
+#      defaultZone: http://localhost:7001/eureka

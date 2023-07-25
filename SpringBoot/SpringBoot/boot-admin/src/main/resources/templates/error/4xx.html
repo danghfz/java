@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>404错误</title>
+</head>
+<body>
+    <h1>4xx错误</h1>
+    <h2 th:text="${status}"></h2>
+    <h3 th:text="${message}"></h3>
+<a th:href="@{/success}">返回</a>
+</body>
+</html>

@@ -1,0 +1,20 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: cloud-hystrix-order8080
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002.com:7002/eureka
+    register-with-eureka: true
+    fetch-registry: true
+feign:
+  circuitbreaker: # 断路器
+    enabled: true # default true
+  client:
+    config:
+      default:
+        read-timeout: 5000
+        connect-timeout: 5000

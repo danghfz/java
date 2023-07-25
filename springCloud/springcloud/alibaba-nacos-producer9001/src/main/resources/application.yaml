@@ -1,0 +1,14 @@
+server:
+  port: 9001
+spring:
+  application:
+    name: nacos-producer
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

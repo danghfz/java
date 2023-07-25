@@ -1,0 +1,31 @@
+server:
+  port: 3355
+spring:
+  application:
+    name: config-client
+  cloud:
+    config:
+      label: master # 分支名称
+      name: cloud-config # 配置文件名称
+      profile: dev # 环境
+      uri: http://localhost:3344 # 配置中心地址
+      # http://localhost:3344/{lable}/{name}-{profile}.yaml
+      # http://localhost:3344/master/cloud-config-dev.yaml
+  rabbitmq:
+    host: centos.com
+    port: 5672
+    password: dhf200827
+    username: danghf
+eureka:
+  instance:
+    instance-id: client3355
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka
+
+# 动态刷新，暴露监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

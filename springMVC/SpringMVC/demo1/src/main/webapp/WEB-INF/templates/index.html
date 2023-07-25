@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<h1 align="center">首页</h1>
+<!--使用thymeleaf 语法 @{}当发现绝对路径时，自动补全前缀-->
+<!--http://localhost:8080/demo1/target-->
+<a th:href="@{/target}">访问target.html</a>
+</body>
+</html>

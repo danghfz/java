@@ -1,0 +1,28 @@
+server:
+  port: 8084
+spring:
+  application:
+    name: alibaba-client
+  cloud:
+    sentinel:
+      transport:
+        dashboard: centos.com:8080
+        port: 8791
+      datasource:
+        ds1:
+          nacos:
+            username: nacos
+            password: nacos
+            server-addr: centos.com:8848
+            dataId: ${spring.application.name}
+            groupId:  DEFAULT_GROUP
+            data-type: json
+            rule-type: flow
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

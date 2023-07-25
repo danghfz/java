@@ -1,0 +1,32 @@
+server:
+  port: 9527
+
+eureka:
+  instance:
+    instance-id: gateway9527
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka,http://eureka7002:7002/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+spring:
+  application:
+    name: cloud-gateway-gateway9527
+  cloud:
+    gateway:
+      routes:
+        - id: payment_8001 # 路由id，无固定规则，但要求唯一，建议配合服务名
+#          uri: http://localhost:8001 # 匹配后，提供服务的路由地址
+          uri: lb://CLOUD-PAYMENT-SERVICE
+          predicates:
+            - Path=/payment/payment/getPaymentById/** # 断言，匹配后提供服务的路由地址
+        - id: payment_8001_route2
+          uri: lb://CLOUD-PAYMENT-SERVICE # 使用服务名 配置
+#          uri: http://localhost:8001
+          predicates:
+            - Path=/payment/payment/payment/discovery # 断言，匹配后提供服务的路由地址
+      discovery:
+        # locator需要打开，不然通过 lb://.. 方式请求不到
+        locator:
+          enabled: true

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div style="align-content: center">这是首页</div>
+<div>测试Scope</div>
+<hr>
+<div>
+    <a th:href="@{/testRequestByServletAPI}">测试testRequestByServletApi</a>
+</div>
+<div>
+    <a th:href="@{/testModelAndView}">测试ModelAndView /testModelAndView</a>
+</div>
+<div>
+    <a th:href="@{/testModel}">测试Model /testModel</a>
+</div>
+<div>
+    <a th:href="@{/testMap}">测试Map /testMap</a>
+</div>
+<div>
+    <a th:href="@{/testModelMap}">测试ModelMap /testModelMap</a>
+</div>
+<div>
+    <a th:href="@{/testSession}">测试Session /testSession</a>
+</div>
+<div>
+    <a th:href="@{/testApplication}">/testApplication</a>
+</div>
+<hr>
+<div>测试view
+    <div>
+        <a th:href="@{/view}">view</a>
+    </div>
+</div>
+<hr>
+<div>forward
+    <div>
+        <a th:href="@{/testForward}">testForward</a>
+    </div>
+</div>
+<hr>
+<div>redirect
+    <div>
+        <a th:href="@{/testRedirect}">testRedirect</a>
+    </div>
+</div>
+<hr>
+</body>
+</html>

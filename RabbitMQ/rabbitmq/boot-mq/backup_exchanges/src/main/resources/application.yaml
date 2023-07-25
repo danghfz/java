@@ -1,0 +1,10 @@
+spring:
+  rabbitmq:
+    port: 5672
+    username: dhf
+    password: dhf200827
+    publisher-returns: true # ????
+    publisher-confirm-type: correlated # ????
+    host: 192.168.152.134
+server:
+  port: 6060

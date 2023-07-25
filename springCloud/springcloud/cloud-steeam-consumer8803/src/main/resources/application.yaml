@@ -1,0 +1,23 @@
+server:
+  port: 8803
+spring:
+  application:
+    name: cloud-stream-consumer8803
+  cloud:
+    stream:
+      bindings: # 没有配置binder使用默认的rabbitmq
+        input-in-0: # 消费者
+          destination: topicExchange # 交换机
+          content-type: application/json
+          group: groupA
+  rabbitmq:
+    host: centos.com
+    password: dhf200827
+    username: danghf
+    port: 5672
+eureka:
+  instance:
+    instance-id: consumer8803
+  client:
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka

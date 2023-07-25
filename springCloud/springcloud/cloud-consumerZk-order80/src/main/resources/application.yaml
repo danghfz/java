@@ -1,0 +1,9 @@
+server:
+  port: 800
+
+spring:
+  application:
+    name: cloud-consumerZk-order80
+  cloud:
+    zookeeper:
+      connect-string: 192.168.152.134:2181 # ip : port

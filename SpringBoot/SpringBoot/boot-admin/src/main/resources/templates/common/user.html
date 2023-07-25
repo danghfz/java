@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+</head>
+<body>
+    <div id="user" style="
+            background: yellow;
+            position: absolute;
+            top: 0px;
+            right: 0px;">
+        <table border="1">
+            <tr>
+                <td>用户:</td>
+                <td th:text="${session.user.username}"></td>
+            </tr>
+        </table>
+    </div>
+</body>
+</html>

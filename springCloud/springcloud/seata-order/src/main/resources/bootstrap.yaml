@@ -1,0 +1,91 @@
+server:
+  port: 2001
+spring:
+#  config:
+#    import:
+#      - optional:nacos:seata-client-demo.yml
+  application:
+    name: seata-order-service
+  cloud:
+    nacos:
+      config:
+        group: SEATA_GROUP
+      discovery:
+        group: SEATA_GROUP # 要与 seata 相同
+        server-addr: centos.com:8848
+  datasource:
+    dynamic: # 多数据源配置
+      primary: mysql1
+      strict: true #严格匹配数据源,默认false. true未匹配到指定数据源时抛异常,false使用默认数据源
+      datasource:
+        mysql1:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_order
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+        mysql2:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_storage
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+        mysql3:
+          driver-class-name: com.mysql.jdbc.Driver
+          url: jdbc:mysql://centos.com:3306/seata_account
+          username: seata
+          password: seata
+          type: com.alibaba.druid.pool.DruidDataSource
+
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+# seata配置
+seata:
+    application-id: seata-cilent-deme
+  # Seata 事务组编号，此处需于 seata 相同
+  tx-service-group: my_test_tx_group # seata配置文件没有配置，用这个默认的
+  config:
+    type: nacos
+    nacos:
+      # nacos ip地址
+      server-addr: centos.com:8848
+      group: SEATA_GROUP
+      data-id: seataServer.properties # 读取 nacos seata 配置
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server # seata 服务名
+      # nacos ip地址
+      server-addr: centos.com:8848
+      group: SEATA_GROUP
+
+# seata:
+#  registry:
+#    type: nacos
+#    nacos:
+#      application: seata-server
+#      server-addr: centos.com:8848
+#      group: SEATA_GROUP
+#      username: danghf
+#      password: dhf200827
+#  service:
+#    vgroup-mapping:
+#      default_tx_group: default
+#    grouplist:
+#      seata-server: centos.com:8091
+#      default: centos.com:8091
+#  config:
+#    type: nacos
+#    nacos:
+#      data-id: seataServer.properties
+#      server-addr: centos.com:8848
+#      group: SEATA_GROUP
+#      username: danghf
+#      password: dhf200827
+#      namespace:
+#  tx-service-group: my_test_tx_group # seata配置文件没有配置，用这个默认的

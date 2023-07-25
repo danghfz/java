@@ -1,0 +1,40 @@
+server:
+  port: 8888 #端口
+  error:
+    path: /error #错误页面
+spring:
+  web:
+    resources:
+      static-locations: #静态资源访问路径
+        - classpath:/static/
+        - classpath:/public/
+        - classpath:/resources/
+        - classpath:/META-INF/resources/
+        - classpath:/templates/
+      cache:
+        max-age: 3600 #缓存时间
+  mvc:
+    servlet:
+      path: / #dispatcherServlet默认处理的路径以 /(default) 开始
+    hiddenmethod:
+      filter:
+        enabled: true #开启表单Rest功能,PUT,DELETE,请求Restful风格
+
+    contentnegotiation:
+      favor-parameter: true #开启参数内容协商
+      parameter-name: format #参数名称(参数内容协商)
+
+  thymeleaf:
+    suffix: .html #Controller跳转到html页面配置
+    prefix: classpath:/templates/ #Controller跳转到html页面配置
+  servlet:
+    multipart:
+      max-file-size: 10MB #文件上传大小限制
+      max-request-size: 100MB #总请求大小限制
+
+management: # 监控配置actuator
+  endpoints:
+    enabled-by-default: true #暴露所有端点信息
+    web:
+      exposure:
+        include: '*'  #以web方式暴露

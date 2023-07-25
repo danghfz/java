@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <table border="1">
+        <tr>
+            <td>#</td>
+            <td>id</td>
+            <td>name</td>
+            <td>age</td>
+            <td>email</td>
+        </tr>
+        <tr th:each="emp,stat:${list}" >
+            <td th:text="${stat.count}"></td>
+            <td th:text="${emp.id}"></td>
+            <td th:text="${emp.name}"></td>
+            <td th:text="${emp.age}"></td>
+            <td th:text="${emp.email}"></td>
+        </tr>
+    </table>
+</body>
+</html>

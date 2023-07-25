@@ -1,0 +1,13 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: nacos-consumer
+  cloud:
+    nacos:
+      server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

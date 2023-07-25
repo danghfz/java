@@ -1,0 +1,17 @@
+server:
+  port: 6080
+spring:
+  application:
+    name: cloud-order-service
+  zipkin:
+    base-url: http://centos.com:9411
+  sleuth:
+    sampler:
+      probability: 1
+Eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+#      defaultZone: http://localhost:7001/eureka
+      defaultZone: http://localhost:7001/eureka,http://localhost:7002/eureka  # 集群

@@ -1,0 +1,35 @@
+server:
+  port: 3344
+spring:
+  application:
+    name: cloud-config
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/dang-huifeng/springCloud-config.git # git 地址
+          search-paths: # 搜索目录
+            - springCloud-config
+          username: 1049334207@qq.com
+          password: dhf200827
+          default-label: master
+      label: master # 读取分支
+  rabbitmq:
+    host: centos.com
+    port: 5672
+    password: dhf200827
+    username: danghf
+eureka:
+  instance:
+    instance-id: cloud-config-center3344
+  client:
+    fetch-registry: true
+    register-with-eureka: true
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka
+# rabbitmq相关配置，暴露bus刷新配置的端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: busrefresh

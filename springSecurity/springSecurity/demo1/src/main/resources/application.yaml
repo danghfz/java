@@ -1,0 +1,8 @@
+server:
+  port: 8080
+#spring:
+#  security:
+#    user:
+#      password: dhf200827
+#      name: danghf # default user
+

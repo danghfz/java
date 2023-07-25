@@ -1,0 +1,19 @@
+server:
+  port: 8401
+spring:
+  application:
+    name: sentinel-service
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+    sentinel:
+      transport:
+        dashboard: centos.com:8080
+        # 默认8791端口，加入端口被占用，会自动 +1 扫描
+        port: 8791
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

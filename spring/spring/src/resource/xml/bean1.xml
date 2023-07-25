@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <!--配置User对象-http://www.springframework.org/schema/beans-->
+    <bean id="User" class="com.local.spring5.ioc.xml.bean.User">
+    </bean>
+    <!--使用set方法注入属性-->
+    <bean id="User_set" class="com.local.spring5.ioc.xml.bean.User" >
+        <!--使用property完成属性注入-->
+        <property name="name" value="张三"/>
+        <property name="age" value="20"/>
+    </bean>
+    <bean id="User_p" class="com.local.spring5.ioc.xml.bean.User" p:name="张三" p:age="20">
+    </bean>
+    <!--有参构造注入属性-->
+    <bean id="User_constructor" class="com.local.spring5.ioc.xml.bean.User">
+        <constructor-arg name="name" value="张三"/>
+        <constructor-arg name="age" value="20"/>
+    </bean>
+
+</beans>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="../jquery-3.6.0.js"></script>
+    <script>
+        $(function (){
+            $("#sub").click(function (){
+                return confirm("确定删除吗");
+            })
+        })
+
+    </script>
+</head>
+<body>
+<div>
+    <a th:href="@{/user}">查询所有用户信息</a>
+</div>
+<div>
+    <a th:href="@{/user/1}">根据id=1查询用户信息</a>
+</div>
+<div>
+<form th:action="@{user}" method="post">
+    <table border="1">
+        <tr>
+            <td>
+                用户名：
+            </td>
+            <td>
+                <input type="text" name="username">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                密码：
+            </td>
+            <td>
+                <input type="password" name="password">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                提交：
+            </td>
+            <td>
+                <input type="submit">
+            </td>
+        </tr>
+    </table>
+</form></div><br><br><br>
+<div>
+<form th:action="@{user}" method="post">
+    <input type="hidden" name="_method" value="put">
+    <table border="1">
+        <tr>
+            <td>
+                用户名：
+            </td>
+            <td>
+                <input type="text" name="username">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                密码：
+            </td>
+            <td>
+                <input type="password" name="password">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                提交：
+            </td>
+            <td>
+                <input type="submit" value="修改">
+            </td>
+        </tr>
+    </table>
+</form>
+</div><br><br><br>
+<div>
+    <form th:action="@{/user/${'#username'}}" method="post">
+        <input type="hidden" name="_method" value="delete">
+        <input type="text" name="username" id="username"><br>
+        <input type="submit" value="删除" id="sub">
+    </form>
+</div>
+</body>
+</html>

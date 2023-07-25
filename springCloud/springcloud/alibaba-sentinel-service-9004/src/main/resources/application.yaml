@@ -1,0 +1,14 @@
+server:
+  port: 9004
+spring:
+  application:
+    name: alibaba-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: centos.com:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

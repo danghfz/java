@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <base th:href="${#request.getScheme}+'://'+${#request.getServerName}+':'+${#request.getServerPort}+${#request.contextPath}+'/'">
+</head>
+<body>
+    <h1>测试参数传递</h1><br>
+    <h2>注解</h2>
+<a href="PathVariable/10/me?hobby='篮球'&hobby='足球'">@PathVariable(路径变量)注解</a><br>
+    <a th:href="test"></a>
+<table border="1">
+    id<input type="text" th:value="${#request.getAttribute('id')}" disabled><br>
+    name<input type="text" th:value="${#request.getAttribute('name')}" disabled><br>
+    map<input type="text" th:value="${#request.getAttribute('map')}" disabled><br>
+    requestHeader<input type="text" th:value="${#request.getAttribute('header')}" disabled><br>
+    language<input type="text" th:value="${#request.getAttribute('language')}" disabled><br>
+    hobby<input type="text" th:value="${#request.getAttribute('hobby')}" disabled><br>
+    cookie<input type="text" th:value="${#request.getAttribute('cookie')}" disabled><br>
+    sessionId<input type="text" th:value="${#request.getAttribute('sessionId')}" disabled><br>
+</table>
+<hr><br>
+<h2>@RequestBody</h2><br>
+<form method="post" action="save">
+    <table border="1">
+        <tr>
+            <td>username</td>
+            <td><input type="text" name="username"></td>
+        </tr>
+        <tr>
+            <td>password</td>
+            <td><input type="password" name="password"></td>
+        </tr>
+        <tr>
+            <td>requestBody</td>
+            <td><input type="text" name="requestBody" th:value="${#request.getAttribute('requestBody')}" disabled></td>
+        </tr>
+        <tr>
+            <td>提交</td>
+            <td><input type="submit" name="submit"></td>
+        </tr>
+    </table>
+</form><br>
+<hr>
+    <h2>RequestAttribute</h2>
+    <a th:href="Attribute">RequestAttribute</a>
+    <form>
+        msg:<input type="text" th:value="${#request.getAttribute('msg')}">
+    </form>
+<br><hr><br>
+    <h2>@MatrixVariable(矩阵变量)</h2>
+<div>@RequestParam /xx/{path}?xx=xx&xx=xx</div>
+<div>@MatrixVariable /xx/{path;xx=xx;xx=a,b,c}</div>
+<div>
+    页面开发，cookie被禁用，session怎样获取<br>
+    cookie-->jsessionId-->session<br>
+    url重写：/abc/jsessionId=xxx 把cookie的值使用矩阵变量的方式进行传递
+</div>
+<a href="MatrixVariable/test;user=user+password;hobbies=1,2;hobbies=3">MatrixVariable</a>
+    <table>
+        <tr>
+            <td>user</td>
+            <td><input type="text" th:value="${#request.getAttribute('user')}" disabled name="user"></td>
+        </tr>
+        <tr>
+            <td>hobby</td>
+            <td><input type="text" th:value="${#request.getAttribute('hobbies')}" disabled name="hobby"></td>
+        </tr>
+        <tr>
+            <td>path</td>
+            <td><input type="text" th:value="${#request.getAttribute('path')}" disabled name="path"></td>
+        </tr>
+    </table>
+</body>
+</html>

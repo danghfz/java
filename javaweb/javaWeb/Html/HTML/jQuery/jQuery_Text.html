@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script type="text/javascript" src="jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(function (){
+            var $div = $("div");
+            //设置和获取起始标签和结束标签的内容
+            //无参获取,有参设置
+            alert($div.html());
+
+            var $02 = $("#02");
+            $02.click(function (){
+                $div.html("<img src='../../../HTML/picture/02.jpg' width='400' height='500'>")
+            })
+            var $text = $("#text");
+            $text.click(function (){
+                $div.text("text修改div文本内容");
+            })
+            var $val = $("#val");
+            $val.click(function (){
+                var $usename = $("#usename");
+                if ($usename.val()){
+                    alert($usename.val())
+                }else{
+                    $usename.val("123456")
+                    alert("用户姓名为null,自动设置");
+                }
+
+            })
+        })
+    </script>
+</head>
+<body>
+  <div align="center">
+    我是div标签<br>
+      <span>
+          我是div中的span
+      </span>
+  </div>
+  用户姓名 <input id = "usename" name = "usename" type="text">
+<br><button id = "02">HTML</button><br>
+<button id = "text">text</button><br>
+<button id = "val">val</button>
+</body>
+</html>
