@@ -6,16 +6,16 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   20:26
  */
-//ÔöÇ¿Àà
+//ï¿½ï¿½Ç¿ï¿½ï¿½
 @Component("userProxy")
-@Aspect //±íÊ¾Éú³É´úÀí¶ÔÏó
+@Aspect //ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½É´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 @Order(1)
 public class UserProxy {
-    //ÏàÍ¬ÇÐÈëµã³éÈ¡
+    //ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡
     @Pointcut("execution(* com.local.spring5.aop.JAspectJ.annotation.User.add())")
     public void pointcut() {
 
@@ -24,32 +24,32 @@ public class UserProxy {
 
     @Before("pointcut()")
     public void before() {
-        System.out.println("UserProxyÇ°ÖÃÍ¨Öª");
+        System.out.println("UserProxyÇ°ï¿½ï¿½Í¨Öª");
     }
 
     @After("execution(* com.local.spring5.aop.JAspectJ.annotation.User.add())")
     public void after() {
-        System.out.println("ºóÖÃÍ¨Öª");
+        System.out.println("ï¿½ï¿½ï¿½ï¿½Í¨Öª");
     }
 
     @AfterReturning("execution(* com.local.spring5.aop.JAspectJ.annotation.User.add())")
     public void afterReturning() {
-        System.out.println("·µ»ØÍ¨Öª");
+        System.out.println("ï¿½ï¿½ï¿½ï¿½Í¨Öª");
     }
 
     @AfterThrowing("execution(* com.local.spring5.aop.JAspectJ.annotation.User.add())")
     public void afterThrowing() {
-        System.out.println("Òì³£Í¨Öª");
+        System.out.println("ï¿½ì³£Í¨Öª");
     }
 
     @Around(value = "execution(* com.local.spring5.aop.JAspectJ.annotation.User.add())")
     public void around(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-//        System.out.println("»·ÈÆÍ¨Öª");
-        System.out.println("»·ÈÆÖ®Ç°");
+//        System.out.println("ï¿½ï¿½ï¿½ï¿½Í¨Öª");
+        System.out.println("ï¿½ï¿½ï¿½ï¿½Ö®Ç°");
 
-        //±»ÔöÇ¿µÄ·½·¨
+        //ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½Ä·ï¿½ï¿½ï¿½
         proceedingJoinPoint.proceed();
 
-        System.out.println("»·ÈÆÖ®ºó");
+        System.out.println("ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½");
     }
 }

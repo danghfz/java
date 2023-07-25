@@ -9,44 +9,44 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/4/17   17:27
  */
 public class Dom4jTest {
     @Test
     public void test1() throws DocumentException {
-        //´´½¨Ò»¸öSAXReaderÊäÈëÁ÷,¶ÁÈ¡xmlÅäÖÃÎÄ¼þ,Éú³Édocument¶ÔÏó
+        //ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½SAXReaderï¿½ï¿½ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½È¡xmlï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½,ï¿½ï¿½ï¿½ï¿½documentï¿½ï¿½ï¿½ï¿½
         SAXReader saxReader = new SAXReader();
         Document document = saxReader.read("E:\\java\\java_base\\xml\\src\\books.xml");
         System.out.println(document);
         //org.dom4j.tree.DefaultDocument@1d76aeea [Document: name E:\java\java_base\xml\src\books.xml]
     }
     @Test
-    //¶ÁÈ¡books.xmlÉú³ÉbookÀà
+    //ï¿½ï¿½È¡books.xmlï¿½ï¿½ï¿½ï¿½bookï¿½ï¿½
     public void test2() throws DocumentException {
-        //1.¶ÁÈ¡books.xmlÎÄ¼þ
+        //1.ï¿½ï¿½È¡books.xmlï¿½Ä¼ï¿½
         SAXReader saxReader = new SAXReader();
-        //ÔÚjunitÖÐ,Ïà¶ÔÂ·¾¶´ÓÏîÄ¿¿ªÊ¼
+        //ï¿½ï¿½junitï¿½ï¿½,ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Ê¼
         Document document = saxReader.read("src//books.xml");
-        //2.Í¨¹ýdom¶Ô»ñÈ¡¸ùÔªËØ
+        //2.Í¨ï¿½ï¿½domï¿½Ô»ï¿½È¡ï¿½ï¿½Ôªï¿½ï¿½
         Element rootElement = document.getRootElement();
         //System.out.println(rootElement);
         //org.dom4j.tree.DefaultElement@6e75aa0d [Element: <books attributes: []/>]
-        //3.Í¨¹ý¸ùÔªËØ»ñÈ¡book±êÇ©¶ÔÏó
-        //element()·½·¨ºÍelements()¶¼ÊÇÍ¨¹ý±êÇ©Ãû²éÕÒ×ÓÔªËØ
+        //3.Í¨ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø»ï¿½È¡bookï¿½ï¿½Ç©ï¿½ï¿½ï¿½ï¿½
+        //element()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½elements()ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½Ç©ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½
         List<Element> books = rootElement.elements("book");
-        //4.±éÀú,´¦ÀíÃ¿¸öbook±êÇ©×ª»»ÎªBookÀà
+        //4.ï¿½ï¿½ï¿½ï¿½,ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½bookï¿½ï¿½Ç©×ªï¿½ï¿½ÎªBookï¿½ï¿½
         for (Element book : books){
-            // asXML()°Ñ±êÇ©¶ÔÏó×ª»»Îª±êÇ©×Ö·û´®;È¡³öxmlÎÄ±¾
+            // asXML()ï¿½Ñ±ï¿½Ç©ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½Îªï¿½ï¿½Ç©ï¿½Ö·ï¿½ï¿½ï¿½;È¡ï¿½ï¿½xmlï¿½Ä±ï¿½
 //            System.out.println(book.asXML());
             Element name = book.element("name");
-            String text = name.getText();//»ñÈ¡±êÇ©ÎÄ±¾ÄÚÈÝ
+            String text = name.getText();//ï¿½ï¿½È¡ï¿½ï¿½Ç©ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½
             System.out.println(text);
-            //Ö±½Ó»ñÈ¡±êÇ©ÎÄ±¾ÄÚÈÝ
+            //Ö±ï¿½Ó»ï¿½È¡ï¿½ï¿½Ç©ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½
             String author = book.elementText("author");
             System.out.println(author);
-            //»ñÈ¡ÊôÐÔÖµÄÚÈÝ
+            //ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
             String sn = book.attributeValue("sn");
 
         }

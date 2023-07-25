@@ -1,7 +1,7 @@
 package com.atguigu.pojo;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/4/17   17:22
  */
@@ -49,7 +49,7 @@ public class Book {
 
     }
 
-    private String sn;//³ö°æÐòÁÐºÅ
+    private String sn;//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðºï¿½
     private String name;
     private String author;
     private String prices;

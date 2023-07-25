@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/12   12:34
  */
@@ -18,14 +18,14 @@ public class DeptService {
     private DeptDao deptDao;
     public void add(Dept dept){
         int add = deptDao.add(dept);
-        System.out.println("Ìí¼ÓÁË"+add+"ÌõÊý¾Ý");
+        System.out.println("ï¿½ï¿½ï¿½ï¿½ï¿½"+add+"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
     public void delete(Integer depton){
         int delete = deptDao.delete(depton);
-        System.out.println(delete+"ÌõÊý¾Ý±»É¾³ý");
+        System.out.println(delete+"ï¿½ï¿½ï¿½ï¿½ï¿½Ý±ï¿½É¾ï¿½ï¿½");
     }
     public void queryObject(){
         Object o1 = deptDao.queryCount();
-        System.out.println("ÓÐ"+o1+"ÌõÊý¾Ý");
+        System.out.println("ï¿½ï¿½"+o1+"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½");
     }
 }

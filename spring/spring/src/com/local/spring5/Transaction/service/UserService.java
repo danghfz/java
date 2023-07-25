@@ -14,24 +14,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/12   14:42
  */
 @Service(value = "userService")
-@Transactional // ¿ªÆôÊÂÎñ
+@Transactional // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 public class UserService {
     @Autowired
     @Qualifier("userDaoImpl")
     private UserDao userDao;
 
-    //×ªÕË
+    //×ªï¿½ï¿½
     public void accountMoney(){
 
-        //lucyÉÙ100Ôª
+        //lucyï¿½ï¿½100Ôª
         userDao.updateMoney(-100,"lucy");
 
-        //jack¶à100Ôª
+        //jackï¿½ï¿½100Ôª
         userDao.updateMoney(100,"jack");
 
     }

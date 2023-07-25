@@ -11,13 +11,13 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/12   12:32
  */
 @Component("deptDaoImpl")
 public class DeptDaoImpl implements DeptDao {
-    //×¢ÈëJdbcTemplate,ÔÚxmlÅäÖÃÎÄ¼þÖÐ
+    //×¢ï¿½ï¿½JdbcTemplate,ï¿½ï¿½xmlï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
     @Autowired
     @Qualifier("jdbcTemplate")
     private JdbcTemplate jdbcTemplate;
@@ -33,7 +33,7 @@ public class DeptDaoImpl implements DeptDao {
         return jdbcTemplate.update(sql, depton);
     }
 
-    //²éÑ¯µ¥¸öÊý¾Ý
+    //ï¿½ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     @Override
     public Object queryCount() {
         String sql = "select count(*) from dept";
@@ -41,31 +41,31 @@ public class DeptDaoImpl implements DeptDao {
         return integer;
     }
 
-    //²éÑ¯µ¥¸ö¶ÔÏó
+    //ï¿½ï¿½Ñ¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public Object queryForOne(Integer depton) {
         String sql = "select * from dept where depton=?";
         return jdbcTemplate.queryForObject(sql, new BeanPropertyRowMapper<>(Dept.class), depton);
     }
 
-    //¶à¸ö¶ÔÏó²éÑ¯
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¯
     public List<Dept> queryForList() {
         String sql = "select * from dept";
         return jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Dept.class));
     }
 
-    //======================ÅúÁ¿²Ù×÷
-    //ÅúÁ¿Ìí¼Ó
+    //======================ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public void batchAdd(List<Object[]> list) {
         jdbcTemplate.batchUpdate("insert into dept values(?,?,?)", list);
     }
 
-    //ÅúÁ¿É¾³ý
+    //ï¿½ï¿½ï¿½ï¿½É¾ï¿½ï¿½
     public int[] batchDelete(List<Object[]> list) {
         int[] ints = jdbcTemplate.batchUpdate("delete from dept where depton=?", list);
         return ints;
     }
 
-    //ÅúÁ¿¸üÐÂ
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public int[] batchUpdate(List<Object[]> batchArgs) {
         int[] ints = jdbcTemplate.batchUpdate("update dept set dname=?,loc=? where depton=?", batchArgs);
         return ints;

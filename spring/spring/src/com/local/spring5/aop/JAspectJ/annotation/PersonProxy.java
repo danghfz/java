@@ -7,18 +7,18 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   21:18
  */
-@Component //´´½¨¶ÔÏó
-@Aspect //±íÊ¾Éú³É´úÀí¶ÔÏó
-@Order(2) //Ö¸¶¨Éú³É´úÀí¶ÔÏóµÄË³Ðò
+@Component //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+@Aspect //ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½É´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+@Order(2) //Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½É´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë³ï¿½ï¿½
 public class PersonProxy {
     @Pointcut("execution(* com.local.spring5.aop.JAspectJ.annotation.User.add(..))")
     public void pointcut(){}
     @Before("pointcut()")
     public void before(){
-        System.out.println("PersonProxyÇ°ÖÃÍ¨Öª");
+        System.out.println("PersonProxyÇ°ï¿½ï¿½Í¨Öª");
     }
 }

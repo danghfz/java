@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   21:34
  */
-@Configuration //ÅäÖÃÀà
-@ComponentScan //¿ªÆô×¢½âÉ¨Ãè
-@EnableAspectJAutoProxy(proxyTargetClass = true) //¿ªÆôAOP¹¦ÄÜ
+@Configuration //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+@ComponentScan //ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½É¨ï¿½ï¿½
+@EnableAspectJAutoProxy(proxyTargetClass = true) //ï¿½ï¿½ï¿½ï¿½AOPï¿½ï¿½ï¿½ï¿½
 public class SpringConfig {
 
 }

@@ -7,13 +7,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/15   14:07
  */
 @Configuration
 @ComponentScan(basePackages = "IOC.*")
-public class Spring {//ÅäÖÃÀà
+public class Spring {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     @Bean
     public Book book(){
         Book book = new Book();

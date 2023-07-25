@@ -5,12 +5,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/15   14:21
  */
 @Configuration
 @ComponentScan(basePackages = "AOP")
-@EnableAspectJAutoProxy(proxyTargetClass = true) //¿ªÆôAOP¹¦ÄÜ
+@EnableAspectJAutoProxy(proxyTargetClass = true) //ï¿½ï¿½ï¿½ï¿½AOPï¿½ï¿½ï¿½ï¿½
 public class Spring {
 }

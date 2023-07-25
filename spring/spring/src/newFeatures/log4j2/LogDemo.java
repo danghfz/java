@@ -6,25 +6,25 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.support.GenericApplicationContext;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/12   17:40
  */
-//ÑÝÊ¾log4j2µÄÊ¹ÓÃ
+//ï¿½ï¿½Ê¾log4j2ï¿½ï¿½Ê¹ï¿½ï¿½
 public class LogDemo {
     private static final Logger log = LoggerFactory.getLogger(LogDemo.class);
-    //ÊÖ¶¯Êä³öÈÕÖ¾
+    //ï¿½Ö¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¾
     public static void main(String[] args) {
         log.debug("hello debug");
         log.error("hello error");
     }
     public void testGenericApplicationContext(){
-        //´´½¨GenericApplicationContext¶ÔÏó¡¤
+        //ï¿½ï¿½ï¿½ï¿½GenericApplicationContextï¿½ï¿½ï¿½ï¿½
         GenericApplicationContext context = new GenericApplicationContext();
-        //×¢²áµ÷ÓÃcontext·½·¨½øÐÐ×¢²á
-        context.refresh();//Çå¿Õ
+        //×¢ï¿½ï¿½ï¿½ï¿½ï¿½contextï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½
+        context.refresh();//ï¿½ï¿½ï¿½
         context.registerBean(User.class,()-> new User());
-        //»ñÈ¡ÔÚspringÖÐ×¢²áµÄ¶ÔÏó
+        //ï¿½ï¿½È¡ï¿½ï¿½springï¿½ï¿½×¢ï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
         User bean = (User)context.getBean("com.local.spring5.Transaction.pojo.User");
         context.registerBean("user1",User.class,()-> new User());
         User user1 = context.getBean("user1", User.class);

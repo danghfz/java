@@ -3,11 +3,11 @@ package com.local.spring5.aop.JAspectJ.annotation;
 import org.springframework.stereotype.Component;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   20:24
  */
-//±»ÔöÇ¿Àà
+//ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½
 @Component(value = "user")
 public class User {
     public void add(){

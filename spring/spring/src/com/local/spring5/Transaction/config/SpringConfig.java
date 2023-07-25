@@ -14,17 +14,17 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import javax.sql.DataSource;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/12   16:30
  */
-@Configuration //ÅäÖÃÀà
-@ComponentScan(basePackages = "com.local.spring5.Transaction") //×é¼þÉ¨Ãè
-@EnableAspectJAutoProxy //¿ªÆôaop
-@EnableTransactionManagement //¿ªÆôÊÂÎñ¹ÜÀí
+@Configuration //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+@ComponentScan(basePackages = "com.local.spring5.Transaction") //ï¿½ï¿½ï¿½É¨ï¿½ï¿½
+@EnableAspectJAutoProxy //ï¿½ï¿½ï¿½ï¿½aop
+@EnableTransactionManagement //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 public class SpringConfig {
-    //´´½¨Êý¾Ý¿âÁ¬½Ó³Ø
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½Ó³ï¿½
     @Bean
     public DruidDataSource druidDataSource(){
         DruidDataSource dataSource = new DruidDataSource();
@@ -35,14 +35,14 @@ public class SpringConfig {
         return dataSource;
     }
     @Bean
-    //´´½¨JdbcTemplate
+    //ï¿½ï¿½ï¿½ï¿½JdbcTemplate
     public JdbcTemplate jdbcTemplate(DataSource dataSource){
         JdbcTemplate jdbcTemplate = new JdbcTemplate();
         jdbcTemplate.setDataSource(dataSource);
         return jdbcTemplate;
     }
     @Bean
-    //´´½¨ÊÂÎñ¹ÜÀíÆ÷£¬»á×Ô¶¯ÕÒµ½dataSource×¢Èë
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½Òµï¿½dataSource×¢ï¿½ï¿½
     public DataSourceTransactionManager dataSourceTransactionManager(DataSource dataSource){
         DataSourceTransactionManager dataSourceTransactionManager = new DataSourceTransactionManager();
         dataSourceTransactionManager.setDataSource(dataSource);

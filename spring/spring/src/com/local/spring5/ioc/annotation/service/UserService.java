@@ -9,28 +9,28 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
- * @author 党
+ * @author 锟斤拷
  * @version 1.0
  * 2022/5/10   14:59
  */
 @Service(value = "userService")
 //<bean id="",class=""/>
-//id等价于value
-//注解中value属性值可以不写,默认类名首字母小写
+//id锟饺硷拷锟斤拷value
+//注锟斤拷锟斤拷value锟斤拷锟斤拷值锟斤拷锟皆诧拷写,默锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷母小写
 
 
 public class UserService {
-    //定义dao属性
-    @Autowired //根据类型进行注入
-//    //不需要set方法
-//    @Qualifier(value="userDaoImpl") //根据名称进行注入
-//    /*一个接口如果有多个实现类,根据名称注入*/
+    //锟斤拷锟斤拷dao锟斤拷锟斤拷
+    @Autowired //锟斤拷锟斤拷锟斤拷锟酵斤拷锟斤拷注锟斤拷
+//    //锟斤拷锟斤拷要set锟斤拷锟斤拷
+//    @Qualifier(value="userDaoImpl") //锟斤拷锟斤拷锟斤拷锟狡斤拷锟斤拷注锟斤拷
+//    /*一锟斤拷锟接匡拷锟斤拷锟斤拷卸锟斤拷实锟斤拷锟斤拷,锟斤拷锟斤拷锟斤拷锟斤拷注锟斤拷*/
 
-    //    @Resource //根据类型注入
-    @Resource(name = "userDaoImpl")//根据名称注入
+    //    @Resource //锟斤拷锟斤拷锟斤拷锟斤拷注锟斤拷
+    @Resource(name = "userDaoImpl")//锟斤拷锟斤拷锟斤拷锟斤拷注锟斤拷
     private UserDao userDao;
 
-    @Value(value = "张三")//普通类型属性注入
+    @Value(value = "锟斤拷锟斤拷")//锟斤拷通锟斤拷锟斤拷锟斤拷锟斤拷注锟斤拷
     private String name;
     public void add() {
         System.out.println("UserService.add()");

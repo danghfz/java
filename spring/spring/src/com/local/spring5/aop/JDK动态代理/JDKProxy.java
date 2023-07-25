@@ -1,4 +1,4 @@
-package com.local.spring5.aop.JDK¶¯Ì¬´úÀí;
+package com.local.spring5.aop.JDKï¿½ï¿½Ì¬ï¿½ï¿½ï¿½ï¿½;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -6,37 +6,37 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   19:13
  */
 public class JDKProxy {
     public static void main(String[] args) {
-        //´´½¨½Ó¿ÚÊµÏÖÀàµÄ´úÀí¶ÔÏó
+        //ï¿½ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Êµï¿½ï¿½ï¿½ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         Class[] interfacez = new Class[]{UserDao.class};
         UserDao userDao = new UserDaoImpl();
-        //µÃµ½´úÀí¶ÔÏó
+        //ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         UserDao o = (UserDao)Proxy.newProxyInstance(JDKProxy.class.getClassLoader(), interfacez, new UserDaoProxy(userDao));
         int add = o.add(1, 2);
         System.out.println(add);
     }
 }
 class UserDaoProxy implements InvocationHandler{
-    //´´½¨Ë­µÄ´úÀí¶ÔÏó£¬°ÑË­´«½øÀ´
+    //ï¿½ï¿½ï¿½ï¿½Ë­ï¿½Ä´ï¿½ï¿½ï¿½ï¿½ï¿½ó£¬°ï¿½Ë­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     private Object obj;
     public UserDaoProxy(Object obj){
         this.obj = obj;
     }
 
-    //ÔöÇ¿µÄÂß¼­
+    //ï¿½ï¿½Ç¿ï¿½ï¿½ï¿½ß¼ï¿½
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        //·½·¨Ö®Ç°
-        System.out.println(method.getName()+"·½·¨¿ªÊ¼Ö´ÐÐ"+ Arrays.toString(args));
-        //±»ÔöÇ¿µÄ·½·¨
-        Object res = method.invoke(obj, args);//·´Éä
-        //·½·¨Ö®ºó
-        System.out.println("·½·¨Ö®ºó"+obj.toString());
+        //ï¿½ï¿½ï¿½ï¿½Ö®Ç°
+        System.out.println(method.getName()+"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼Ö´ï¿½ï¿½"+ Arrays.toString(args));
+        //ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½Ä·ï¿½ï¿½ï¿½
+        Object res = method.invoke(obj, args);//ï¿½ï¿½ï¿½ï¿½
+        //ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½
+        System.out.println("ï¿½ï¿½ï¿½ï¿½Ö®ï¿½ï¿½"+obj.toString());
         return res;
     }
 }

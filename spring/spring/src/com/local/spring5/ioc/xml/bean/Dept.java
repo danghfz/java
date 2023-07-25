@@ -1,11 +1,11 @@
 package com.local.spring5.ioc.xml.bean;
 
 /**
- * @author ╣Ё
+ * @author О©╫О©╫
  * @version 1.0
  * 2022/5/8   16:51
  */
-//╡©це
+//О©╫О©╫О©╫О©╫
 public class Dept {
     private String depton;
     private String dname;

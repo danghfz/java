@@ -4,7 +4,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.testng.annotations.Test;
 import com.local.spring5.aop.JAspectJ.annotation.User;
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   20:39
  */

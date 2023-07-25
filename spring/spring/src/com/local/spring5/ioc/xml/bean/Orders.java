@@ -1,29 +1,29 @@
 package com.local.spring5.ioc.xml.bean;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   12:42
  */
 public class Orders {
     private String name;
     public Orders(){
-        System.out.println("OrdersµÄÎÞ²Î¹¹Ôì·½·¨");
+        System.out.println("Ordersï¿½ï¿½ï¿½Þ²Î¹ï¿½ï¿½ì·½ï¿½ï¿½");
     }
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
-        System.out.println("OrdersµÄsetName·½·¨");
+        System.out.println("Ordersï¿½ï¿½setNameï¿½ï¿½ï¿½ï¿½");
         this.name = name;
     }
-    //³õÊ¼»¯·½·¨
+    //ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     public void init(){
-        System.out.println("OrdersµÄinit·½·¨");
+        System.out.println("Ordersï¿½ï¿½initï¿½ï¿½ï¿½ï¿½");
     }
-    //Ïú»Ù·½·¨
+    //ï¿½ï¿½ï¿½Ù·ï¿½ï¿½ï¿½
     public void destroy(){
-        System.out.println("OrdersµÄdestroy·½·¨");
+        System.out.println("Ordersï¿½ï¿½destroyï¿½ï¿½ï¿½ï¿½");
     }
 }

@@ -6,19 +6,19 @@ import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
 
 /**
- * @author 党
+ * @author 锟斤拷
  * @version 1.0
  * 2022/5/15   14:22
  */
 @Component
-@Aspect //增强
+@Aspect //锟斤拷强
 public class SuperUser {
     @Before("execution(* AOP.dao.User.add(..))")
     public void before(){
-        System.out.println("前置通知");
+        System.out.println("前锟斤拷通知");
     }
     @After("execution(* AOP.dao.User.add(..))")
     public void after(){
-        System.out.println("后置通知");
+        System.out.println("锟斤拷锟斤拷通知");
     }
 }

@@ -4,12 +4,12 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   16:34
  */
-//ÅäÖÃÀà
-@Configuration //×÷ÎªÅäÖÃÀà£¬Ìæ»»xmlÎÄ¼þ
-@ComponentScan(basePackages = "com.local.spring5.ioc.annotation")//¿ªÆô×é¼þÉ¨Ãè
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+@Configuration //ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½à£¬ï¿½æ»»xmlï¿½Ä¼ï¿½
+@ComponentScan(basePackages = "com.local.spring5.ioc.annotation")//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¨ï¿½ï¿½
 public class SpringConfig {
 }

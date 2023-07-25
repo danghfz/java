@@ -1,11 +1,11 @@
 package com.local.spring5.aop.JAspectJ.xml;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/10   21:24
  */
-//±»ÔöÇ¿Àà
+//ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½
 public class Book {
     public void buy() {
         System.out.println("buy...");

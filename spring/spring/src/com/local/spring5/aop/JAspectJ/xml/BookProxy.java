@@ -1,11 +1,11 @@
 package com.local.spring5.aop.JAspectJ.xml;
 
 /**
- * @author 党
+ * @author 锟斤拷
  * @version 1.0
  * 2022/5/10   21:25
  */
-//增强类
+//锟斤拷强锟斤拷
 public class BookProxy {
     public void before(){
         System.out.println("before");

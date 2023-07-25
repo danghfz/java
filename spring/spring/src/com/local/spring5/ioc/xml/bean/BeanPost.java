@@ -4,19 +4,19 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 
 /**
- * @author 党
+ * @author 锟斤拷
  * @version 1.0
  * 2022/5/10   12:55
  */
 public class BeanPost implements BeanPostProcessor {
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-        System.out.println("初始化之前");
+        System.out.println("锟斤拷始锟斤拷之前");
         return bean;
     }
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        System.out.println("初始化之后");
+        System.out.println("锟斤拷始锟斤拷之锟斤拷");
         return bean;
     }
 }

@@ -8,13 +8,13 @@ import org.springframework.stereotype.Component;
 import java.util.Date;
 
 /**
- * @author µ³
+ * @author ï¿½ï¿½
  * @version 1.0
  * 2022/5/15   13:53
  */
 @Component
 public class User {
-    @Value("ÕÔµÏ")
+    @Value("ï¿½Ôµï¿½")
     private String name;
     @Value("123465")
     private String id;
