@@ -1,4 +1,7 @@
-#
+
+
+
+
 # 第1章 RocketMQ概述
 ## 一、MQ概述
 ### 1 、MQ简介
@@ -1704,46 +1707,58 @@ Producer对于消息的发送方式也有多种选择，不同的方式会产生
 导入rocketmq的client依赖。
 ```xml
 <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+  <maven.compiler.source>8</maven.compiler.source>
+  <maven.compiler.target>8</maven.compiler.target>
+  <rocketmq.version>4.5.2</rocketmq.version>
 </properties>
 <dependencies>
-    <dependency>
-        <groupId>org.apache.rocketmq</groupId>
-        <artifactId>rocketmq-client</artifactId>
-        <version>4.8.0</version>
-    </dependency>
+<dependency>
+  <groupId>org.apache.rocketmq</groupId>
+  <artifactId>rocketmq-client</artifactId>
+  <version>${rocketmq.version}</version>
+</dependency>
 </dependencies>
 ```
 #### 定义同步消息发送生产者
 
 ```java
+/**
+ * @author danghf
+ * @version 1.0
+ * @date 2023/07/27 19:51
+ * 同步消息生产者
+ */
 public class SyncProducer {
-    public static void main(String[] args) throws Exception {
-        // 创建一个producer，参数为Producer Group名称
-        DefaultMQProducer producer = new DefaultMQProducer("pg");
-        // 指定nameServer地址
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        // 设置当发送失败时重试发送的次数，默认为 2 次
-        producer.setRetryTimesWhenSendFailed( 3 );
-        // 设置发送超时时限为5s，默认3s
-        producer.setSendMsgTimeout( 5000 );
-        // 开启生产者
-        producer.start();
-        // 生产并发送 100 条消息
-        for (int i = 0 ; i < 100 ; i++) {
-            byte[] body = ("Hi," + i).getBytes();
-            Message msg = new Message("someTopic", "someTag", body);
-            // 为消息指定key
-            msg.setKeys("key-" + i);
-            // 发送消息
-            SendResult sendResult = producer.send(msg);
-            System.out.println(sendResult);
-        }
-        // 关闭producer
-        producer.shutdown();
+
+  public static void main(String[] args) {
+    // 创建生产者
+    // new DefaultMQProducer(producerGroup) producerGroup:生产者组名
+    DefaultMQProducer producer = new DefaultMQProducer("sync_producer");
+    // 设置NameServer地址
+    producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+    // 设置当发送失败时重试发送的次数，默认为 2 次
+    producer.setRetryTimesWhenSendFailed(3);
+    // 设置发送超时时限为5s，默认3s
+    producer.setSendMsgTimeout(5000);
+    try {
+      // 启动生产者
+      producer.start();
+      // 发送消息
+      for (int i = 0; i < 10; i++) {
+        // public Message(String topic, byte[] body) {
+        byte[] body = ("hello" + i).getBytes();
+        // public Message(String topic, String tags, byte[] body)
+        Message msg = new Message("sync_topic", "sync_tag", body);
+        SendResult sendResult = producer.send(msg);
+        System.out.println("消息发送结果：" + sendResult);
+      }
+    } catch (MQClientException | MQBrokerException | RemotingException | InterruptedException e) {
+      e.printStackTrace();
+    } finally {
+      // 关闭生产者
+      producer.shutdown();
     }
+  }
 }
 ```
 
@@ -1751,7 +1766,7 @@ public class SyncProducer {
 // 消息发送的状态
 public enum SendStatus {
     SEND_OK, // 发送成功
-    FLUSH_DISK_TIMEOUT,  // 刷盘超时。当Broker设置的刷盘策略为同步刷盘时才可能出现这种异常状态。异步刷盘不会出现
+    FLUSH_DISK_TIMEOUT,  // 刷盘超时。当Broker设置的刷盘策略为同步刷盘时才可能出现这种异常状态。异步刷盘不会出现
     FLUSH_SLAVE_TIMEOUT, // Slave同步超时。当Broker集群设置的Master-Slave的复制方式为同步复制时才可能出现这种异常状态。异步复制不会出现
     SLAVE_NOT_AVAILABLE, // 没有可用的Slave。当Broker集群设置为Master-Slave的复制方式为同步复制时才可能出现这种异常状态。异步复制不会出现
 }
@@ -1760,42 +1775,46 @@ public enum SendStatus {
 #### 定义异步消息发送生产者
 ```java
 public class AsyncProducer {
-    public static void main(String[] args) throws Exception {
-        DefaultMQProducer producer = new DefaultMQProducer("pg");
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        // 指定异步发送失败后不进行重试发送
-        producer.setRetryTimesWhenSendAsyncFailed( 0 );
+    public static void main(String[] args) {
+        DefaultMQProducer producer = new DefaultMQProducer("async_producer");
+        producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        // 指定异步发送失败后不进行重试发送 default:2
+        producer.setRetryTimesWhenSendAsyncFailed(0);
         // 指定新创建的Topic的Queue数量为 2 ，默认为 4
-        producer.setDefaultTopicQueueNums( 2 );
+        producer.setDefaultTopicQueueNums(2);
 
-        producer.start();
+        try {
+            producer.start();
+            for (int i = 0; i < 10; i++) {
+                byte[] body = ("async_topic," + i).getBytes();
+                try {
+                    Message msg = new Message("async_topic", "async_tag", body);
+                    // 异步发送。指定回调
+                    producer.send(msg, new SendCallback() {
+                        // 当producer接收到MQ发送来的ACK后就会触发该回调方法的执行
+                        @Override
+                        public void onSuccess(SendResult sendResult) {
+                            System.out.println(sendResult);
+                        }
 
-        for (int i = 0 ; i < 100 ; i++) {
-            byte[] body = ("Hi," + i).getBytes();
-            try {
-            Message msg = new Message("myTopicA", "myTag", body);
-            // 异步发送。指定回调
-            producer.send(msg, new SendCallback() {
-                    // 当producer接收到MQ发送来的ACK后就会触发该回调方法的执行
-                    @Override
-                    public void onSuccess(SendResult sendResult) {
-                    System.out.println(sendResult);
-                    }
-
-                    @Override
-                    public void onException(Throwable e) {
+                        @Override
+                        public void onException(Throwable e) {
+                            e.printStackTrace();
+                        }
+                    });
+                } catch (Exception e) {
                     e.printStackTrace();
-                    }
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } // end-for
-        // sleep一会儿
-        // 由于采用的是异步发送，所以若这里不sleep，
-        // 则消息还未发送就会将producer给关闭，报错
-        TimeUnit.SECONDS.sleep( 3 );
-        producer.shutdown();
+                }
+            } // end-for
+            // sleep一会儿
+            // 由于采用的是异步发送，所以若这里不sleep，
+            // 则消息还未发送就会将producer给关闭，报错
+            TimeUnit.SECONDS.sleep(3);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            producer.shutdown();
+        }
     }
 }
 ```
@@ -1803,37 +1822,38 @@ public class AsyncProducer {
 #### 定义单向消息发送生产者
 ```java
 public class OnewayProducer {
-    public static void main(String[] args) throws Exception{
+    public static void main(String[] args) {
         DefaultMQProducer producer = new DefaultMQProducer("pg");
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        producer.start();
-
-        for (int i = 0 ; i < 10 ; i++) {
-            byte[] body = ("Hi," + i).getBytes();
-            Message msg = new Message("single", "someTag", body);
-            // 单向发送
-            producer.sendOneway(msg);
+        producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        try {
+            producer.start();
+            for (int i = 0; i < 10; i++) {
+                byte[] bytes = ("OnewayProducer" + i).getBytes();
+                Message msg = new Message("single_topic", "single_tag", bytes);
+                producer.sendOneway(msg);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            producer.shutdown();
         }
-        producer.shutdown();
-        System.out.println("producer shutdown");
     }
 }
 ```
 #### 定义消息消费者
 ```java
-public class SomeConsumer {
+public class Consumer {
     public static void main(String[] args) throws MQClientException {
         // 定义一个pull消费者
-        // DefaultLitePullConsumer consumer = new
-        DefaultLitePullConsumer("cg");
+        // DefaultLitePullConsumer consumer = new DefaultLitePullConsumer("cg");
         // 定义一个push消费者
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
         // 指定nameServer
-        consumer.setNamesrvAddr("rocketmqOS:9876");
+        consumer.setNamesrvAddr("www.danghf.rocketmq:9876");
         // 指定从第一条消息开始消费
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
-        // 指定消费topic与tag
-        consumer.subscribe("someTopic", "*");
+        // 指定消费topic与tag   *表示消费所有tag
+        consumer.subscribe("single_topic", "*");
         // 指定采用“广播模式”进行消费，默认为“集群模式”
         // consumer.setMessageModel(MessageModel.BROADCASTING);
         // 注册消息监听器
@@ -1841,7 +1861,7 @@ public class SomeConsumer {
             // 一旦broker中有了其订阅的消息就会触发该方法的执行，
             // 其返回值为当前consumer消费的状态
             @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,ConsumeConcurrentlyContext context) {
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
                 // 逐条消费消息
                 for (MessageExt msg : msgs) {
                     System.out.println(msg);
@@ -1854,6 +1874,7 @@ public class SomeConsumer {
         consumer.start();
         System.out.println("Consumer Started");
     }
+
 }
 ```
 
@@ -1912,26 +1933,33 @@ public class SomeConsumer {
 
 ### 4 代码举例
 ```java
-public class OrderedProducer {
-    public static void main(String[] args) throws Exception {
-        DefaultMQProducer producer = new DefaultMQProducer("pg");
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        producer.start();
-        for (int i = 0 ; i < 100 ; i++) {
-            Integer orderId = i;
-            byte[] body = ("Hi," + i).getBytes();
-            Message msg = new Message("TopicA", "TagA", body);
-            SendResult sendResult = producer.send(msg, new MessageQueueSelector() {
-                @Override
-                public MessageQueue select(List<MessageQueue> mqs,Message msg, Object arg) {
-                        Integer id = (Integer) arg;
-                        int index = id % mqs.size();
+public class OrderProducer {
+    public static void main(String[] args) {
+        DefaultMQProducer producer = new DefaultMQProducer("order_producer_group");
+        producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        try {
+            producer.start();
+            for (int i = 0; i < 10; i++) {
+                Integer orderId = i;
+                byte[] body = ("order " + i).getBytes();
+                Message msg = new Message("order_topic", "order_tag", body);
+                // send(Message msg, MessageQueueSelector selector, Object arg)
+                // @param arg Argument to work aLong with message queue selector 、
+                producer.send(msg, new MessageQueueSelector() {
+                    // 消息选择器中的 arg 参数就是 send 方法中的 arg 参数
+                    @Override
+                    public MessageQueue select(List<MessageQueue> mqs, Message message, Object arg) {
+                        int index = (Integer)arg % mqs.size();
                         return mqs.get(index);
                     }
                 }, orderId);
-            System.out.println(sendResult);
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            producer.shutdown();
         }
-        producer.shutdown();
     }
 }
 ```
@@ -1999,51 +2027,59 @@ Broker内部有一个延迟消息服务类ScheuleMessageService，其会消费SC
 
 ### 4 代码举例
 
-定义DelayProducer类
+定义DelayMsg类
 
 ```java
-public class DelayProducer {
-    public static void main(String[] args) throws Exception {
-        DefaultMQProducer producer = new DefaultMQProducer("pg");
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        producer.start();
-        for (int i = 0 ; i < 10 ; i++) {
-            byte[] body = ("Hi," + i).getBytes();
-            Message msg = new Message("TopicB", "someTag", body);
-            // 指定消息延迟等级为 3 级，即延迟10s
-            // msg.setDelayTimeLevel(3);
-            SendResult sendResult = producer.send(msg);
-            // 输出消息被发送的时间
-            System.out.print(new SimpleDateFormat("mm:ss").format(new Date()));
-            System.out.println(" ," + sendResult);
+public class DelayMsg {
+    public static void main(String[] args) {
+        DefaultMQProducer producer = new DefaultMQProducer("delay_producer_group");
+        producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        try {
+            producer.start();
+            for (int i = 0; i < 10; i++) {
+                byte[] body = ("delay " + i).getBytes();
+                Message msg = new Message("delay_topic", "delay_tag", body);
+                msg.setKeys(i+"");
+                // 设置延时等级 3 表示 10s 后发送
+                msg.setDelayTimeLevel(3);
+                producer.send(msg);
+                System.out.println(new SimpleDateFormat("HH:mm:ss")
+                        .format(System.currentTimeMillis())
+                        + " send delay msg ");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            producer.shutdown();
         }
-        producer.shutdown();
     }
 }
 ```
 
-定义OtherConsumer类
+定义Consumer类
 
 ```java
-public class OtherConsumer {
+public class Consumer {
     public static void main(String[] args) throws MQClientException {
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
-        consumer.setNamesrvAddr("rocketmqOS:9876");
-        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET );
-        consumer.subscribe("TopicB", "*");
-        consumer.registerMessageListener(new MessageListenerConcurrently() {
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("consumer_group");
+        consumer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+        consumer.subscribe("delay_topic","*");
+        consumer.registerMessageListener(new MessageListenerConcurrently(){
             @Override
-            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,ConsumeConcurrentlyContext context) {
-            for (MessageExt msg : msgs) {
-                    // 输出消息被消费的时间
-                    System.out.print(new SimpleDateFormat("mm:ss").format(new Date()));
-                    System.out.println(" ," + msg);
+            public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> list,
+                                                            ConsumeConcurrentlyContext consumeConcurrentlyContext) {
+                for(MessageExt msg : list){
+                    String keys = msg.getKeys();
+                    System.out.println(new SimpleDateFormat("HH:mm:ss")
+                            .format(System.currentTimeMillis())
+                            + " receive msg keys: " + keys);
                 }
-                return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                return null;
             }
         });
         consumer.start();
-        System.out.println("Consumer Started");
+
     }
 }
 ```
@@ -2234,31 +2270,29 @@ public class ICBCTransactionListener implements TransactionListener {
 
 ```java
 public class TransactionProducer {
-    public static void main(String[] args) throws Exception {
-        TransactionMQProducer producer = new TransactionMQProducer("tpg");
-        producer.setNamesrvAddr("rocketmqOS:9876");
-        /**
-        * 定义一个线程池
-        * @param corePoolSize 线程池中核心线程数量
-        * @param maximumPoolSize 线程池中最多线程数
-        * @param keepAliveTime 这是一个时间。当线程池中线程数量大于核心线程数量是，多余空闲线程的存活时长
-        * @param unit 时间单位
-        * @param workQueue 临时存放任务的队列，其参数就是队列的长度
-        * @param threadFactory 线程工厂
-        */
-        ExecutorService executorService = new ThreadPoolExecutor( 2 , 5 ,100 , TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>( 2000 ), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
-        // 为生产者指定一个线程池
-        producer.setExecutorService(executorService);
-        // 为生产者添加事务监听器
+    public static void main(String[] args) throws MQClientException {
+        TransactionMQProducer producer = new TransactionMQProducer("transaction_producer_group");
+        producer.setNamesrvAddr("www.danghf.rocketmq:9876");
+        ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(2,
+                5,
+                100,
+                TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(2000),
+                new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                },
+                new ThreadPoolExecutor.AbortPolicy());
+        // 为生产者指定线程池
+        producer.setExecutorService(poolExecutor);
+        // 为生产者指定监听器
         producer.setTransactionListener(new ICBCTransactionListener());
         producer.start();
+        // 发送消息
         String[] tags = {"TAGA","TAGB","TAGC"};
         for (int i = 0 ; i < 3 ; i++) {
             byte[] body = ("Hi," + i).getBytes();
@@ -2268,6 +2302,7 @@ public class TransactionProducer {
             SendResult sendResult =producer.sendMessageInTransaction(msg,null);
             System.out.println("发送结果为：" +sendResult.getSendStatus());
         }
+        producer.shutdown();
     }
 }
 ```
@@ -2282,7 +2317,7 @@ public class SomeConsumer {
         // 定义一个push消费者
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
         // 指定nameServer
-        consumer.setNamesrvAddr("rocketmqOS:9876");
+        consumer.setNamesrvAddr("www.danghf.rocketmq:9876");
         // 指定从第一条消息开始消费
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
         // 指定消费topic与tag
@@ -2353,9 +2388,11 @@ Consumer的pullBatchSize属性与consumeMessageBatchMaxSize属性是否设置的
 * pullBatchSize值设置的越大，Consumer每拉取一次需要的时间就会越长，且在网络上传输出现问题的可能性就越高。若在拉取过程中若出现了问题，那么本批次所有消息都需要全部重新拉取。
 * consumeMessageBatchMaxSize值设置的越大，Consumer的消息并发消费能力越低，且这批被消费的消息具有相同的消费结果。因为consumeMessageBatchMaxSize指定的一批消息只会使用一个线程进行处理，且在处理过程中只要有一个消息处理异常，则这批消息需要全部重新再次消费处理。
 ### 3 代码举例
+
 该批量发送的需求是，不修改最大发送4M的默认值，但要防止发送的批量消息超出4M的限制。
 
 #### 定义消息列表分割器
+
 ```java
     // 消息列表分割器：其只会处理每条消息的大小不超4M的情况。
     // 若存在某条消息，其本身大小大于4M，这个分割器无法处理，
@@ -2436,6 +2473,7 @@ public class BatchProducer {
         }
 
         // 定义消息列表分割器，将消息列表分割为多个不超出4M大小的小列表
+        // 将一个 大的 list  [] ->  [[],[],[]]若干个不超过大小的小列表 
         MessageListSplitter splitter = new MessageListSplitter(messages);
         while (splitter.hasNext()) {
             try {
@@ -2587,6 +2625,7 @@ public class FilterBySQLProducer {
             try {
                 byte[] body = ("Hi," + i).getBytes();
                 Message msg = new Message("myTopic", "myTag", body);
+                // 设置属性 Property ，后面根据属性进行sql过滤
                 msg.putUserProperty("age", i + "");
                 SendResult sendResult = producer.send(msg);
                 System.out.println(sendResult);
@@ -2607,6 +2646,7 @@ public class FilterBySQLConsumer {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("pg");
         consumer.setNamesrvAddr("rocketmqOS:9876");
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+        // sql 过滤  age between 0 and 6
         consumer.subscribe("myTopic", MessageSelector.bySql("age between 0 and 6"));
         consumer.registerMessageListener(new MessageListenerConcurrently() {
             @Override
@@ -2648,7 +2688,7 @@ Producer对发送失败的消息进行重新发送的机制，称为消息发送
 // 创建一个producer，参数为Producer Group名称
 DefaultMQProducer producer = new DefaultMQProducer("pg");
 // 指定nameServer地址
-producer.setNamesrvAddr("rocketmqOS:9876");
+producer.setNamesrvAddr("www.danghf.rock:9876");
 // 设置同步发送失败时重试发送的次数，默认为 2 次
 producer.setRetryTimesWhenSendFailed( 3 );
 // 设置发送超时时限为5s，默认3s
@@ -2671,7 +2711,7 @@ producer.setSendMsgTimeout( 5000 );
 
 ```java
 DefaultMQProducer producer = new DefaultMQProducer("pg");
-producer.setNamesrvAddr("rocketmqOS:9876");
+producer.setNamesrvAddr("www.danghf.rocketmq:9876");
 // 指定异步发送失败后不进行重试发送
 producer.setRetryTimesWhenSendAsyncFailed( 0 );
 ```
